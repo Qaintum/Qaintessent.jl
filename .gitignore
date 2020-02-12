@@ -1,0 +1,13 @@
+
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+
+# ignore compressed files
+*.zip
+*.tar.gz
+
+# ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+obsolete/
