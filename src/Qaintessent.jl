@@ -7,7 +7,17 @@ include("gates.jl")
 export
     X,
     Y,
-    Z
+    Z,
+    XGate,
+    YGate,
+    ZGate,
+    SGate,
+    TGate,
+    SdagGate,
+    TdagGate,
+    SwapGate,
+    ControlledGate,
+    controlled_not
 
 
 end
