@@ -1,8 +1,10 @@
 module Qaintessent
 
 using LinearAlgebra
+using SparseArrays
 
 include("gates.jl")
+include("circuit.jl")
 
 export
     X,
@@ -11,13 +13,14 @@ export
     XGate,
     YGate,
     ZGate,
+    HadamardGate,
     SGate,
     TGate,
     SdagGate,
     TdagGate,
     SwapGate,
     ControlledGate,
-    controlled_not
-
+    controlled_not,
+    CircuitGate
 
 end
