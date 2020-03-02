@@ -62,15 +62,15 @@ matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 Base.adjoint(s::SwapGate) = s
 
 
-struct ControlledGate{K,M,N} <: AbstractGate{N}
+struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
-    function ControlledGate{K,M,N}(U) where {K,M,N}
-        K + M == N || error("Number of control and target wires does not match overall number of wires.")
-        new{K,M,N}(U)
+    function ControlledGate{M,N}(U::AbstractGate{M}) where {M,N}
+        M < N || error("Number of target wires of a controlled gate must be smaller than overall number of wires.")
+        new{M,N}(U)
     end
 end
 
-function matrix(g::ControlledGate{K,M,N}) where {K,M,N}
+function matrix(g::ControlledGate{M,N}) where {M,N}
     Umat = matrix(g.U)
     CU = sparse(one(eltype(Umat))*I, 2^N, 2^N)
     # Note: following the ordering convention of `kron` here, i.e.,
@@ -79,7 +79,7 @@ function matrix(g::ControlledGate{K,M,N}) where {K,M,N}
     return CU
 end
 
-Base.adjoint(g::ControlledGate{K,M,N}) where {K,M,N} = ControlledGate{K,M,N}(Base.adjoint(g.U))
+Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
 
 
-controlled_not() = ControlledGate{1,1,2}(X)
+controlled_not() = ControlledGate{1,2}(X)

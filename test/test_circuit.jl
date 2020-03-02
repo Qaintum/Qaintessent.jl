@@ -15,7 +15,8 @@ using .Qaintessent
     cg = CircuitGate{2,2}((2, 1), controlled_not())
     @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
 
-    cg = CircuitGate{2,3}((1, 3), ControlledGate{1,1,2}(HadamardGate()))
+    # first qubit as control and third qubit as target
+    cg = CircuitGate{2,3}((1, 3), ControlledGate{1,2}(HadamardGate()))
     @test Qaintessent.matrix(cg) ≈ [
         Matrix(I, 4, 4) fill(0, 4, 2) fill(0, 4, 2);
         fill(0, 2, 4) Qaintessent.matrix(HadamardGate()) fill(0, 2, 2);
