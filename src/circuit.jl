@@ -1,6 +1,13 @@
 
+"""
+    AbstractCircuitGate{N}
 
-struct CircuitGate{M,N}
+Abtract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
+"""
+abstract type AbstractCircuitGate{N} end
+
+
+struct CircuitGate{M,N} <: AbstractCircuitGate{N}
     "ordered wire indices which this gate acts on"
     iwire::NTuple{M, <:Integer}
     "actual gate"
@@ -57,4 +64,42 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     @assert count == d^(N+M)
 
     return dropzeros!(sparse(rowind, colind, values, d^N, d^N))
+end
+
+
+single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) = CircuitGate{1,N}((iwire,), gate)
+
+
+two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer) = CircuitGate{2,N}((iwire1, iwire2), gate)
+
+
+# single control and target wire
+controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer) =
+    controlled_circuit_gate((icntrl,), (itarget,), U, N)
+
+# single control wire
+controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {M} =
+    controlled_circuit_gate((icntrl,), itarget, U, N)
+
+function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
+    # consistency checks
+    K + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
+    length(intersect(icntrl, itarget)) == 0 || error("Control and target wires must be disjoint.")
+
+    CircuitGate{K+M,N}((icntrl..., itarget...), ControlledGate{M,K+M}(U))
+end
+
+
+"""
+    CircuitBlock{N}
+
+Quantum circuit block consisting of a sequence of gates.
+"""
+mutable struct CircuitBlock{N}
+    gates::AbstractVector{<:AbstractCircuitGate{N}}
+end
+
+
+function matrix(b::CircuitBlock{N}) where {N}
+    prod(Tuple(matrix(g) for g in reverse(b.gates)))
 end
