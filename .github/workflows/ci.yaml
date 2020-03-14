@@ -19,5 +19,4 @@ jobs:
       - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.julia-version }}
-      - name: "Run Tests"
       - uses: julia-actions/julia-runtest@master
