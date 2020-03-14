@@ -1,7 +1,6 @@
 using Test
 
-include("../src/Qaintessent.jl")
-using .Qaintessent
+using Qaintessent
 
 
 @testset "quantum gates" begin
