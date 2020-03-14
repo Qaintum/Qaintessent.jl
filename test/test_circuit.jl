@@ -1,8 +1,7 @@
 using Test
 using LinearAlgebra
 
-include("../src/Qaintessent.jl")
-using .Qaintessent
+using Qaintessent
 
 
 @testset "circuit gates" begin
