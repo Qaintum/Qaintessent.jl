@@ -4,7 +4,7 @@
 
 Abtract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
 """
-abstract type bstractCircuitGate{N} end
+abstract type AbstractCircuitGate{N} end
 
 
 struct CircuitGate{M,N} <: AbstractCircuitGate{N}
