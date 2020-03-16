@@ -1,5 +1,13 @@
 
 """
+    pauli_vector(x, y, z)
+
+Assemble the "Pauli vector" matrix.
+"""
+pauli_vector(x, y, z) = [z x-im*y; x+im*y -z]
+
+
+"""
     AbstractGate{N}
 
 Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
@@ -8,6 +16,7 @@ abstract type AbstractGate{N} end
 
 
 # Pauli matrices
+
 struct XGate <: AbstractGate{1} end
 struct YGate <: AbstractGate{1} end
 struct ZGate <: AbstractGate{1} end
@@ -26,7 +35,9 @@ X = XGate()
 Y = YGate()
 Z = ZGate()
 
+
 # Hadamard gate
+
 struct HadamardGate <: AbstractGate{1} end
 
 matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
@@ -34,7 +45,9 @@ matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
 # Hadamard gate is Hermitian
 Base.adjoint(H::HadamardGate) = H
 
+
 # S & T gates
+
 struct SGate <: AbstractGate{1} end
 struct TGate <: AbstractGate{1} end
 
@@ -53,7 +66,9 @@ Base.adjoint(::TGate) = TdagGate()
 Base.adjoint(::SdagGate) = SGate()
 Base.adjoint(::TdagGate) = TGate()
 
-# Rotation gates
+
+# rotation gates
+
 struct RxGate <: AbstractGate{1}
     θ::Real
 end
@@ -86,33 +101,36 @@ Base.adjoint(g::RxGate) = RxGate(-g.θ)
 Base.adjoint(g::RyGate) = RyGate(-g.θ)
 Base.adjoint(g::RzGate) = RzGate(-g.θ)
 
-# Phase-shift gate
-struct RϕGate <: AbstractGate{1}
-    ϕ::Real
-end
-
-function matrix(g::RϕGate)
-    [1 0; 0 exp(im*g.ϕ)]
-end
-
-Base.adjoint(g::RϕGate) = RϕGate(-g.ϕ)
-
-# Rotational Gate
+# general rotation operator gate
 struct RotationGate <: AbstractGate{1}
     θ::Real
-    n::AbstractVector
+    n::AbstractVector{<:Real}
+
+    function RotationGate(θ::Real, n::AbstractVector{<:Real})
+        length(n) == 3 || error("Rotation axis vector must have length 3.")
+        norm(n) ≈ 1 || error("Norm of rotation axis vector must be 1.")
+        new(θ, n)
+    end
 end
 
-function matrix(g::RotationGate)
-    norm(g.n) == 1 || error("Norm of input vector must be 1.")
-    c = cos(g.θ/2)
-    s = sin(g.θ/2)
-    c*[1.0 0.0; 0.0 1.0] - im*s*[g.n[3] g.n[1]-im*g.n[2]; g.n[1]+im*g.n[2] -g.n[3]]
-end
+matrix(g::RotationGate) = cos(g.θ/2)*I - im*sin(g.θ/2)*pauli_vector(g.n...)
 
 Base.adjoint(g::RotationGate) = RotationGate(-g.θ, g.n)
 
-# Swap gate
+
+# phase shift gate
+
+struct PhaseShiftGate <: AbstractGate{1}
+    ϕ::Real
+end
+
+matrix(g::PhaseShiftGate) = [1 0; 0 exp(im*g.ϕ)]
+
+Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ)
+
+
+# swap gate
+
 struct SwapGate <: AbstractGate{2} end
 
 matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
@@ -120,6 +138,8 @@ matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 # swap gate is Hermitian
 Base.adjoint(s::SwapGate) = s
 
+
+# general controlled gate
 
 struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
@@ -139,6 +159,5 @@ function matrix(g::ControlledGate{M,N}) where {M,N}
 end
 
 Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
-
 
 controlled_not() = ControlledGate{1,2}(X)
