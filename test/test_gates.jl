@@ -69,8 +69,24 @@ using Qaintessent
 
     @testset "Rϕ gate" begin
         ϕ = 0.7*π
-        @test Qaintessent.matrix(RϕGate(ϕ)) ≈ [1 0; 0 exp(im*ϕ)]
+        @test Qaintessent.matrix(RϕGate(ϕ)) ≈ [1.0 0.0; 0.0 exp(im*ϕ)]
         @test Qaintessent.matrix(RϕGate(ϕ))*Qaintessent.matrix(RϕGate(-ϕ)) ≈ I
+    end
+
+    @testset "Rotation gate" begin
+        θ = 0.7*π
+        # Recover Rx matrix
+        n1 = [1.0; 0.0; 0.0]
+        # Recover Ry matrix
+        n2 = [0.0; 1.0; 0.0]
+        # Recover Rz matrix
+        n3 = [0.0; 0.0; 1.0]
+        c = cos(θ/2)
+        s = sin(θ/2)
+        @test Qaintessent.matrix(RotationGate(θ, n1)) ≈ Qaintessent.matrix(RxGate(θ))
+        @test Qaintessent.matrix(RotationGate(θ, n2)) ≈ Qaintessent.matrix(RyGate(θ))
+        @test Qaintessent.matrix(RotationGate(θ, n3)) ≈ Qaintessent.matrix(RzGate(θ))
+        @test Qaintessent.matrix(RotationGate(θ, n1))*Qaintessent.matrix(Base.adjoint(RotationGate(θ, n1))) ≈ I
     end
 
 end
