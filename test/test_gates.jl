@@ -46,7 +46,7 @@ using Qaintessent
     end
 
     @testset "Rx gate" begin
-        θ = 0.5*π
+        θ = 0.7*π
         c = cos(θ/2)
         s = sin(θ/2)
         @test Qaintessent.matrix(RxGate(θ)) ≈ [c -im*s; -im*s c]
@@ -54,7 +54,7 @@ using Qaintessent
     end
 
     @testset "Ry gate" begin
-        θ = 0.5*π
+        θ = 0.7*π
         c = cos(θ/2)
         s = sin(θ/2)
         @test Qaintessent.matrix(RyGate(θ)) ≈ [c -s; s c]
@@ -62,9 +62,15 @@ using Qaintessent
     end
 
     @testset "Rz gate" begin
-        θ = 0.5*π
+        θ = 0.7*π
         @test Qaintessent.matrix(RzGate(θ)) ≈ [exp(-im*θ/2) 0; 0 exp(im*θ/2)]
         @test Qaintessent.matrix(RzGate(θ))*Qaintessent.matrix(Base.adjoint(RzGate(θ))) ≈ I
+    end
+
+    @testset "Rϕ gate" begin
+        ϕ = 0.7*π
+        @test Qaintessent.matrix(RϕGate(ϕ)) ≈ [1 0; 0 exp(im*ϕ)]
+        @test Qaintessent.matrix(RϕGate(ϕ))*Qaintessent.matrix(RϕGate(-ϕ)) ≈ I
     end
 
 end
