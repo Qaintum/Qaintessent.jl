@@ -95,7 +95,7 @@ function matrix(g::RϕGate)
     [1 0; 0 exp(im*g.ϕ)]
 end
 
-Base.adjoint(g::RϕGate) = [1 0; 0 exp(-im*g.ϕ)]
+Base.adjoint(g::RϕGate) = RϕGate(-g.ϕ)
 
 # Swap gate
 struct SwapGate <: AbstractGate{2} end
