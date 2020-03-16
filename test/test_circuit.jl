@@ -24,8 +24,7 @@ using Qaintessent
 
 end
 
-
-@testset "circuit block" begin
+@testset ExtendedTestSet "circuit block" begin
 
     # three qubit quantum Fourier transform
     N = 3
@@ -45,7 +44,13 @@ end
         # final swap gate
         two_qubit_circuit_gate(1, 3, SwapGate(), N),
     ])
+    
+    @test cb[1] ≈ single_qubit_circuit_gate(1, HadamardGate(), N)
+    for (index, gate) in enumerate(cb)
+        @test gate ≈ cb[index]
+    end
+    for gate in cb
+    end
 
     @test Qaintessent.matrix(cb) ≈ [exp(2*π*1im*j*k/8)/sqrt(8) for j in 0:7, k in 0:7]
-
 end
