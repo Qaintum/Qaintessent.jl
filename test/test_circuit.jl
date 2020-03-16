@@ -1,7 +1,6 @@
 using Test
 using TestSetExtensions
 using LinearAlgebra
-
 using Qaintessent
 
 
@@ -25,6 +24,7 @@ using Qaintessent
 end
 
 @testset ExtendedTestSet "circuit block" begin
+
     @testset "simple circuit" begin
         N = 1
         cb = CircuitBlock([
@@ -34,10 +34,8 @@ end
             single_qubit_circuit_gate(1, Z, N),
         ])
 
-        test_vector = [1; 0]
-        solution_vector = Complex{Float64}[-1im; 0]
-
-        @test Qaintessent.measure(cb, test_vector) ≈ solution_vector
+        ψ = randn(ComplexF64, 2)
+        @test Qaintessent.apply(cb, ψ) ≈ Qaintessent.matrix(cb)*ψ
     end
 
     @testset "fourier transform" begin
@@ -67,11 +65,8 @@ end
 
         @test Qaintessent.matrix(cb) ≈ [exp(2*π*1im*j*k/8)/sqrt(8) for j in 0:7, k in 0:7]
 
-        test_vector = [1; 0; 0; -1.0im; 1im; 0; 0; -1]
-
-        solution_vector = Qaintessent.matrix(cb)*test_vector
-
-        @test Qaintessent.measure(cb, test_vector) ≈ solution_vector
+        ψ = randn(ComplexF64, 8)
+        @test Qaintessent.apply(cb, ψ) ≈ Qaintessent.matrix(cb)*ψ
 
     end
 end
