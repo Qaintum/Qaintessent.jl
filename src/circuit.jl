@@ -90,10 +90,6 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
 end
 
 
-function Base.isapprox(g1::CircuitGate{M,N}, g2::CircuitGate{M,N}) where {M, N}
-    return matrix(g1) ≈ matrix(g2)
-end
-
 """
     CircuitBlock{N}
 
