@@ -1,4 +1,4 @@
-using Compat.Test
+using Test
 using TestSetExtensions
 
 # my_tests = ["test_circuit.jl",
