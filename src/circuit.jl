@@ -103,8 +103,18 @@ mutable struct CircuitBlock{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 end
 
+# Convert circuit block to matrix
 function matrix(b::CircuitBlock{N}) where {N}
     prod(Tuple(matrix(g) for g in reverse(b.gates)))
+end
+
+# Apply circuit block to input vector of qubits
+function measure(b::CircuitBlock{N}, v::AbstractVector) where {N}
+    sv = reshape(v, :, 1)
+    for gate in b
+        sv = matrix(gate) * sv
+    end
+    return sv
 end
 
 # Make CircuitBlock iterable and indexable for future use
@@ -113,10 +123,11 @@ function Base.getindex(b::CircuitBlock{N}, i::Int64) where {N}
     return b.gates[i]
 end
 
-function Base.iterate(b::CircuitBlock{N}, state=1) where{N}
+function Base.iterate(b::CircuitBlock{N}, state=1) where {N}
     return state > Base.length(b.gates) ? nothing : (b[state], state+1)
 end
 
+# Implement methods required for iteration
 function Base.firstindex(b::CircuitBlock{N}) where {N}
     return 1
 end
