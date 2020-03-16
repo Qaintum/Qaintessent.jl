@@ -90,6 +90,10 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
 end
 
 
+function Base.isapprox(g1::CircuitGate{M,N}, g2::CircuitGate{M,N}) where {M, N}
+    return matrix(g1) ≈ matrix(g2)
+end
+
 """
     CircuitBlock{N}
 
@@ -99,7 +103,23 @@ mutable struct CircuitBlock{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 end
 
-
 function matrix(b::CircuitBlock{N}) where {N}
     prod(Tuple(matrix(g) for g in reverse(b.gates)))
+end
+
+# Make CircuitBlock iterable and indexable for future use
+function Base.getindex(b::CircuitBlock{N}, i::Int64) where {N}
+    1 <= i <= Base.length(b.gates) || throw(BoundsError(S, i))
+    return b.gates[i]
+end
+
+function Base.iterate(b::CircuitBlock{N}, state=1) where{N}
+    return state > Base.length(b.gates) ? nothing : (b[state], state+1)
+end
+
+function Base.firstindex(b::CircuitBlock{N}) where {N}
+    return 1
+end
+function Base.lastindex(b::CircuitBlock{N}) where {N}
+    return Base.length(b.gates)
 end
