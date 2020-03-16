@@ -1,10 +1,11 @@
-using Test
+using Compat.Test
+using TestSetExtensions
 using LinearAlgebra
 
 using Qaintessent
 
 
-@testset "circuit gates" begin
+@testset ExtendedTestSet "circuit gates" begin
 
     # Y acting on second wire
     cg = CircuitGate{1,3}((2,), Y)

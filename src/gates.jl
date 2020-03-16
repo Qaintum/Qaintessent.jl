@@ -53,6 +53,38 @@ Base.adjoint(::TGate) = TdagGate()
 Base.adjoint(::SdagGate) = SGate()
 Base.adjoint(::TdagGate) = TGate()
 
+struct RxGate <: AbstractGate{1}
+    θ::Real
+end
+
+function matrix(g::RxGate)
+    c = cos(g.θ/2)
+    s = sin(g.θ/2)
+    [c -im*s; -im*s c]
+end
+
+struct RyGate <: AbstractGate{1}
+    θ::Real
+end
+
+function matrix(g::RyGate)
+    c = cos(g.θ/2)
+    s = sin(g.θ/2)
+    [c -s; s c]
+end
+
+struct RzGate <: AbstractGate{1}
+    θ::Real
+end
+
+function matrix(g::RzGate)
+
+    [exp(-im*g.θ/2) 0; 0 exp(im*g.θ/2)]
+end
+
+Base.adjoint(g::RxGate) = RxGate(-g.θ)
+Base.adjoint(g::RyGate) = RyGate(-g.θ)
+Base.adjoint(g::RzGate) = RzGate(-g.θ)
 
 struct SwapGate <: AbstractGate{2} end
 
