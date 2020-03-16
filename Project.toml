@@ -1,6 +1,6 @@
 name = "Qaintessent"
 uuid = "9e6618a4-6605-11ea-2880-e931cf774ea8"
-authors = ["Keefe Huang <huangq1234553@gmail.com>"]
+authors = ["Christian Mendl <christian.b.mendl@gmail.com>"]
 version = "0.1.0"
 
 [deps]
