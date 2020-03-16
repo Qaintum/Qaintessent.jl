@@ -21,6 +21,7 @@ export
     RxGate,
     RyGate,
     RzGate,
+    RϕGate,
     SwapGate,
     ControlledGate,
     controlled_not,
