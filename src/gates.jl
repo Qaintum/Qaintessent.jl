@@ -26,7 +26,7 @@ X = XGate()
 Y = YGate()
 Z = ZGate()
 
-
+# Hadamard gate
 struct HadamardGate <: AbstractGate{1} end
 
 matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
@@ -34,7 +34,7 @@ matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
 # Hadamard gate is Hermitian
 Base.adjoint(H::HadamardGate) = H
 
-
+# S & T gates
 struct SGate <: AbstractGate{1} end
 struct TGate <: AbstractGate{1} end
 
@@ -53,6 +53,7 @@ Base.adjoint(::TGate) = TdagGate()
 Base.adjoint(::SdagGate) = SGate()
 Base.adjoint(::TdagGate) = TGate()
 
+# Rotation gates
 struct RxGate <: AbstractGate{1}
     θ::Real
 end
@@ -78,7 +79,6 @@ struct RzGate <: AbstractGate{1}
 end
 
 function matrix(g::RzGate)
-
     [exp(-im*g.θ/2) 0; 0 exp(im*g.θ/2)]
 end
 
@@ -86,6 +86,18 @@ Base.adjoint(g::RxGate) = RxGate(-g.θ)
 Base.adjoint(g::RyGate) = RyGate(-g.θ)
 Base.adjoint(g::RzGate) = RzGate(-g.θ)
 
+# Phase-shift gate
+struct RϕGate <: AbstractGate{1}
+    ϕ::Real
+end
+
+function matrix(g::RϕGate)
+    [1 0; 0 exp(im*g.ϕ)]
+end
+
+Base.adjoint(g::RϕGate) = [1 0; 0 exp(-im*g.ϕ)]
+
+# Swap gate
 struct SwapGate <: AbstractGate{2} end
 
 matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
