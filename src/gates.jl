@@ -97,6 +97,21 @@ end
 
 Base.adjoint(g::RϕGate) = RϕGate(-g.ϕ)
 
+# Rotational Gate
+struct RotationGate <: AbstractGate{1}
+    θ::Real
+    n::AbstractVector
+end
+
+function matrix(g::RotationGate)
+    norm(g.n) == 1 || error("Norm of input vector must be 1.")
+    c = cos(g.θ/2)
+    s = sin(g.θ/2)
+    c*[1.0 0.0; 0.0 1.0] - im*s*[g.n[3] g.n[1]-im*g.n[2]; g.n[1]+im*g.n[2] -g.n[3]]
+end
+
+Base.adjoint(g::RotationGate) = RotationGate(-g.θ, g.n)
+
 # Swap gate
 struct SwapGate <: AbstractGate{2} end
 
