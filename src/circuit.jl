@@ -90,10 +90,6 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
 end
 
 
-function Base.isapprox(g1::CircuitGate{M,N}, g2::CircuitGate{M,N}) where {M, N}
-    return matrix(g1) ≈ matrix(g2)
-end
-
 """
     CircuitBlock{N}
 
@@ -103,21 +99,20 @@ mutable struct CircuitBlock{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 end
 
-# Convert circuit block to matrix
+# convert circuit block to matrix
 function matrix(b::CircuitBlock{N}) where {N}
     prod(Tuple(matrix(g) for g in reverse(b.gates)))
 end
 
-# Apply circuit block to input vector of qubits
-function measure(b::CircuitBlock{N}, v::AbstractVector) where {N}
-    sv = reshape(v, :, 1)
+# apply circuit block to input vector of qubits
+function apply(b::CircuitBlock{N}, ψ::AbstractVector) where {N}
     for gate in b
-        sv = matrix(gate) * sv
+        ψ = matrix(gate) * ψ
     end
-    return sv
+    return ψ
 end
 
-# Make CircuitBlock iterable and indexable for future use
+# make CircuitBlock iterable and indexable
 function Base.getindex(b::CircuitBlock{N}, i::Int64) where {N}
     1 <= i <= Base.length(b.gates) || throw(BoundsError(S, i))
     return b.gates[i]
@@ -127,7 +122,7 @@ function Base.iterate(b::CircuitBlock{N}, state=1) where {N}
     return state > Base.length(b.gates) ? nothing : (b[state], state+1)
 end
 
-# Implement methods required for iteration
+# implement methods required for iteration
 function Base.firstindex(b::CircuitBlock{N}) where {N}
     return 1
 end

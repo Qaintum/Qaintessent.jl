@@ -1,92 +1,25 @@
 using Test
 using TestSetExtensions
+using LinearAlgebra
 using Qaintessent
 
 
+function isunitary(g::Qaintessent.AbstractGate)
+    Qaintessent.matrix(g) * Qaintessent.matrix(Base.adjoint(g)) ≈ I
+end
+
+
 @testset ExtendedTestSet "quantum gates" begin
-    I = [1 0; 0 1]
-    @test Qaintessent.matrix(controlled_not()) ≈ [1 0 0 0; 0 1 0 0; 0 0 0 1; 0 0 1 0]
 
-    @testset "Pauli X gate" begin
-        @test Qaintessent.matrix(XGate()) ≈ [0.  1.; 1.  0.]
-        @test Qaintessent.matrix(XGate())*Qaintessent.matrix(Base.adjoint(XGate())) ≈ I
+    θ = 0.7*π
+    ϕ = 0.4*π
+    n = randn(3); n /= norm(n)
+
+    for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ), controlled_not()]
+        @test isunitary(g)
     end
 
-    @testset "Pauli Y gate" begin
-        @test Qaintessent.matrix(YGate()) ≈ [0. -im; im  0.]
-        @test Qaintessent.matrix(YGate())*Qaintessent.matrix(Base.adjoint(YGate())) ≈ I
-    end
-
-    @testset "Pauli Z gate" begin
-        @test Qaintessent.matrix(ZGate()) ≈ [1.  0.; 0. -1.]
-        @test Qaintessent.matrix(ZGate())*Qaintessent.matrix(Base.adjoint(ZGate())) ≈ I
-    end
-
-    @testset "Hadamard" begin
-        @test Qaintessent.matrix(HadamardGate()) ≈ [1 1; 1 -1] / sqrt(2)
-        @test Qaintessent.matrix(HadamardGate())*Qaintessent.matrix(Base.adjoint(HadamardGate())) ≈ I
-    end
-
-    @testset "SGate" begin
-        @test Qaintessent.matrix(SGate())*Qaintessent.matrix(Base.adjoint(SGate())) ≈ I
-        @test Qaintessent.matrix(SGate())*Qaintessent.matrix(SdagGate()) ≈ I
-    end
-
-    @testset "TGate" begin
-        @test Qaintessent.matrix(TGate())*Qaintessent.matrix(Base.adjoint(TGate())) ≈ I
-        @test Qaintessent.matrix(TGate())*Qaintessent.matrix(TdagGate()) ≈ I
-    end
-
-    @testset "Rx gate" begin
-        θ = 0.5*π
-        c = cos(θ/2)
-        s = sin(θ/2)
-        @test Qaintessent.matrix(RxGate(θ)) ≈ [c -im*s; -im*s c]
-        @test Qaintessent.matrix(RxGate(θ))*Qaintessent.matrix(Base.adjoint(RxGate(θ))) ≈ I
-    end
-
-    @testset "Rx gate" begin
-        θ = 0.7*π
-        c = cos(θ/2)
-        s = sin(θ/2)
-        @test Qaintessent.matrix(RxGate(θ)) ≈ [c -im*s; -im*s c]
-        @test Qaintessent.matrix(RxGate(θ))*Qaintessent.matrix(Base.adjoint(RxGate(θ))) ≈ I
-    end
-
-    @testset "Ry gate" begin
-        θ = 0.7*π
-        c = cos(θ/2)
-        s = sin(θ/2)
-        @test Qaintessent.matrix(RyGate(θ)) ≈ [c -s; s c]
-        @test Qaintessent.matrix(RyGate(θ))*Qaintessent.matrix(Base.adjoint(RyGate(θ))) ≈ I
-    end
-
-    @testset "Rz gate" begin
-        θ = 0.7*π
-        @test Qaintessent.matrix(RzGate(θ)) ≈ [exp(-im*θ/2) 0; 0 exp(im*θ/2)]
-        @test Qaintessent.matrix(RzGate(θ))*Qaintessent.matrix(Base.adjoint(RzGate(θ))) ≈ I
-    end
-
-    @testset "Rϕ gate" begin
-        ϕ = 0.7*π
-        @test Qaintessent.matrix(RϕGate(ϕ)) ≈ [1.0 0.0; 0.0 exp(im*ϕ)]
-        @test Qaintessent.matrix(RϕGate(ϕ))*Qaintessent.matrix(RϕGate(-ϕ)) ≈ I
-    end
-
-    @testset "Rotation gate" begin
-        θ = 0.7*π
-        # Recover Rx matrix
-        n1 = [1.0; 0.0; 0.0]
-        # Recover Ry matrix
-        n2 = [0.0; 1.0; 0.0]
-        # Recover Rz matrix
-        n3 = [0.0; 0.0; 1.0]
-        c = cos(θ/2)
-        s = sin(θ/2)
-        @test Qaintessent.matrix(RotationGate(θ, n1)) ≈ Qaintessent.matrix(RxGate(θ))
-        @test Qaintessent.matrix(RotationGate(θ, n2)) ≈ Qaintessent.matrix(RyGate(θ))
-        @test Qaintessent.matrix(RotationGate(θ, n3)) ≈ Qaintessent.matrix(RzGate(θ))
-        @test Qaintessent.matrix(RotationGate(θ, n1))*Qaintessent.matrix(Base.adjoint(RotationGate(θ, n1))) ≈ I
-    end
-
+    @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
+    @test Qaintessent.matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.matrix(RyGate(θ))
+    @test Qaintessent.matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.matrix(RzGate(θ))
 end

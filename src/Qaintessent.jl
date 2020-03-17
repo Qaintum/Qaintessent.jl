@@ -21,7 +21,7 @@ export
     RxGate,
     RyGate,
     RzGate,
-    RϕGate,
+    PhaseShiftGate,
     RotationGate,
     SwapGate,
     ControlledGate,
