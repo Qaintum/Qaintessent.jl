@@ -23,7 +23,6 @@ struct CircuitGate{M,N} <: AbstractCircuitGate{N}
     end
 end
 
-
 function matrix(cg::CircuitGate{M,N}) where {M,N}
     # complementary wires
     iwcompl = setdiff(1:N, cg.iwire)
@@ -65,6 +64,8 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
 
     return dropzeros!(sparse(rowind, colind, values, d^N, d^N))
 end
+
+Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
 
 
 single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) = CircuitGate{1,N}((iwire,), gate)
@@ -111,6 +112,8 @@ function apply(b::CircuitBlock{N}, ψ::AbstractVector) where {N}
     end
     return ψ
 end
+
+Base.adjoint(b::CircuitBlock{N}) where {N} = CircuitBlock{N}(Base.adjoint.(reverse(b.gates)))
 
 # make CircuitBlock iterable and indexable
 function Base.getindex(b::CircuitBlock{N}, i::Int64) where {N}

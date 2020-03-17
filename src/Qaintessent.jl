@@ -5,6 +5,7 @@ using SparseArrays
 
 include("gates.jl")
 include("circuit.jl")
+include("models.jl")
 
 export
     X,
@@ -21,8 +22,8 @@ export
     RxGate,
     RyGate,
     RzGate,
-    PhaseShiftGate,
     RotationGate,
+    PhaseShiftGate,
     SwapGate,
     ControlledGate,
     controlled_not,
@@ -30,6 +31,7 @@ export
     single_qubit_circuit_gate,
     two_qubit_circuit_gate,
     controlled_circuit_gate,
-    CircuitBlock
+    CircuitBlock,
+    qft_circuit
 
 end
