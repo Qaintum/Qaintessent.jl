@@ -8,8 +8,8 @@ function isunitary(cg::CircuitGate)
     Qaintessent.matrix(cg) * Qaintessent.matrix(Base.adjoint(cg)) ≈ I
 end
 
-function isunitary(cb::CircuitBlock)
-    Qaintessent.matrix(cb) * Qaintessent.matrix(Base.adjoint(cb)) ≈ I
+function isunitary(cgc::CircuitGateChain)
+    Qaintessent.matrix(cgc) * Qaintessent.matrix(Base.adjoint(cgc)) ≈ I
 end
 
 
@@ -35,26 +35,26 @@ end
 end
 
 
-@testset ExtendedTestSet "simple circuit block" begin
+@testset ExtendedTestSet "simple circuit chain" begin
     N = 1
-    cb = CircuitBlock([
+    cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(1, X, N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
         single_qubit_circuit_gate(1, Z, N),
         single_qubit_circuit_gate(1, Y, N),
     ])
 
-    @test isunitary(cb)
+    @test isunitary(cgc)
 
     ψ = randn(ComplexF64, 2^N)
-    @test Qaintessent.apply(cb, ψ) ≈ Qaintessent.matrix(cb)*ψ
+    @test apply(cgc, ψ) ≈ Qaintessent.matrix(cgc)*ψ
 end
 
 
 @testset ExtendedTestSet "three qubit QFT" begin
     # three qubit quantum Fourier transform
     N = 3
-    cb = CircuitBlock([
+    cgc = CircuitGateChain{N}([
         # first Hadamard gate
         single_qubit_circuit_gate(1, HadamardGate(), N),
         # first controlled-S gate
@@ -71,15 +71,43 @@ end
         two_qubit_circuit_gate(1, 3, SwapGate(), N),
     ])
 
-    @test cb[1] == single_qubit_circuit_gate(1, HadamardGate(), N)
-    for (index, gate) in enumerate(cb)
-        @test gate == cb[index]
+    @test cgc[1] == single_qubit_circuit_gate(1, HadamardGate(), N)
+    for (index, gate) in enumerate(cgc)
+        @test gate == cgc[index]
     end
 
-    @test Qaintessent.matrix(cb) ≈ [exp(2*π*1im*j*k/2^N)/sqrt(2^N) for j in 0:(2^N-1), k in 0:(2^N-1)]
+    @test Qaintessent.matrix(cgc) ≈ [exp(2*π*1im*j*k/2^N)/sqrt(2^N) for j in 0:(2^N-1), k in 0:(2^N-1)]
 
-    @test isunitary(cb)
+    @test isunitary(cgc)
 
     ψ = randn(ComplexF64, 2^N)
-    @test Qaintessent.apply(cb, ψ) ≈ Qaintessent.matrix(cb)*ψ
+    @test apply(cgc, ψ) ≈ Qaintessent.matrix(cgc)*ψ
+end
+
+
+@testset ExtendedTestSet "quantum circuit" begin
+    N = 3
+
+    cgc = CircuitGateChain{N}([
+        single_qubit_circuit_gate(2, Y, N),
+        controlled_circuit_gate((1, 3), 2, SGate(), N),
+        two_qubit_circuit_gate(2, 3, SwapGate(), N),
+        single_qubit_circuit_gate(3, RxGate(1.5π), N),
+    ])
+
+    Xmat = Qaintessent.matrix(X)
+    Ymat = Qaintessent.matrix(Y)
+    Zmat = Qaintessent.matrix(Z)
+    mop1 = kron(Matrix{Float64}(I, 2, 2), kron(Xmat, Xmat))
+    mop2 = kron(Matrix{Float64}(I, 2, 2), kron(Zmat, Ymat))
+    mop3 = kron(Zmat, Matrix{Float64}(I, 4, 4))
+    meas = MeasurementOps{N}([mop1, mop2, mop3])
+
+    c = Circuit(cgc, meas)
+
+    ψ = randn(ComplexF64, 2^N)
+
+    ψs = apply(cgc, ψ)
+    @test [dot(ψs, m*ψs) for m in [mop1, mop2, mop3]] ≈ apply(c, ψ)
+
 end

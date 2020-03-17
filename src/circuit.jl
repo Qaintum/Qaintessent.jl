@@ -82,6 +82,10 @@ controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N
 controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {M} =
     controlled_circuit_gate((icntrl,), itarget, U, N)
 
+# single target wire
+controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K} =
+    controlled_circuit_gate(icntrl, (itarget,), U, N)
+
 function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
     # consistency checks
     K + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
@@ -92,43 +96,102 @@ end
 
 
 """
-    CircuitBlock{N}
+    CircuitGateChain{N}
 
-Quantum circuit block consisting of a sequence of gates.
+Chain of quantum circuit gates.
 """
-mutable struct CircuitBlock{N}
+mutable struct CircuitGateChain{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 end
 
-# convert circuit block to matrix
-function matrix(b::CircuitBlock{N}) where {N}
-    prod(Tuple(matrix(g) for g in reverse(b.gates)))
+# unitary matrix representation of a sequence of circuit gates
+function matrix(cgc::CircuitGateChain{N}) where {N}
+    prod(Tuple(matrix(g) for g in reverse(cgc.gates)))
 end
 
-# apply circuit block to input vector of qubits
-function apply(b::CircuitBlock{N}, ψ::AbstractVector) where {N}
-    for gate in b
+# apply circuit gate chain to quantum state vector
+function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
+    for gate in cgc
         ψ = matrix(gate) * ψ
     end
     return ψ
 end
 
-Base.adjoint(b::CircuitBlock{N}) where {N} = CircuitBlock{N}(Base.adjoint.(reverse(b.gates)))
+Base.adjoint(cgc::CircuitGateChain{N}) where {N} = CircuitGateChain{N}(Base.adjoint.(reverse(cgc.gates)))
 
-# make CircuitBlock iterable and indexable
-function Base.getindex(b::CircuitBlock{N}, i::Int64) where {N}
-    1 <= i <= Base.length(b.gates) || throw(BoundsError(S, i))
-    return b.gates[i]
+# make CircuitGateChain iterable and indexable
+function Base.getindex(cgc::CircuitGateChain{N}, i::Integer) where {N}
+    1 <= i <= Base.length(cgc.gates) || throw(BoundsError(S, i))
+    return cgc.gates[i]
 end
 
-function Base.iterate(b::CircuitBlock{N}, state=1) where {N}
-    return state > Base.length(b.gates) ? nothing : (b[state], state+1)
+function Base.iterate(cgc::CircuitGateChain{N}, state=1) where {N}
+    return state > Base.length(cgc.gates) ? nothing : (cgc[state], state+1)
 end
 
 # implement methods required for iteration
-function Base.firstindex(b::CircuitBlock{N}) where {N}
+function Base.firstindex(cgc::CircuitGateChain{N}) where {N}
     return 1
 end
-function Base.lastindex(b::CircuitBlock{N}) where {N}
-    return Base.length(b.gates)
+function Base.lastindex(cgc::CircuitGateChain{N}) where {N}
+    return Base.length(cgc.gates)
+end
+
+
+"""
+    comm(A, B)
+
+Matrix commutator [A, B].
+"""
+comm(A::AbstractMatrix, B::AbstractMatrix) = A*B - B*A
+
+
+"""
+    MeasurementOps{N}
+
+Pairwise commuting measurement operators (Hermitian matrices).
+"""
+struct MeasurementOps{N}
+    mops::AbstractVector{<:AbstractMatrix}
+
+    function MeasurementOps{N}(mop::AbstractMatrix) where {N}
+        # TODO: support general "qudits"
+        d = 2
+        # consistency checks
+        size(mop) == (d^N, d^N) || error("Measurement operator must be a 2^N × 2^N matrix.")
+        mop ≈ Base.adjoint(mop) || error("Measurement operator must be Hermitian.")
+        new([mop])
+    end
+
+    function MeasurementOps{N}(mops::AbstractVector{<:AbstractMatrix}) where {N}
+        # TODO: support general "qudits"
+        d = 2
+        # consistency checks
+        for m in mops
+            size(m) == (d^N, d^N) || error("Measurement operator must be a 2^N × 2^N matrix.")
+            m ≈ Base.adjoint(m) || error("Measurement operator must be Hermitian.")
+            for n in mops
+                norm(comm(m, n))/d^N < 1e-13 || error("Measurement operators must pairwise commute.")
+            end
+        end
+        new(mops)
+    end
+end
+
+
+"""
+    Circuit{N}
+
+Quantum circuit consisting of a unitary gate chain and measurement operators.
+"""
+struct Circuit{N}
+    cgc::CircuitGateChain{N}
+    meas::MeasurementOps{N}
+end
+
+
+# apply circuit to quantum state vector and compute measurement expectation values
+function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
+    ψs = apply(c.cgc, ψ)
+    return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
 end
