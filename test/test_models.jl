@@ -4,7 +4,7 @@ using LinearAlgebra
 using Qaintessent
 
 
-function isunitary(cb::CircuitBlock)
+function isunitary(cb::CircuitGateChain)
     Qaintessent.matrix(cb) * Qaintessent.matrix(Base.adjoint(cb)) ≈ I
 end
 
