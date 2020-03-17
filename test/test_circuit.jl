@@ -48,6 +48,24 @@ end
 
     ψ = randn(ComplexF64, 2^N)
     @test Qaintessent.apply(cb, ψ) ≈ Qaintessent.matrix(cb)*ψ
+    ψ = [1, 0, 0]
+    @test_throws DimensionMismatch Qaintessent.apply(cb, ψ)
+
+    # observable block with Pauli Z matrix
+    ob = CircuitBlock([
+        single_qubit_circuit_gate(1, Z, N),
+        ])
+    ψ = randn(ComplexF64, 2^N)
+    ϕ1 = Qaintessent.measure(cb, ob, ψ)
+    ϕ2 = Qaintessent.apply(cb, ψ)
+    @test ϕ1 ≈ adjoint(ϕ2)* Qaintessent.apply(ob, ϕ2)
+
+    # Arbitrary observerables. Non-physical, used to test math implementation.
+    o = rand(2,2)
+    ψ = randn(ComplexF64, 2^N)
+    ϕ1 = Qaintessent.measure(cb, o, ψ)
+    ϕ2 = Qaintessent.apply(cb, ψ)
+    @test ϕ1 ≈ adjoint(ϕ2) * o * ϕ2
 end
 
 

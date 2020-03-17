@@ -100,6 +100,15 @@ mutable struct CircuitBlock{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 end
 
+# define adjoint of CircuitBlock
+Base.adjoint(b::CircuitBlock{N}) where {N} = CircuitBlock{N}(Base.adjoint.(reverse(b.gates)))
+
+# helper function to return matrix size of CircuitBlock
+Base.size(b::CircuitBlock{N}) where {N} = 2^N
+
+# helper function to return number of wires in CircuitBlock
+wires(b::CircuitBlock{N}) where {N} = N
+
 # convert circuit block to matrix
 function matrix(b::CircuitBlock{N}) where {N}
     prod(Tuple(matrix(g) for g in reverse(b.gates)))
@@ -107,25 +116,35 @@ end
 
 # apply circuit block to input vector of qubits
 function apply(b::CircuitBlock{N}, ψ::AbstractVector) where {N}
+    Base.size(b)[1] == Base.length(ψ) || throw(DimensionMismatch("Qubit ψ must be of same dimensions as CircuitBlock"))
     for gate in b
         ψ = matrix(gate) * ψ
     end
     return ψ
 end
 
-Base.adjoint(b::CircuitBlock{N}) where {N} = CircuitBlock{N}(Base.adjoint.(reverse(b.gates)))
+# calculate expectation of circuit block using passed observable matrix as an AbstractArray
+function measure(b::CircuitBlock{N}, o::AbstractArray, ψ::AbstractVector) where {N, M}
+    Base.size(o)[1] == Base.size(o)[2] || throw(ArgumentError("Observable matrix o must be square"))
+    Base.size(o)[1] == Base.size(b)[1] || throw(DimensionMismatch("Observable matrix o must have same dimensions as CircuitBlock"))
+    ψ = apply(b, ψ)
+    adjoint(ψ)*o*ψ
+end
 
-# make CircuitBlock iterable and indexable
+# calculate expectation of circuit block using passed observable matrix as a CircuitBlock
+function measure(b::CircuitBlock{N}, ob::CircuitBlock{N}, ψ::AbstractVector) where {N}
+    ψ = apply(b, ψ)
+    adjoint(ψ)*apply(ob, ψ)
+end
+
+
 function Base.getindex(b::CircuitBlock{N}, i::Int64) where {N}
     1 <= i <= Base.length(b.gates) || throw(BoundsError(S, i))
     return b.gates[i]
 end
-
 function Base.iterate(b::CircuitBlock{N}, state=1) where {N}
     return state > Base.length(b.gates) ? nothing : (b[state], state+1)
 end
-
-# implement methods required for iteration
 function Base.firstindex(b::CircuitBlock{N}) where {N}
     return 1
 end
