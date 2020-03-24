@@ -65,6 +65,12 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     return dropzeros!(sparse(rowind, colind, values, d^N, d^N))
 end
 
+# apply circuit gate to quantum state vector
+function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
+    # TODO: optimize (do not explicitly generate matrix)
+    return matrix(cg) * ψ
+end
+
 Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
 
 
@@ -112,7 +118,7 @@ end
 # apply circuit gate chain to quantum state vector
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
     for gate in cgc
-        ψ = matrix(gate) * ψ
+        ψ = apply(gate, ψ)
     end
     return ψ
 end
