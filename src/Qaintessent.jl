@@ -6,6 +6,7 @@ using SparseArrays
 include("gates.jl")
 include("circuit.jl")
 include("models.jl")
+include("gradients.jl")
 
 export
     X,
@@ -35,6 +36,7 @@ export
     CircuitGateChain,
     MeasurementOps,
     Circuit,
-    qft_circuit
+    qft_circuit,
+    gradients
 
 end
