@@ -65,10 +65,58 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     return dropzeros!(sparse(rowind, colind, values, d^N, d^N))
 end
 
-# apply circuit gate to quantum state vector
+function bitswap(n::Int, p1::Int, p2::Int, N::Int)
+    if p1 == p2
+        return n
+    end
+    p1̄ = N-p1
+    p2̄ = N-p2
+    bit1 = (n >> p1̄) & 1
+    bit2 = (n >> p2̄) & 1
+    x = (bit1 ⊻ bit2)
+    x = (x << p1̄) | (x << p2̄)
+    return n ⊻ x
+end
+
+ror(x::Int, k::Int) = (x >>> (0x3f & k)) | (x << (0x3f & -k))
+rol(x::Int, k::Int) = (x << (0x3f & k)) | (x >>> (0x3f & -k))
+
+function swap(w::AbstractArray, p1::Int, p2::Int)
+    tmp = w[p1]
+    w[p1] = w[p2]
+    w[p2] = tmp
+    return w
+end
+
 function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
-    # TODO: optimize (do not explicitly generate matrix)
-    return matrix(cg) * ψ
+    W = length(cg.iwire)
+    wires = [i for i in cg.iwire]
+
+    gmat = matrix(cg.gate)
+    # Use indices starting from 0 for easier calculation
+    indices = 0:2^(N)-1
+
+    for i in 1:W
+        target = N-W+i
+        indices = bitswap.(indices, wires[i], target, N)
+        if target in wires
+            target_index = Base.findfirst(x -> x==target, wires)
+            wires = swap(wires, i, target_index)
+        end
+    end
+
+    indices = sortperm(indices)
+
+    ψ = ψ[indices]
+
+    ψr = reshape(ψ, size(gmat)[1], :)
+
+    ψr = gmat * ψr
+
+    ψr = reshape(ψr, :)
+
+    indices = sortperm(indices)
+    return ψr[indices]
 end
 
 Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
