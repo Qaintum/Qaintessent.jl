@@ -66,10 +66,83 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
 end
 
 # apply circuit gate to quantum state vector
-function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
-    # TODO: optimize (do not explicitly generate matrix)
-    return matrix(cg) * ψ
+# function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
+#     # TODO: optimize (do not explicitly generate matrix)
+#     return matrix(cg) * ψ
+# end
+function bitswap(n::Int, p1::Int, p2::Int, N::Int)
+    if p1 == p2
+        return n
+    end
+    p1̄ = N-p1
+    p2̄ = N-p2
+    bit1 = (n >> p1̄) & 1
+    bit2 = (n >> p2̄) & 1
+    x = (bit1 ⊻ bit2)
+    x = (x << p1̄) | (x << p2̄)
+    return n ⊻ x
 end
+
+
+ror(x::Int, k::Int) = (x >>> (0x3f & k)) | (x << (0x3f & -k))
+rol(x::Int, k::Int) = (x << (0x3f & k)) | (x >>> (0x3f & -k))
+
+function swap(w::AbstractArray, p1::Int, p2::Int)
+    tmp = w[p1]
+    w[p1] = w[p2]
+    w[p2] = tmp
+    return w
+end
+
+function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
+    W = length(cg.iwire)
+    wires = [i for i in cg.iwire]
+
+    gmat = matrix(cg.gate)
+    buffer = Array{Complex{Float64}, 1}(undef, 2^N)
+    indices = 0:2^(N)-1
+
+    if W > 1
+        if wires[1] + W > N
+            target = N-W
+            indices = bitswap.(indices, wires[1], target, N)
+            if target in wires
+                target_index = Base.findfirst(x -> x==target, wires)
+                wires = swap(wires, 1, target_index)
+            else
+                wires[1] = target
+            end
+        end
+
+        for i in 1:W-1
+            target = (wires[1] + i -1) %N + 1
+            indices = bitswap.(indices, wires[i+1], target, N)
+            if target in wires
+                target_index = Base.findfirst(x -> x==target, wires)
+                wires = swap(wires, i+1, target_index)
+            end
+        end
+    end
+
+    # Circular bitshift, use right-shift as size of Int unknown a
+    bitshift = N-(wires[1] + W - 1)
+
+    indices = ror.(indices, bitshift)
+
+    indices = sortperm(indices)
+
+    ψ = ψ[indices]
+
+    # smaller O(S^2) for loop for repeated long Matrix-Vector operations
+    S = size(gmat)[1]
+    for i in 1:S
+        buffer[i:S:end] = sum(ψ[j:S:end] .* gmat[i,j] for j in 1:S)
+    end
+
+    indices = sortperm(indices)
+    return buffer[indices]
+end
+
 
 Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
 
@@ -200,4 +273,9 @@ end
 function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
     ψs = apply(c.cgc, ψ)
     return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
+end
+
+# get cost of quantum state vector and compute measurement expectation values
+function cost(c::Circuit{N}, ψ::AbstractVector, e::Real) where {N}
+    return sum([real(dot(ψ, m*ψ)) for m in c.meas.mops]) - e
 end
