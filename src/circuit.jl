@@ -258,8 +258,3 @@ function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
     ψs = apply(c.cgc, ψ)
     return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
 end
-
-# get cost of quantum state vector and compute measurement expectation values
-function cost(c::Circuit{N}, ψ::AbstractVector, e::Real) where {N}
-    return sum([real(dot(ψ, m*ψ)) for m in c.meas.mops]) - e
-end
