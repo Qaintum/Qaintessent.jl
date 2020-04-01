@@ -66,10 +66,13 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
 end
 
 # apply circuit gate to quantum state vector
-# function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
-#     # TODO: optimize (do not explicitly generate matrix)
-#     return matrix(cg) * ψ
-# end
+function oldapply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
+    # TODO: optimize (do not explicitly generate matrix)
+    return matrix(cg) * ψ
+end
+
+
+
 function bitswap(n::Int, p1::Int, p2::Int, N::Int)
     if p1 == p2
         return n
@@ -82,7 +85,6 @@ function bitswap(n::Int, p1::Int, p2::Int, N::Int)
     x = (x << p1̄) | (x << p2̄)
     return n ⊻ x
 end
-
 
 ror(x::Int, k::Int) = (x >>> (0x3f & k)) | (x << (0x3f & -k))
 rol(x::Int, k::Int) = (x << (0x3f & k)) | (x >>> (0x3f & -k))
@@ -100,41 +102,26 @@ function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
 
     gmat = matrix(cg.gate)
     buffer = Array{Complex{Float64}, 1}(undef, 2^N)
+    # Use indices starting from 0 for easier calculation
     indices = 0:2^(N)-1
 
-    if W > 1
-        if wires[1] + W > N
-            target = N-W
-            indices = bitswap.(indices, wires[1], target, N)
-            if target in wires
-                target_index = Base.findfirst(x -> x==target, wires)
-                wires = swap(wires, 1, target_index)
-            else
-                wires[1] = target
-            end
-        end
-
-        for i in 1:W-1
-            target = (wires[1] + i -1) %N + 1
-            indices = bitswap.(indices, wires[i+1], target, N)
-            if target in wires
-                target_index = Base.findfirst(x -> x==target, wires)
-                wires = swap(wires, i+1, target_index)
-            end
+    for i in 1:W
+        target = N-W+i
+        indices = bitswap.(indices, wires[i], target, N)
+        if target in wires
+            target_index = Base.findfirst(x -> x==target, wires)
+            wires = swap(wires, i, target_index)
         end
     end
-
-    # Circular bitshift, use right-shift as size of Int unknown a
-    bitshift = N-(wires[1] + W - 1)
-
-    indices = ror.(indices, bitshift)
 
     indices = sortperm(indices)
 
     ψ = ψ[indices]
 
     # smaller O(S^2) for loop for repeated long Matrix-Vector operations
+    # S is size of gmat
     S = size(gmat)[1]
+    # Still not optimal, non-contiguous (?)
     for i in 1:S
         buffer[i:S:end] = sum(ψ[j:S:end] .* gmat[i,j] for j in 1:S)
     end
@@ -142,7 +129,6 @@ function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
     indices = sortperm(indices)
     return buffer[indices]
 end
-
 
 Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
 
@@ -192,6 +178,14 @@ end
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
     for gate in cgc
         ψ = apply(gate, ψ)
+    end
+    return ψ
+end
+
+function oldapply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {M,N}
+    # TODO: optimize (do not explicitly generate matrix)
+    for gate in cgc
+        ψ = oldapply(gate, ψ)
     end
     return ψ
 end
