@@ -66,10 +66,10 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
 end
 
 # apply circuit gate to quantum state vector
-function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
-    # TODO: optimize (do not explicitly generate matrix)
-    return matrix(cg) * ψ
-end
+# function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
+#     # TODO: optimize (do not explicitly generate matrix)
+#     return matrix(cg) * ψ
+# end
 
 function bitswap(n::Int, p1::Int, p2::Int, N::Int)
     if p1 == p2
