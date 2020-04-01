@@ -65,12 +65,6 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     return dropzeros!(sparse(rowind, colind, values, d^N, d^N))
 end
 
-# apply circuit gate to quantum state vector
-# function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
-#     # TODO: optimize (do not explicitly generate matrix)
-#     return matrix(cg) * ψ
-# end
-
 function bitswap(n::Int, p1::Int, p2::Int, N::Int)
     if p1 == p2
         return n
@@ -257,9 +251,4 @@ end
 function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
     ψs = apply(c.cgc, ψ)
     return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
-end
-
-# get cost of quantum state vector and compute measurement expectation values
-function cost(c::Circuit{N}, ψ::AbstractVector, e::Real) where {N}
-    return sum([real(dot(ψ, m*ψ)) for m in c.meas.mops]) - e
 end
