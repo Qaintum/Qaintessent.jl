@@ -25,13 +25,19 @@ end
 
     # construct parametrized circuit
     N = 4
-    cgc(θ, ϕ) = CircuitGateChain{N}([
+    function cgc(θ, ϕ, a, b, c)
+        r = norm([a, b, c])
+        n = [a, b, c]/r
+        
+        CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
         controlled_circuit_gate((1, 4), 2, RzGate(θ), N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
         single_qubit_circuit_gate(3, PhaseShiftGate(ϕ), N),
+        single_qubit_circuit_gate(1, RotationGate(r, n), N),
         single_qubit_circuit_gate(1, Y, N),
-    ])
+        ])
+    end
     meas = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(randn(ComplexF64, 2^N, 2^N))])
 
     # input quantum state
@@ -40,8 +46,11 @@ end
     # fictitious gradients of cost function with respect to circuit output
     Δ = [0.3, -1.2]
 
-    f(arg) = dot(Δ, apply(Circuit(cgc(arg[1], arg[2]), meas), ψ))
+    f(arg) = dot(Δ, apply(Circuit(cgc(arg...), meas), ψ))
     θ = 1.5π
     ϕ = 0.3
-    @test ngradient(f, [θ, ϕ])[1] ≈ gradients(Circuit(cgc(θ, ϕ), meas), ψ, Δ) rtol=1e-5
+    n = randn(Float64, 3)
+
+    args = [θ, ϕ, n[1], n[2], n[3]]
+    @test ngradient(f, args)[1] ≈ gradients(Circuit(cgc(args...), meas), ψ, Δ) rtol=1e-5
 end
