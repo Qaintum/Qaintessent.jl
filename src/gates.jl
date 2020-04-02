@@ -103,19 +103,19 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ)
 
 # general rotation operator gate
 struct RotationGate <: AbstractGate{1}
-    θ::Real
-    n::AbstractVector{<:Real}
     nθ::AbstractVector{<:Real}
 
     function RotationGate(θ::Real, n::AbstractVector{<:Real})
         length(n) == 3 || error("Rotation axis vector must have length 3.")
         norm(n) ≈ 1 || error("Norm of rotation axis vector must be 1.")
-        new(θ, n, θ*n)
+        new(θ*n)
     end
 end
 
 function matrix(g::RotationGate)
-    cos(g.θ/2)*I - im*sin(g.θ/2)*pauli_vector(g.n...)
+    θ = norm(g.nθ)
+    n = g.nθ/θ
+    cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
 Base.adjoint(g::RotationGate) = RotationGate(-norm(g.nθ), g.nθ/norm(g.nθ))
