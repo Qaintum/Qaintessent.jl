@@ -93,7 +93,6 @@ function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
     wires = [i for i in cg.iwire]
 
     gmat = matrix(cg.gate)
-    buffer = Array{Complex{Float64}, 1}(undef, 2^N)
     # Use indices starting from 0 for easier calculation
     indices = 0:2^(N)-1
 
@@ -110,16 +109,14 @@ function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
 
     ψ = ψ[indices]
 
-    # smaller O(S^2) for loop for repeated long Matrix-Vector operations
-    # S is size of gmat
-    S = size(gmat)[1]
-    # Still not optimal, non-contiguous (?)
-    for i in 1:S
-        buffer[i:S:end] = sum(ψ[j:S:end] .* gmat[i,j] for j in 1:S)
-    end
+    ψr = reshape(ψ, size(gmat)[1], :)
+
+    ψr = gmat * ψr
+
+    ψr = reshape(ψr, :)
 
     indices = sortperm(indices)
-    return buffer[indices]
+    return ψr[indices]
 end
 
 Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
