@@ -3,11 +3,8 @@ module Qaintessent
 using LinearAlgebra
 using SparseArrays
 
-include("gates.jl")
-include("circuit.jl")
-include("models.jl")
-include("gradients.jl")
 
+include("gates.jl")
 export
     X,
     Y,
@@ -27,16 +24,30 @@ export
     PhaseShiftGate,
     SwapGate,
     ControlledGate,
-    controlled_not,
+    controlled_not
+
+
+include("circuit.jl")
+export
     CircuitGate,
     single_qubit_circuit_gate,
     two_qubit_circuit_gate,
     controlled_circuit_gate,
     apply,
+    rdm,
     CircuitGateChain,
     MeasurementOps,
-    Circuit,
-    qft_circuit,
+    Circuit
+
+
+include("models.jl")
+export
+    qft_circuit
+
+
+include("gradients.jl")
+export
     gradients
+
 
 end

@@ -35,6 +35,21 @@ end
 end
 
 
+@testset ExtendedTestSet "reduced density matrix" begin
+    N = 4
+    ψ = randn(ComplexF64, 2^N)
+    χ = randn(ComplexF64, 2^N)
+    # full density matrix |ψ⟩⟨χ|
+    ρ = reshape(kron(conj(χ), ψ), 2^N, 2^N)
+
+    id = Matrix{ComplexF64}(I, 2, 2)
+    A = randn(ComplexF64, 2, 2)
+    B = randn(ComplexF64, 2, 2)
+
+    @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(id, B, id, A) .* ρ)
+end
+
+
 @testset ExtendedTestSet "simple circuit chain" begin
     N = 1
     cgc = CircuitGateChain{N}([
