@@ -1,109 +1,72 @@
 
-# derivatives of rotation gates with respect to rotation angle
 
-struct dRxGate <: AbstractGate{1}
-    θ::Real
+# `backward` functions return a list of gradient vectors, corresponding to gate parameters
+
+function backward(g::RxGate, Δ::AbstractMatrix)
+    c = cos(g.θ[1]/2)
+    s = sin(g.θ[1]/2)
+    # using conjugated derivative matrix
+    [[2*sum(real([-0.5*s 0.5im*c; 0.5im*c -0.5*s] .* Δ))]]
 end
 
-function matrix(g::dRxGate)
-    c = cos(g.θ/2)
-    s = sin(g.θ/2)
-    [-0.5*s -0.5im*c; -0.5im*c -0.5*s]
+function backward(g::RyGate, Δ::AbstractMatrix)
+    c = cos(g.θ[1]/2)
+    s = sin(g.θ[1]/2)
+    [[2*sum(real([-0.5*s -0.5*c; 0.5*c -0.5*s] .* Δ))]]
 end
 
-struct dRyGate <: AbstractGate{1}
-    θ::Real
-end
-
-function matrix(g::dRyGate)
-    c = cos(g.θ/2)
-    s = sin(g.θ/2)
-    [-0.5*s -0.5*c; 0.5*c -0.5*s]
-end
-
-struct dRzGate <: AbstractGate{1}
-    θ::Real
-end
-
-function matrix(g::dRzGate)
-    [-0.5im*exp(-im*g.θ/2) 0; 0 0.5im*exp(im*g.θ/2)]
+function backward(g::RzGate, Δ::AbstractMatrix)
+    # using conjugated derivative matrix
+    [[2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2])]]
 end
 
 # TODO: derivatives of general RotationGate
 
 
-struct dPhaseShiftGate <: AbstractGate{1}
-    ϕ::Real
+function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
+    # using conjugated derivative matrix
+    [[2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2])]]
 end
 
-matrix(g::dPhaseShiftGate) = [0 0; 0 im*exp(im*g.ϕ)]
 
-
-struct dControlledGate{M,N} <: AbstractGate{N}
-    dU::AbstractGate{M}
-end
-
-function matrix(g::dControlledGate{M,N}) where {M,N}
-    dUmat = matrix(g.dU)
-    dCU = sparse([], [], eltype(dUmat)[], 2^N, 2^N)
+function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
     # Note: following the ordering convention of `kron` here, i.e.,
     # target qubits correspond to fastest varying index
-    dCU[end-size(dUmat,1)+1:end, end-size(dUmat,2)+1:end] = dUmat
-    return dCU
+    backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end])
 end
 
 
-# collect first derivatives
+# default: no gradients
+backward(g::AbstractGate{N}, Δ::AbstractMatrix) where {N} = []
 
-function derivatives(g::RxGate)
-    [dRxGate(g.θ)]
+
+function backward(cg::CircuitGate{M,N}, ψ::AbstractVector, Δ::AbstractVector) where {M,N}
+    ρ = rdm(N, cg.iwire, Δ, ψ)
+    backward(cg.gate, ρ)
 end
 
-function derivatives(g::RyGate)
-    [dRyGate(g.θ)]
-end
 
-function derivatives(g::RzGate)
-    [dRzGate(g.θ)]
-end
-
-function derivatives(g::PhaseShiftGate)
-    [dPhaseShiftGate(g.ϕ)]
-end
-
-function derivatives(g::ControlledGate{M,N}) where {M,N}
-    [dControlledGate{M,N}(dU) for dU in derivatives(g.U)]
-end
-
-# default: no derivatives
-derivatives(g::AbstractGate{N}) where {N} = []
-
-function derivatives(cg::CircuitGate{M,N}) where {M,N}
-    [CircuitGate{M,N}(cg.iwire, dg) for dg in derivatives(cg.gate)]
+function backward(cgc::CircuitGateChain{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
+    grads = []
+    for cg in reverse(cgc.gates)
+        Udag = Base.adjoint(cg)
+        # backward step of quantum state
+        ψ = apply(Udag, ψ)
+        # prepend new gradients since we traverse gates in reverse order
+        grads = vcat(backward(cg, ψ, Δ), grads)
+        # backward step of quantum state gradient
+        Δ = apply(Udag, Δ)
+    end
+    return grads, Δ
 end
 
 
 function gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}) where {N}
     # length of circuit output vector must match gradient vector
     @assert length(Δ) == length(c.meas.mops)
-
     # forward pass through unitary gates
     ψ = apply(c.cgc, ψ)
     # gradient (conjugated Wirtinger derivatives) of cost function with respect to ψ
     ψbar = sum([Δ[i] * (c.meas.mops[i]*ψ) for i in 1:length(Δ)])
-
-    # assuming for now that all parameters are real-valued
-    grads = Real[]
-    for cg in reverse(c.cgc.gates)
-        Udag = Base.adjoint(cg)
-        # backward step of quantum state
-        ψ = apply(Udag, ψ)
-        # use reverse here to counteract final reverse
-        for dcg in reverse(derivatives(cg))
-            push!(grads, 2*real(dot(ψ, conj(matrix(dcg))*ψbar)))
-        end
-        # backward step of quantum state gradient
-        ψbar = apply(Udag, ψbar)
-    end
-    return reverse(grads)
+    return backward(c.cgc, ψ, ψbar)[1]
 end

@@ -46,8 +46,6 @@ export
 
 
 include("gradients.jl")
-export
-    gradients
 
 
 end
