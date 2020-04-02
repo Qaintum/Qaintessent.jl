@@ -24,9 +24,11 @@ struct CircuitGate{M,N} <: AbstractCircuitGate{N}
 end
 
 function matrix(cg::CircuitGate{M,N}) where {M,N}
+    # convert to array
+    iwire = collect(cg.iwire)
     # complementary wires
-    iwcompl = setdiff(1:N, cg.iwire)
-    @assert length(cg.iwire) + length(iwcompl) == N
+    iwcompl = setdiff(1:N, iwire)
+    @assert length(iwire) + length(iwcompl) == N
 
     # TODO: support general "qudits"
     d = 2
@@ -43,19 +45,14 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     colind = fill(0, d^(N+M))
     values = fill(zero(eltype(gmat)), d^(N+M))
     count = 0
-    for kw in (N-M > 0 ? reverse.(Iterators.product(fill(0:d-1, N-M)...)) : [()])
+    for kw in (N-M > 0 ? reverse.(Iterators.product(fill(0:d-1, N-M)...)) : [Int[]])
+        koffset = dot(collect(kw), strides[iwcompl])
         for (i, iw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
             for (j, jw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
                 # rearrange wire indices according to specification
-                p = fill(0, N)
-                for m in 1:(N-M); p[ iwcompl[m]] = kw[m]; end
-                for m in 1:M;     p[cg.iwire[m]] = iw[m]; end
-                q = fill(0, N)
-                for m in 1:(N-M); q[ iwcompl[m]] = kw[m]; end
-                for m in 1:M;     q[cg.iwire[m]] = jw[m]; end
                 count += 1
-                rowind[count] = dot(p, strides) + 1
-                colind[count] = dot(q, strides) + 1
+                rowind[count] = koffset + dot(collect(iw), strides[iwire]) + 1
+                colind[count] = koffset + dot(collect(jw), strides[iwire]) + 1
                 values[count] = gmat[i, j]
             end
         end
@@ -146,6 +143,50 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
     length(intersect(icntrl, itarget)) == 0 || error("Control and target wires must be disjoint.")
 
     CircuitGate{K+M,N}((icntrl..., itarget...), ControlledGate{M,K+M}(U))
+end
+
+
+"""
+    rdm(N, iwire, ψ, χ)
+
+Compute the reduced density matrix ``tr_B[|ψ⟩⟨χ|]``, where the trace runs over
+the subsystem complementary to the qubits specified by `iwire`.
+"""
+function rdm(N::Integer, iwire::NTuple{M, <:Integer}, ψ::AbstractVector, χ::AbstractVector) where {M}
+    M ≥ 1 || error("Need at least one wire to act on.")
+    M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
+    length(unique(iwire)) == M || error("Wire indices must be unique.")
+    minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
+    maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
+
+    # convert to array
+    iwire = collect(iwire)
+    # complementary wires
+    iwcompl = setdiff(1:N, iwire)
+    @assert length(iwire) + length(iwcompl) == N
+
+    # TODO: support general "qudits"
+    d = 2
+
+    ρ = zeros(eltype(ψ), d^M, d^M)
+
+    # Note: following the ordering convention of `kron` here, i.e.,
+    # last qubit corresponds to fastest varying index
+    strides = [d^(N-j) for j in 1:N]
+
+    # TODO: optimize memory access pattern
+    for kw in (N-M > 0 ? reverse.(Iterators.product(fill(0:d-1, N-M)...)) : [Int[]])
+        koffset = dot(collect(kw), strides[iwcompl])
+        for (i, iw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
+            for (j, jw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
+                rowind = koffset + dot(collect(iw), strides[iwire]) + 1
+                colind = koffset + dot(collect(jw), strides[iwire]) + 1
+                ρ[i, j] += ψ[rowind] * conj(χ[colind])
+            end
+        end
+    end
+
+    return ρ
 end
 
 
