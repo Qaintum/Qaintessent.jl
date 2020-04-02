@@ -39,26 +39,6 @@ function dpauli(i::Int, θ::Real, nθ::AbstractVector{<:Real})
     pauli_vector(x, y, z)
 end
 
-struct dRotationGateθ <: AbstractGate{1}
-    θ::Real
-    n::AbstractVector{<:Real}
-end
-
-struct dRotationGateG1 <: AbstractGate{1}
-    θ::Real
-    n::AbstractVector{<:Real}
-end
-
-struct dRotationGateG2 <: AbstractGate{1}
-    θ::Real
-    n::AbstractVector{<:Real}
-end
-
-struct dRotationGateG3 <: AbstractGate{1}
-    θ::Real
-    n::AbstractVector{<:Real}
-end
-
 struct dRotationGateX <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
 end
@@ -69,26 +49,6 @@ end
 
 struct dRotationGateZ <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
-end
-
-function matrix(g::dRotationGateθ)
-
-    -0.5*sin(g.θ/2)*I - 0.5im*cos(g.θ/2) * conj(pauli_vector(g.n...))
-end
-
-function matrix(g::dRotationGateG1)
-
-    -im*sin(g.θ/2) * pauli_vector(1, 0, 0)
-end
-
-function matrix(g::dRotationGateG2)
-
-    -im*sin(g.θ/2) * pauli_vector(0, -1, 0)
-end
-
-function matrix(g::dRotationGateG3)
-
-    -im*sin(g.θ/2) * pauli_vector(0, 0, 1)
 end
 
 function matrix(g::dRotationGateX)
