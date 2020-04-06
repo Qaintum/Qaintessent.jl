@@ -25,12 +25,15 @@ end
 
     # construct parametrized circuit
     N = 4
-    cgc(θ, ϕ, χ) = CircuitGateChain{N}([
+    rz = RzGate(1.5π)
+    ps = PhaseShiftGate(0.3)
+    ry = RyGate(√2)
+    cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
-        controlled_circuit_gate((1, 4), 2, RzGate(θ), N),
+        controlled_circuit_gate((1, 4), 2, rz, N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
-        single_qubit_circuit_gate(3, PhaseShiftGate(ϕ), N),
-        single_qubit_circuit_gate(1, RyGate(χ), N),
+        single_qubit_circuit_gate(3, ps, N),
+        single_qubit_circuit_gate(1, ry, N),
     ])
     meas = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(randn(ComplexF64, 2^N, 2^N))])
 
@@ -40,10 +43,9 @@ end
     # fictitious gradients of cost function with respect to circuit output
     Δ = [0.3, -1.2]
 
-    f(rθ, rϕ, rχ) = dot(Δ, apply(Circuit(cgc(rθ[1], rϕ[1], rχ[1]), meas), ψ))
-    θ = 1.5π
-    ϕ = 0.3
-    χ = √(2)
-    @test all(isapprox.(ngradient(f, [θ], [ϕ], [χ]),
-        Qaintessent.gradients(Circuit(cgc(θ, ϕ, χ), meas), ψ, Δ), rtol=1e-5, atol=1e-5))
+    grads = Qaintessent.gradients(Circuit(cgc, meas), ψ, Δ)
+    # arguments used implicitly via references
+    f(args...) = dot(Δ, apply(Circuit(cgc, meas), ψ))
+    @test all(isapprox.(ngradient(f, rz.θ, ps.ϕ, ry.θ),
+        (grads[rz.θ], grads[ps.ϕ], grads[ry.θ]), rtol=1e-5, atol=1e-5))
 end

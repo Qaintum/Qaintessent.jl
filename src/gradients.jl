@@ -1,23 +1,23 @@
 
 
-# `backward` functions return a list of gradient vectors, corresponding to gate parameters
+# `backward` functions return an `IdDict` with the corresponding variable hash as key
 
 function backward(g::RxGate, Δ::AbstractMatrix)
     c = cos(g.θ[1]/2)
     s = sin(g.θ[1]/2)
     # using conjugated derivative matrix
-    [[2*sum(real([-0.5*s 0.5im*c; 0.5im*c -0.5*s] .* Δ))]]
+    IdDict(g.θ => [2*sum(real([-0.5*s 0.5im*c; 0.5im*c -0.5*s] .* Δ))])
 end
 
 function backward(g::RyGate, Δ::AbstractMatrix)
     c = cos(g.θ[1]/2)
     s = sin(g.θ[1]/2)
-    [[2*sum(real([-0.5*s -0.5*c; 0.5*c -0.5*s] .* Δ))]]
+    IdDict(g.θ => [2*sum(real([-0.5*s -0.5*c; 0.5*c -0.5*s] .* Δ))])
 end
 
 function backward(g::RzGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    [[2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2])]]
+    IdDict(g.θ => [2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2])])
 end
 
 # TODO: derivatives of general RotationGate
@@ -25,7 +25,7 @@ end
 
 function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    [[2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2])]]
+    IdDict(g.ϕ => [2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2])])
 end
 
 
@@ -37,7 +37,7 @@ end
 
 
 # default: no gradients
-backward(g::AbstractGate{N}, Δ::AbstractMatrix) where {N} = []
+backward(g::AbstractGate{N}, Δ::AbstractMatrix) where {N} = IdDict()
 
 
 function backward(cg::CircuitGate{M,N}, ψ::AbstractVector, Δ::AbstractVector) where {M,N}
@@ -47,13 +47,12 @@ end
 
 
 function backward(cgc::CircuitGateChain{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
-    grads = []
+    grads = IdDict()
     for cg in reverse(cgc.gates)
         Udag = Base.adjoint(cg)
         # backward step of quantum state
         ψ = apply(Udag, ψ)
-        # prepend new gradients since we traverse gates in reverse order
-        grads = vcat(backward(cg, ψ, Δ), grads)
+        grads = merge(backward(cg, ψ, Δ), grads)
         # backward step of quantum state gradient
         Δ = apply(Udag, Δ)
     end
