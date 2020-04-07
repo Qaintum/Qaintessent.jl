@@ -20,7 +20,30 @@ function backward(g::RzGate, Δ::AbstractMatrix)
     IdDict(g.θ => [2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2])])
 end
 
-# TODO: derivatives of general RotationGate
+dij(i,j, x, y, θ) = i == j  ? 1/θ - x*y / θ^3 : - x*y / θ^3
+
+function dpauli(i::Int, θ::Real, nθ::AbstractVector{<:Real})
+    v = [ dij(i, j, nθ[j], nθ[i], θ) for j in 1:3 ]
+    pauli_vector(v...)
+end
+
+function backward(g::RotationGate, Δ::AbstractMatrix)
+    θ = norm(g.nθ)
+    n = g.nθ/θ
+
+    p = pauli_vector(n...)
+    dp = [dpauli(i, θ, g.nθ) for i in 1:3]
+
+    mat1 = - g.nθ[1]/2θ*sin(θ/2)*I - im*g.nθ[1]/2θ*cos(θ/2) * p - im*sin(θ/2) * dp[1]
+    mat2 = - g.nθ[2]/2θ*sin(θ/2)*I - im*g.nθ[2]/2θ*cos(θ/2) * p - im*sin(θ/2) * dp[2]
+    mat3 = - g.nθ[3]/2θ*sin(θ/2)*I - im*g.nθ[3]/2θ*cos(θ/2) * p - im*sin(θ/2) * dp[3]
+    # using conjugated derivative matrix
+    IdDict(
+    g.nθ => [2*real(sum( conj(mat1) .* Δ )),
+             2*real(sum( conj(mat2) .* Δ )),
+             2*real(sum( conj(mat3) .* Δ ))]
+    )
+end
 
 
 function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
