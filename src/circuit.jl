@@ -7,6 +7,10 @@ Abtract unitary quantum circuit gate. `N` is the overall number of quantum "wire
 abstract type AbstractCircuitGate{N} end
 
 
+"utility function for enumerating cartesian tuples"
+cartesian_tuples(d::Integer, N::Integer) = Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
+
+
 struct CircuitGate{M,N} <: AbstractCircuitGate{N}
     "ordered wire indices which this gate acts on"
     iwire::NTuple{M, <:Integer}
@@ -40,19 +44,21 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     # Note: following the ordering convention of `kron` here, i.e.,
     # last qubit corresponds to fastest varying index
     strides = [d^(N-j) for j in 1:N]
+    wstrides = strides[iwire]
+    cstrides = strides[iwcompl]
 
     rowind = fill(0, d^(N+M))
     colind = fill(0, d^(N+M))
     values = fill(zero(eltype(gmat)), d^(N+M))
     count = 0
-    for kw in (N-M > 0 ? reverse.(Iterators.product(fill(0:d-1, N-M)...)) : [Int[]])
-        koffset = dot(collect(kw), strides[iwcompl])
-        for (i, iw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
-            for (j, jw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
+    for kw in (N-M > 0 ? reverse.(cartesian_tuples(d, N-M)) : [Int[]])
+        koffset = dot(collect(kw), cstrides)
+        for (i, iw) in enumerate(reverse.(cartesian_tuples(d, M)))
+            for (j, jw) in enumerate(reverse.(cartesian_tuples(d, M)))
                 # rearrange wire indices according to specification
                 count += 1
-                rowind[count] = koffset + dot(collect(iw), strides[iwire]) + 1
-                colind[count] = koffset + dot(collect(jw), strides[iwire]) + 1
+                rowind[count] = koffset + dot(collect(iw), wstrides) + 1
+                colind[count] = koffset + dot(collect(jw), wstrides) + 1
                 values[count] = gmat[i, j]
             end
         end
@@ -173,12 +179,14 @@ function rdm(N::Integer, iwire::NTuple{M, <:Integer}, ψ::AbstractVector, χ::Ab
     # Note: following the ordering convention of `kron` here, i.e.,
     # last qubit corresponds to fastest varying index
     strides = [d^(N-j) for j in 1:N]
+    wstrides = strides[iwire]
+    cstrides = strides[iwcompl]
 
     # TODO: optimize memory access pattern
-    for kw in (N-M > 0 ? reverse.(Iterators.product(fill(0:d-1, N-M)...)) : [Int[]])
+    for kw in (N-M > 0 ? reverse.(cartesian_tuples(d, N-M)) : [Int[]])
         koffset = dot(collect(kw), strides[iwcompl])
-        for (i, iw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
-            for (j, jw) in enumerate(reverse.(Iterators.product(fill(0:d-1, M)...)))
+        for (i, iw) in enumerate(reverse.(cartesian_tuples(d, M)))
+            for (j, jw) in enumerate(reverse.(cartesian_tuples(d, M)))
                 rowind = koffset + dot(collect(iw), strides[iwire]) + 1
                 colind = koffset + dot(collect(jw), strides[iwire]) + 1
                 ρ[i, j] += ψ[rowind] * conj(χ[colind])
