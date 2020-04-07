@@ -28,11 +28,15 @@ end
     rz = RzGate(1.5π)
     ps = PhaseShiftGate(0.3)
     ry = RyGate(√2)
+    n = randn(Float64, 3)
+    n = n/norm(n)
+    rg = RotationGate(0.2π, n)
     cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
         controlled_circuit_gate((1, 4), 2, rz, N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
         single_qubit_circuit_gate(3, ps, N),
+        single_qubit_circuit_gate(3, rg, N),
         single_qubit_circuit_gate(1, ry, N),
     ])
     meas = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(randn(ComplexF64, 2^N, 2^N))])
@@ -46,6 +50,6 @@ end
     grads = Qaintessent.gradients(Circuit(cgc, meas), ψ, Δ)
     # arguments used implicitly via references
     f(args...) = dot(Δ, apply(Circuit(cgc, meas), ψ))
-    @test all(isapprox.(ngradient(f, rz.θ, ps.ϕ, ry.θ),
-        (grads[rz.θ], grads[ps.ϕ], grads[ry.θ]), rtol=1e-5, atol=1e-5))
+    @test all(isapprox.(ngradient(f, rz.θ, ps.ϕ, ry.θ, rg.nθ),
+        (grads[rz.θ], grads[ps.ϕ], grads[ry.θ], grads[rg.nθ]), rtol=1e-5, atol=1e-5))
 end
