@@ -12,20 +12,21 @@ using Qaintessent
         single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
         single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N),
+        two_qubit_circuit_gate(1,2, SwapGate(), N),
+        controlled_circuit_gate(4, (3,5), SwapGate(), N),
     ])
-
-    correct_output = ["",
-                      "    1 ————————•—————x————————————————[Ry]—",
-                      "              |     |                     ",
-                      "    2 ———————[Rx]———•————[Pϕ]—————————————",
-                      "              |     |                     ",
-                      "    3 —[H ]————————————————————[Rϕ]———————",
-                      "              |     |                     ",
-                      "    4 ————————•—————•—————————————————————",
-                      "                    |                     ",
-                      "    5 ——————————————x—————————————————————"]
-
     printed_output = String[]
+    correct_output = ["",
+                      "    1 ————————•—————x————[Ry]———x———",
+                      "              |     |           |   ",
+                      "    2 ———————[Rx]———•————[Pϕ]———x———",
+                      "              |     |               ",
+                      "    3 —[H ]——————————————[Rϕ]———x———",
+                      "              |     |           |   ",
+                      "    4 ————————•—————•———————————•———",
+                      "                    |           |   ",
+                      "    5 ——————————————x———————————x———"]
+
     original_stdout = stdout
     (rd, wr) = redirect_stdout()
     print(cgc)

@@ -70,22 +70,15 @@ function interleave(a::Vector{T}, b::Vector{T}) where {T}
     return c
 end
 
-function getcol(g::CircuitGate{M, N}, w::Int) where {M,N}
-    circuit =
-    wires = fill("——————", w)
-    gaps = fill("      ", w-1)
-
+function updatecol(g::CircuitGate{M, N}, nw::AbstractVector{String}, ng::AbstractVector{String}) where {M,N}
     iwire = [x for x in g.iwire]
-
     if length(g.iwire) > 1
         index = min(iwire...):max(iwire...)-1
-        gaps[index] .= "  |   "
+        ng[index] .= "  |   "
     end
-
     gate, index = view(g.gate, iwire)
-    wires[index] .= gate
-
-    return interleave(wires, gaps)
+    nw[index] .= gate
+    return nw, ng
 end
 
 function wire_enum(N::Int)
@@ -96,15 +89,29 @@ function wire_enum(N::Int)
 end
 
 function Base.print(c::CircuitGateChain{N}) where {N}
-    wires, gaps = wire_enum(N)
-    circuit = interleave(wires, gaps)
+    w, g = wire_enum(N)
+    i = Int[]
+    nw = fill("——————", N)
+    ng = fill("      ", N-1)
     for gate in c
-        circuit = circuit .* getcol(gate, N)
+        r = min(gate.iwire...):max(gate.iwire...)
+        if length(intersect(i, r)) == 0
+            i = union(i, r)
+            nw, ng = updatecol(gate, nw, ng)
+        else
+            i = r
+            w = w .* nw
+            g = g .* ng
+            nw = fill("——————", N)
+            ng = fill("      ", N-1)
+            nw, ng = updatecol(gate, nw, ng)
+        end
     end
+    w = w .* nw
+    g = g .* ng
+    circuit = interleave(w, g)
     println("")
     println.(circuit)
 end
 
-Base.println(c::CircuitGateChain) = Base.print(c)
-
-Base.show(c::Circuit) = show(c.cgc)
+Base.print(c::Circuit) = Base.print(c.cgc)
