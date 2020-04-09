@@ -1,10 +1,6 @@
-@info("Ensuring example environment instantiated...")
-import Pkg
-Pkg.activate("../")
-Pkg.instantiate()
 
-@info("Loading Qaintessent, Flux...")
-using Qaintessent
+include("../src/Qaintessent.jl")
+using .Qaintessent
 
 N = 5
 cgc = CircuitGateChain{N}([
