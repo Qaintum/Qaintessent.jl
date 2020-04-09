@@ -46,6 +46,6 @@ export
 
 
 include("gradients.jl")
-
+include("view.jl")
 
 end
