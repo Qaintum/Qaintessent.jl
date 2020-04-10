@@ -115,30 +115,31 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # general rotation operator gate
 struct RotationGate <: AbstractGate{1}
-    # use a reference type (array with 1 entry) for compatibility with Flux
     nθ::AbstractVector{<:Real}
+
+    function RotationGate(nθ::AbstractVector{<:Real})
+        length(nθ) == 3 || error("Rotation axis vector must have length 3.")
+        new(nθ)
+    end
 
     function RotationGate(θ::Real, n::AbstractVector{<:Real})
         length(n) == 3 || error("Rotation axis vector must have length 3.")
         norm(n) ≈ 1 || error("Norm of rotation axis vector must be 1.")
-        # n = n*θ
         new(n*θ)
     end
 end
 
 function matrix(g::RotationGate)
     θ = norm(g.nθ)
+    if θ == 0
+        return Matrix{Complex{eltype(g.nθ)}}(I, 2, 2)
+    end
     n = g.nθ/θ
-
     cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
-function Base.adjoint(g::RotationGate)
-    θ = norm(g.nθ)
-    n = g.nθ/θ
+Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
-    RotationGate(-θ, n)
-end
 
 # phase shift gate
 

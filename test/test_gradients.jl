@@ -4,7 +4,7 @@ using LinearAlgebra
 using Qaintessent
 
 
-# from https://github.com/FluxML/Zygote.jl/blob/master/test/gradcheck.jl
+# adapted from https://github.com/FluxML/Zygote.jl/blob/master/test/gradcheck.jl
 function ngradient(f, xs::AbstractArray...)
     grads = zero.(xs)
     for (x, Δ) in zip(xs, grads), i in 1:length(x)
@@ -16,6 +16,15 @@ function ngradient(f, xs::AbstractArray...)
         y2 = f(xs...)
         x[i] = tmp
         Δ[i] = (y2-y1)/δ
+        if eltype(x) <: Complex
+            # derivative with respect to imaginary part
+            x[i] = tmp - im*δ/2
+            y1 = f(xs...)
+            x[i] = tmp + im*δ/2
+            y2 = f(xs...)
+            x[i] = tmp
+            Δ[i] += im*(y2-y1)/δ
+        end
     end
     return grads
 end
@@ -25,21 +34,28 @@ end
 
     # construct parametrized circuit
     N = 4
-    rz = RzGate(1.5π)
-    ps = PhaseShiftGate(0.3)
-    ry = RyGate(√2)
-    n = randn(Float64, 3)
-    n = n/norm(n)
-    rg = RotationGate(0.2π, n)
-    cgc = CircuitGateChain{N}([
+    cgc(θ, ϕ, χ, ωn) = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
-        controlled_circuit_gate((1, 4), 2, rz, N),
+        controlled_circuit_gate((1, 4), 2, RzGate(θ), N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
-        single_qubit_circuit_gate(3, ps, N),
-        single_qubit_circuit_gate(3, rg, N),
-        single_qubit_circuit_gate(1, ry, N),
+        single_qubit_circuit_gate(3, PhaseShiftGate(ϕ), N),
+        single_qubit_circuit_gate(3, RotationGate(ωn), N),
+        single_qubit_circuit_gate(1, RyGate(χ), N),
     ])
-    meas = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(randn(ComplexF64, 2^N, 2^N))])
+    # measurement operators
+    meas(M) = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)])
+
+    # parameter values
+    θ = 1.5π
+    ϕ = 0.3
+    χ = √2
+    n = randn(Float64, 3)
+    n /= norm(n)
+    ωn = 0.2π * n
+    M = randn(ComplexF64, 2^N, 2^N)
+    M = 0.5*(M + adjoint(M))
+
+    c = Circuit(cgc(θ, ϕ, χ, ωn), meas(M))
 
     # input quantum state
     ψ = randn(ComplexF64, 2^N)
@@ -47,9 +63,17 @@ end
     # fictitious gradients of cost function with respect to circuit output
     Δ = [0.3, -1.2]
 
-    grads = Qaintessent.gradients(Circuit(cgc, meas), ψ, Δ)
-    # arguments used implicitly via references
-    f(args...) = dot(Δ, apply(Circuit(cgc, meas), ψ))
-    @test all(isapprox.(ngradient(f, rz.θ, ps.ϕ, ry.θ, rg.nθ),
-        (grads[rz.θ], grads[ps.ϕ], grads[ry.θ], grads[rg.nθ]), rtol=1e-5, atol=1e-5))
+    dc = Qaintessent.gradients(c, ψ, Δ)[1]
+
+    f(rθ, rϕ, rχ, ωn, M) = dot(Δ, apply(Circuit(cgc(rθ[], rϕ[], rχ[], ωn), meas(M)), ψ))
+    # numeric gradients
+    ngrad = ngradient(f, [θ], [ϕ], [χ], ωn, M)
+    # symmetrize gradient with respect to measurement operator
+    ngrad[end][:] = 0.5*(ngrad[end] + adjoint(ngrad[end]))
+    @test all(isapprox.(ngrad,
+        (dc.cgc.gates[2].gate.U.θ,
+         dc.cgc.gates[4].gate.ϕ,
+         dc.cgc.gates[6].gate.θ,
+         dc.cgc.gates[5].gate.nθ,
+         dc.meas.mops[2]), rtol=1e-5, atol=1e-5))
 end
