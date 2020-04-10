@@ -1,23 +1,37 @@
 
+# `backward` functions return gates storing derivatives
 
-# `backward` functions return an `IdDict` with the corresponding variable hash as key
+backward(g::XGate, Δ::AbstractMatrix) = g
+backward(g::YGate, Δ::AbstractMatrix) = g
+backward(g::ZGate, Δ::AbstractMatrix) = g
+
+
+backward(g::HadamardGate, Δ::AbstractMatrix) = g
+
+
+backward(g::SGate, Δ::AbstractMatrix) = g
+backward(g::TGate, Δ::AbstractMatrix) = g
+
+backward(g::SdagGate, Δ::AbstractMatrix) = g
+backward(g::TdagGate, Δ::AbstractMatrix) = g
+
 
 function backward(g::RxGate, Δ::AbstractMatrix)
     c = cos(g.θ[1]/2)
     s = sin(g.θ[1]/2)
     # using conjugated derivative matrix
-    IdDict(g.θ => [2*sum(real([-0.5*s 0.5im*c; 0.5im*c -0.5*s] .* Δ))])
+    RxGate(2*sum(real([-0.5*s 0.5im*c; 0.5im*c -0.5*s] .* Δ)))
 end
 
 function backward(g::RyGate, Δ::AbstractMatrix)
     c = cos(g.θ[1]/2)
     s = sin(g.θ[1]/2)
-    IdDict(g.θ => [2*sum(real([-0.5*s -0.5*c; 0.5*c -0.5*s] .* Δ))])
+    RyGate(2*sum(real([-0.5*s -0.5*c; 0.5*c -0.5*s] .* Δ)))
 end
 
 function backward(g::RzGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    IdDict(g.θ => [2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2])])
+    RzGate(2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2]))
 end
 
 dij(i,j, x, y, θ) = i == j  ? 1/θ - x*y / θ^3 : - x*y / θ^3
@@ -38,48 +52,45 @@ function backward(g::RotationGate, Δ::AbstractMatrix)
     mat2 = - g.nθ[2]/2θ*sin(θ/2)*I - im*g.nθ[2]/2θ*cos(θ/2) * p - im*sin(θ/2) * dp[2]
     mat3 = - g.nθ[3]/2θ*sin(θ/2)*I - im*g.nθ[3]/2θ*cos(θ/2) * p - im*sin(θ/2) * dp[3]
     # using conjugated derivative matrix
-    IdDict(
-    g.nθ => [2*real(sum( conj(mat1) .* Δ )),
-             2*real(sum( conj(mat2) .* Δ )),
-             2*real(sum( conj(mat3) .* Δ ))]
-    )
+    RotationGate([2*real(sum(conj(mat1) .* Δ)),
+                  2*real(sum(conj(mat2) .* Δ)),
+                  2*real(sum(conj(mat3) .* Δ))])
 end
 
 
 function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    IdDict(g.ϕ => [2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2])])
+    PhaseShiftGate(2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2]))
 end
+
+
+backward(g::SwapGate, Δ::AbstractMatrix) = g
 
 
 function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
     # Note: following the ordering convention of `kron` here, i.e.,
     # target qubits correspond to fastest varying index
-    backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end])
+    ControlledGate{M,N}(backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end]))
 end
-
-
-# default: no gradients
-backward(g::AbstractGate{N}, Δ::AbstractMatrix) where {N} = IdDict()
 
 
 function backward(cg::CircuitGate{M,N}, ψ::AbstractVector, Δ::AbstractVector) where {M,N}
     ρ = rdm(N, cg.iwire, Δ, ψ)
-    backward(cg.gate, ρ)
+    CircuitGate{M,N}(cg.iwire, backward(cg.gate, ρ))
 end
 
 
 function backward(cgc::CircuitGateChain{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
-    grads = IdDict()
+    dcgc = CircuitGateChain{N}(AbstractCircuitGate{N}[])
     for cg in reverse(cgc.gates)
         Udag = Base.adjoint(cg)
         # backward step of quantum state
         ψ = apply(Udag, ψ)
-        grads = merge(backward(cg, ψ, Δ), grads)
+        pushfirst!(dcgc.gates, backward(cg, ψ, Δ))
         # backward step of quantum state gradient
         Δ = apply(Udag, Δ)
     end
-    return grads, Δ
+    return dcgc, Δ
 end
 
 
@@ -90,5 +101,9 @@ function gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}
     ψ = apply(c.cgc, ψ)
     # gradient (conjugated Wirtinger derivatives) of cost function with respect to ψ
     ψbar = sum([Δ[i] * (c.meas.mops[i]*ψ) for i in 1:length(Δ)])
-    return backward(c.cgc, ψ, ψbar)[1]
+    # backward pass through unitary gates
+    dcgc, ψbar = backward(c.cgc, ψ, ψbar)
+    # TODO: efficiently represent Kronecker product without explicitly storing matrix entries
+    dmeas = MeasurementOps{N}([Δ[i]*reshape(kron(conj(ψ), ψ), length(ψ), length(ψ)) for i in 1:length(Δ)])
+    return Circuit{N}(dcgc, dmeas), ψbar
 end
