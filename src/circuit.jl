@@ -224,20 +224,21 @@ Base.adjoint(cgc::CircuitGateChain{N}) where {N} = CircuitGateChain{N}(Base.adjo
 
 # make CircuitGateChain iterable and indexable
 function Base.getindex(cgc::CircuitGateChain{N}, i::Integer) where {N}
-    1 <= i <= Base.length(cgc.gates) || throw(BoundsError(S, i))
+    1 <= i <= length(cgc.gates) || throw(BoundsError(S, i))
     return cgc.gates[i]
 end
 
 function Base.iterate(cgc::CircuitGateChain{N}, state=1) where {N}
-    return state > Base.length(cgc.gates) ? nothing : (cgc[state], state+1)
+    return state > length(cgc.gates) ? nothing : (cgc[state], state+1)
 end
 
 # implement methods required for iteration
 function Base.firstindex(cgc::CircuitGateChain{N}) where {N}
     return 1
 end
+
 function Base.lastindex(cgc::CircuitGateChain{N}) where {N}
-    return Base.length(cgc.gates)
+    return length(cgc.gates)
 end
 
 
