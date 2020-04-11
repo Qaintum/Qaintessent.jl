@@ -27,19 +27,27 @@ function view(g::RzGate, i::Vector{Int64})
 end
 
 function view(g::RotationGate, i::Vector{Int64})
-    ["—[Rϕ]—"], i
+    ["—[Rθ]—"], i
 end
 
 function view(g::PhaseShiftGate, i::Vector{Int64})
     ["—[Pϕ]—"], i
 end
 
+function view(g::SGate, i::Vector{Int64})
+    ["—[S ]—"], i
+end
+
 function view(g::TGate, i::Vector{Int64})
     ["—[T ]—"], i
 end
 
-function view(g::SGate, i::Vector{Int64})
-    ["—[S ]—"], i
+function view(g::SdagGate, i::Vector{Int64})
+    ["—[S†]—"], i
+end
+
+function view(g::TdagGate, i::Vector{Int64})
+    ["—[T†]—"], i
 end
 
 function view(g::SwapGate, i::Vector{Int64})
@@ -48,9 +56,7 @@ end
 
 view(g) = view(g, [1])
 
-function Base.size(g::AbstractGate{N}) where {N}
-    N
-end
+Base.size(g::AbstractGate{N}) where {N} = N
 
 function view(g::ControlledGate, i::Vector{Int64})
     gate = fill("——•———", length(i))
@@ -88,7 +94,7 @@ function wire_enum(N::Int)
     return wires, gaps
 end
 
-function Base.print(c::CircuitGateChain{N}) where {N}
+function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
     w, g = wire_enum(N)
     i = Int[]
     nw = fill("——————", N)
@@ -110,8 +116,10 @@ function Base.print(c::CircuitGateChain{N}) where {N}
     w = w .* nw
     g = g .* ng
     circuit = interleave(w, g)
-    println("")
-    println.(circuit)
+    println(io, "")
+    for c in circuit
+        println(io, c)
+    end
 end
 
-Base.print(c::Circuit) = Base.print(c.cgc)
+Base.show(io::IO, c::Circuit) = Base.show(io, c.cgc)

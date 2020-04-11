@@ -1,9 +1,10 @@
 using Test
 using TestSetExtensions
-using LinearAlgebra
 using Qaintessent
 
+
 @testset ExtendedTestSet "test view" begin
+
     N = 5
     cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
@@ -15,25 +16,21 @@ using Qaintessent
         two_qubit_circuit_gate(1,2, SwapGate(), N),
         controlled_circuit_gate(4, (3,5), SwapGate(), N),
     ])
-    printed_output = String[]
-    correct_output = ["",
-                      "    1 ————————•—————x————[Ry]———x———",
-                      "              |     |           |   ",
-                      "    2 ———————[Rx]———•————[Pϕ]———x———",
-                      "              |     |               ",
-                      "    3 —[H ]——————————————[Rϕ]———x———",
-                      "              |     |           |   ",
-                      "    4 ————————•—————•———————————•———",
-                      "                    |           |   ",
-                      "    5 ——————————————x———————————x———"]
 
-    original_stdout = stdout
-    (rd, wr) = redirect_stdout()
-    print(cgc)
-    for line in correct_output
-        push!(printed_output, readline(rd))
-    end
-    redirect_stdout(original_stdout)
-    @test all(isequal(correct_output, printed_output))
+    cgc_refstring =
+        "\n" *
+        "    1 ————————•—————x————[Ry]———x———\n" *
+        "              |     |           |   \n" *
+        "    2 ———————[Rx]———•————[Pϕ]———x———\n" *
+        "              |     |               \n" *
+        "    3 —[H ]——————————————[Rθ]———x———\n" *
+        "              |     |           |   \n" *
+        "    4 ————————•—————•———————————•———\n" *
+        "                    |           |   \n" *
+        "    5 ——————————————x———————————x———\n"
+
+    io = IOBuffer()
+    show(io, cgc)
+    @test String(take!(io)) == cgc_refstring
 
 end
