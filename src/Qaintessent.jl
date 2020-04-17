@@ -6,6 +6,7 @@ using SparseArrays
 
 include("gates.jl")
 export
+    AbstractGate,
     X,
     Y,
     Z,
@@ -29,6 +30,7 @@ export
 
 include("circuit.jl")
 export
+    AbstractCircuitGate,
     CircuitGate,
     single_qubit_circuit_gate,
     two_qubit_circuit_gate,
