@@ -49,5 +49,6 @@ export
 
 include("gradients.jl")
 include("view.jl")
+include("apply_gate.jl")
 
 end
