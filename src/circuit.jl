@@ -10,12 +10,11 @@ abstract type AbstractCircuitGate{N} end
 "utility function for enumerating cartesian tuples"
 cartesian_tuples(d::Integer, N::Integer) = Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
 
-
-struct CircuitGate{M,N} <: AbstractCircuitGate{N}
+struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "ordered wire indices which this gate acts on"
     iwire::NTuple{M, <:Integer}
     "actual gate"
-    gate::AbstractGate{M}
+    gate::G
 
     function CircuitGate{M,N}(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}) where {M,N}
         M ≥ 1 || error("Need at least one wire to act on.")
@@ -23,11 +22,17 @@ struct CircuitGate{M,N} <: AbstractCircuitGate{N}
         length(unique(iwire)) == M || error("Wire indices must be unique.")
         minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
         maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
-        new{M,N}(iwire, gate)
+        #typeof(gate) <: G  || error("gate must be an instance of G")
+        new{M,N,typeof(gate)}(iwire,gate)
     end
 end
 
-function matrix(cg::CircuitGate{M,N}) where {M,N}
+
+
+#function matrix(cg::CircuitGate{M,N}) where {M,N}
+function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
+
+
     # convert to array
     iwire = collect(cg.iwire)
     # complementary wires
@@ -38,6 +43,7 @@ function matrix(cg::CircuitGate{M,N}) where {M,N}
     d = 2
 
     # TODO: handle sparse matrices efficiently
+    # gmat = matrix(cg.gate)
     gmat = matrix(cg.gate)
     @assert size(gmat) == (d^M, d^M)
 
@@ -91,7 +97,7 @@ function swap(w::AbstractArray, p1::Int, p2::Int)
     return w
 end
 
-function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
+function apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
     W = length(cg.iwire)
     wires = [i for i in cg.iwire]
 
@@ -122,13 +128,17 @@ function apply(cg::CircuitGate{M,N}, ψ::AbstractVector) where {M,N}
     return ψr[indices]
 end
 
-Base.adjoint(cg::CircuitGate{M,N}) where {M,N} = CircuitGate{M,N}(cg.iwire, Base.adjoint(cg.gate))
+function Base.adjoint(cg::CircuitGate{M,N,G}) where {M,N,G}
+    adj_gate = Base.adjoint(cg.gate)
+    CircuitGate{M,N}(cg.iwire, adj_gate)
+end
 
 
-single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) = CircuitGate{1,N}((iwire,), gate)
+single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) =
+    CircuitGate{1,N}((iwire,), gate)
 
-
-two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer) = CircuitGate{2,N}((iwire1, iwire2), gate)
+two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer) =
+    CircuitGate{2,N}((iwire1, iwire2), gate)
 
 
 # single control and target wire
