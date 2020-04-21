@@ -32,12 +32,7 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     end
 end
 
-
-
-#function matrix(cg::CircuitGate{M,N}) where {M,N}
 function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
-
-
     # convert to array
     iwire = collect(cg.iwire)
     # complementary wires
@@ -48,7 +43,6 @@ function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     d = 2
 
     # TODO: handle sparse matrices efficiently
-    # gmat = matrix(cg.gate)
     gmat = matrix(cg.gate)
     @assert size(gmat) == (d^M, d^M)
 
