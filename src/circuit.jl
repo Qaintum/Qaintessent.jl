@@ -22,7 +22,7 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
         length(unique(iwire)) == M || error("Wire indices must be unique.")
         minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
         maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
-        #typeof(gate) <: G  || error("gate must be an instance of G")
+        typeof(gate) <: G  || error("type of gate must be a subtype of G")
         new{M,N,G}(iwire,gate)
     end
 
