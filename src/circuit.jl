@@ -16,14 +16,19 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "actual gate"
     gate::G
 
-    function CircuitGate{M,N}(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}) where {M,N}
+    function CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}) where {M,N,G}
         M ≥ 1 || error("Need at least one wire to act on.")
         M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
         length(unique(iwire)) == M || error("Wire indices must be unique.")
         minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
         maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
         #typeof(gate) <: G  || error("gate must be an instance of G")
-        new{M,N,typeof(gate)}(iwire,gate)
+        new{M,N,G}(iwire,gate)
+    end
+
+
+    function CircuitGate{M,N}(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}) where {M,N}
+        CircuitGate{M,N,typeof(gate)}(iwire,gate)
     end
 end
 
