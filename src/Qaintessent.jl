@@ -41,6 +41,7 @@ export
     MeasurementOps,
     Circuit
 
+include("apply.jl")
 
 include("models.jl")
 export
@@ -49,6 +50,5 @@ export
 
 include("gradients.jl")
 include("view.jl")
-include("apply.jl")
 
 end
