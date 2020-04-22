@@ -41,6 +41,7 @@ export
     MeasurementOps,
     Circuit
 
+include("apply.jl")
 
 include("models.jl")
 export
