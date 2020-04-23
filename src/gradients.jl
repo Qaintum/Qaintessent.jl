@@ -64,9 +64,9 @@ function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
 end
 
 
-function backward(cg::CircuitGate{M,N}, ψ::AbstractVector, Δ::AbstractVector) where {M,N}
+function backward(cg::CircuitGate{M,N,G}, ψ::AbstractVector, Δ::AbstractVector) where {M,N,G}
     ρ = rdm(N, cg.iwire, Δ, ψ)
-    CircuitGate{M,N}(cg.iwire, backward(cg.gate, ρ))
+    CircuitGate{M,N,G}(cg.iwire, backward(cg.gate, ρ))
 end
 
 

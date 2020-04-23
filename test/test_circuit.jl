@@ -16,12 +16,12 @@ end
 @testset ExtendedTestSet "circuit gates" begin
 
     # Y acting on second wire
-    cg = CircuitGate{1,3}((2,), Y)
+    cg = CircuitGate((2,), Y, 3)
     @test Qaintessent.matrix(cg) ≈ kron(kron(Matrix(I, 2, 2), Qaintessent.matrix(Y)), Matrix(I, 2, 2))
     @test isunitary(cg)
 
     # flip control and target
-    cg = CircuitGate{2,2}((2, 1), controlled_not())
+    cg = CircuitGate((2, 1), controlled_not(), 2)
     @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
     @test isunitary(cg)
 

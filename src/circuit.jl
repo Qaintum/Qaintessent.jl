@@ -16,21 +16,21 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "actual gate"
     gate::G
 
-    function CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}) where {M,N,G}
+    function CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G) where {M,N,G}
         M ≥ 1 || error("Need at least one wire to act on.")
         M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
         length(unique(iwire)) == M || error("Wire indices must be unique.")
         minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
         maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
-        typeof(gate) <: G  || error("type of gate must be a subtype of G")
-        new{M,N,G}(iwire,gate)
-    end
-
-
-    function CircuitGate{M,N}(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}) where {M,N}
-        CircuitGate{M,N,typeof(gate)}(iwire,gate)
+        G <: AbstractGate{M} || error("Gate type must be a subtype of AbstractGate{$M}.")
+        new{M,N,G}(iwire, gate)
     end
 end
+
+function CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) where {M}
+    CircuitGate{M,N,typeof(gate)}(iwire, gate)
+end
+
 
 function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     # convert to array
@@ -75,15 +75,15 @@ end
 
 function Base.adjoint(cg::CircuitGate{M,N,G}) where {M,N,G}
     adj_gate = Base.adjoint(cg.gate)
-    CircuitGate{M,N}(cg.iwire, adj_gate)
+    CircuitGate{M,N,typeof(adj_gate)}(cg.iwire, adj_gate)
 end
 
 
 single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) =
-    CircuitGate{1,N}((iwire,), gate)
+    CircuitGate((iwire,), gate, N)
 
 two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer) =
-    CircuitGate{2,N}((iwire1, iwire2), gate)
+    CircuitGate((iwire1, iwire2), gate, N)
 
 
 # single control and target wire
@@ -103,7 +103,7 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
     K + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
     length(intersect(icntrl, itarget)) == 0 || error("Control and target wires must be disjoint.")
 
-    CircuitGate{K+M,N}((icntrl..., itarget...), ControlledGate{M,K+M}(U))
+    CircuitGate((icntrl..., itarget...), ControlledGate{M,K+M}(U), N)
 end
 
 
