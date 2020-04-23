@@ -57,27 +57,6 @@ function apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
     return ψr[indices]
 end
 
-"""
-    apply(cgc, ψ)
-
-Apply CircuitGateChain to quantum state vector
-"""
-function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
-    for gate in cgc
-        ψ = apply(gate, ψ)
-    end
-    return ψ
-end
-
-"""
-    apply(c, ψ)
-
-Apply Circuit to quantum state vector
-"""
-function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
-    ψs = apply(c.cgc, ψ)
-    return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
-end
 
 """Tailored apply for XGate"""
 function apply(cg::CircuitGate{1,N,XGate}, ψ::AbstractVector) where {N}
@@ -174,7 +153,7 @@ function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ψ::AbstractVector) where {N
     ψ = reshape(ψ, 2^(N-i), 2, 2^(i-1))
     A = similar(ψ)
     A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= exp( im*cg.gate.ϕ[]).*ψ[:,2,:]
+    A[:,2,:] .= exp(im*cg.gate.ϕ[]).*ψ[:,2,:]
     return reshape(A, :)
 end
 
@@ -183,8 +162,9 @@ function apply(cg::CircuitGate{1,N,AbstractGate{1}}, ψ::AbstractVector) where {
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(N-i), 2, 2^(i-1))
     A = similar(ψ)
-    A[:,1,:] .= U[1,1] .* ψ[:, 1, :] .+ U[1,2] .* ψ[:, 2, :]
-    A[:,2,:] .= U[2,1] .* ψ[:, 1, :] .+ U[2,2] .* ψ[:, 2, :]
+    U = matrix(cg.gate)
+    A[:,1,:] .= U[1,1] .* ψ[:,1,:] .+ U[1,2] .* ψ[:,2,:]
+    A[:,2,:] .= U[2,1] .* ψ[:,1,:] .+ U[2,2] .* ψ[:,2,:]
     return reshape(A, :)
 end
 
@@ -207,20 +187,44 @@ function apply(cg::CircuitGate{2,N,SwapGate}, ψ::AbstractVector) where {N}
 end
 
 """Tailored apply for a general ControlledGate"""
-function apply(cg::CircuitGate{M,N,ControlledGate{K,M}}, ψ::AbstractVector) where {M,N,K}
+function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ψ::AbstractVector) where {M,N,T}
 
-    # M is the len of iwire, K is the number of target wires
+    # M is the len of iwire, T is the number of target wires
 
     A = copy(ψ) # TODO: copy only what's needed
-    A = reshape(A, fill(2,N)...)
+    A = reshape(A, fill(2, N)...)
 
     # Apply gate to qubits with control qubit = 2
-    icontrol = cg.iwire[1:M-K]
-    itarget =  cg.iwire[M-K+1:M]
+    icontrol = cg.iwire[1:M-T]
+    itarget =  cg.iwire[M-T+1:M]
     new_iwire= Tuple(i - sum(icontrol .< i) for i in itarget)
     slice_target = Tuple(i in icontrol ? 2 : Colon() for i in N:-1:1) # Why it has to go backwards?
-    new_cg = CircuitGate{K,N-M+K}(new_iwire, cg.gate.U)
-    A[slice_target...] = reshape(apply(new_cg, reshape(A[slice_target...],:)),
-                                 fill(2,N-M+K)...)
+    new_cg = CircuitGate(new_iwire, cg.gate.U, N-M+T)
+    A[slice_target...] = reshape(apply(new_cg, reshape(A[slice_target...], :)),
+                                 fill(2, N-M+T)...)
     return reshape(A, :)
+end
+
+
+"""
+    apply(cgc, ψ)
+
+Apply CircuitGateChain to quantum state vector
+"""
+function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
+    for gate in cgc
+        ψ = apply(gate, ψ)
+    end
+    return ψ
+end
+
+
+"""
+    apply(c, ψ)
+
+Apply Circuit to quantum state vector
+"""
+function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
+    ψs = apply(c.cgc, ψ)
+    return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
 end

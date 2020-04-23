@@ -35,13 +35,14 @@ export
     single_qubit_circuit_gate,
     two_qubit_circuit_gate,
     controlled_circuit_gate,
-    apply,
     rdm,
     CircuitGateChain,
     MeasurementOps,
     Circuit
 
 include("apply.jl")
+export
+    apply
 
 include("models.jl")
 export

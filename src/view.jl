@@ -76,7 +76,7 @@ function interleave(a::Vector{T}, b::Vector{T}) where {T}
     return c
 end
 
-function updatecol(g::CircuitGate{M, N}, nw::AbstractVector{String}, ng::AbstractVector{String}) where {M,N}
+function updatecol(g::CircuitGate{M,N,G}, nw::AbstractVector{String}, ng::AbstractVector{String}) where {M,N,G}
     iwire = [x for x in g.iwire]
     if length(g.iwire) > 1
         index = min(iwire...):max(iwire...)-1
