@@ -38,7 +38,8 @@ export
     rdm,
     CircuitGateChain,
     MeasurementOps,
-    Circuit
+    Circuit,
+    distribution
 
 include("apply.jl")
 export

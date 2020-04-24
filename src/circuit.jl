@@ -31,6 +31,16 @@ function CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) wher
     CircuitGate{M,N,typeof(gate)}(iwire, gate)
 end
 
+function Base.isapprox(cg1::CircuitGate{M, N, G}, cg2::CircuitGate{M, N, G}) where {M, N, G}
+    fields = fieldnames(G)
+    for name in fields
+        if getfield(cg1.gate, name) ≈ getfield(cg2.gate, name)
+        else
+            return false
+        end
+    end
+    return true
+end
 
 function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     # convert to array
@@ -188,6 +198,18 @@ function Base.lastindex(cgc::CircuitGateChain{N}) where {N}
     return length(cgc.gates)
 end
 
+function Base.length(cgc::CircuitGateChain{N}) where {N}
+    return length(cgc.gates)
+end
+
+function Base.:*(cgc1::CircuitGateChain{N}, cgc2::CircuitGateChain{N}) where {N}
+    append!(cgc1.gates, cgc2.gates)
+    return cgc1
+end
+
+function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
+    append!(cgc.gates, g)
+end
 
 """
     comm(A, B)
@@ -238,4 +260,27 @@ Quantum circuit consisting of a unitary gate chain and measurement operators.
 struct Circuit{N}
     cgc::CircuitGateChain{N}
     meas::MeasurementOps{N}
+end
+
+# make CircuitGateChain iterable and indexable
+function Base.getindex(c::Circuit{N}, i::Integer) where {N}
+    1 <= i <= length(c.cgc.gates) || throw(BoundsError(S, i))
+    return c.cgc.gates[i]
+end
+
+function Base.iterate(c::Circuit{N}, state=1) where {N}
+    return state > length(c.cgc.gates) ? nothing : (c.cgc[state], state+1)
+end
+
+# implement methods required for iteration
+function Base.firstindex(c::Circuit{N}) where {N}
+    return 1
+end
+
+function Base.lastindex(c::Circuit{N}) where {N}
+    return length(c.cgc.gates)
+end
+
+function distribution(c::Circuit{N}, ψ::AbstractVector) where {N}
+    return apply(c.cgc, ψ)
 end

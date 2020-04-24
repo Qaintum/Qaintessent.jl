@@ -12,9 +12,7 @@ function isunitary(cgc::CircuitGateChain)
     Qaintessent.matrix(cgc) * Qaintessent.matrix(Base.adjoint(cgc)) ≈ I
 end
 
-
 @testset ExtendedTestSet "circuit gates" begin
-
     # Y acting on second wire
     cg = CircuitGate((2,), Y, 3)
     @test Qaintessent.matrix(cg) ≈ kron(kron(Matrix(I, 2, 2), Qaintessent.matrix(Y)), Matrix(I, 2, 2))
@@ -32,8 +30,61 @@ end
         fill(0, 2, 4) Qaintessent.matrix(HadamardGate()) fill(0, 2, 2);
         fill(0, 2, 6) Qaintessent.matrix(HadamardGate())]
     @test isunitary(cg)
+
+    cg_test = controlled_circuit_gate(1, 3, HadamardGate(), 3)
+    @test cg_test == cg
+
+    cg = single_qubit_circuit_gate(1, RxGate(0.2), 1)
+    cg_test = single_qubit_circuit_gate(1, RxGate(0.2), 1)
+
+    @test cg_test ≈ cg
+
+    cg.gate.θ[1] = 0.5
+    @test !(cg ≈ cg_test)
 end
 
+@testset ExtendedTestSet "circuit gate chain" begin
+    N = 1
+    cgc_ref = CircuitGateChain{N}([
+        single_qubit_circuit_gate(1, X, N),
+        single_qubit_circuit_gate(1, HadamardGate(), N),
+        single_qubit_circuit_gate(1, Z, N),
+        single_qubit_circuit_gate(1, Y, N),
+    ])
+
+    cgc1 = CircuitGateChain{N}([
+        single_qubit_circuit_gate(1, X, N),
+        single_qubit_circuit_gate(1, HadamardGate(), N),
+    ])
+
+    cgc2 = CircuitGateChain{N}([
+        single_qubit_circuit_gate(1, Z, N),
+        single_qubit_circuit_gate(1, Y, N),
+    ])
+
+    cgc_test = cgc1 * cgc2
+
+    for (gate1, gate2) in zip(cgc_test, cgc_ref)
+        @test gate1 ≈ gate2
+    end
+end
+
+@testset ExtendedTestSet "circuit" begin
+    N = 1
+    cgc = CircuitGateChain{N}([
+        single_qubit_circuit_gate(1, X, N),
+        single_qubit_circuit_gate(1, HadamardGate(), N),
+        single_qubit_circuit_gate(1, Z, N),
+        single_qubit_circuit_gate(1, Y, N),
+    ])
+    meas = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N)])
+    c = Circuit(cgc, meas)
+    for i in 1:length(cgc)
+        @test c[i] == cgc[i]
+    end
+    ψ = randn(ComplexF64, 2^N)
+    @test distribution(c, ψ) ≈ apply(c.cgc, ψ)
+end
 
 @testset ExtendedTestSet "reduced density matrix" begin
     N = 4
