@@ -228,3 +228,5 @@ function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
     ψs = apply(c.cgc, ψ)
     return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
 end
+
+(c::Circuit)(ψ) = apply(c, ψ)
