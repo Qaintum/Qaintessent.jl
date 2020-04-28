@@ -69,16 +69,24 @@ function backward(cg::CircuitGate{M,N,G}, ψ::AbstractVector, Δ::AbstractVector
     CircuitGate{M,N,G}(cg.iwire, backward(cg.gate, ρ))
 end
 
+function backward(m::Moment{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
+    gates = AbstractCircuitGate{N}[]
+    for cg in reverse(m.gates)
+        Udag = Base.adjoint(cg)
+        ψ = apply(Udag, ψ)
+        # backward step of quantum state
+        pushfirst!(gates, backward(cg, ψ, Δ))
+        Δ = apply(Udag, Δ)
+    end
+    return Moment{N}(gates), ψ, Δ
+end
 
 function backward(cgc::CircuitGateChain{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
     dcgc = CircuitGateChain{N}(AbstractCircuitGate{N}[])
-    for cg in reverse(cgc.gates)
-        Udag = Base.adjoint(cg)
+    for moment in reverse(cgc.moments)
         # backward step of quantum state
-        ψ = apply(Udag, ψ)
-        pushfirst!(dcgc.gates, backward(cg, ψ, Δ))
-        # backward step of quantum state gradient
-        Δ = apply(Udag, Δ)
+        (m, ψ, Δ) = backward(moment, ψ, Δ)
+        pushfirst!(dcgc.moments, m)
     end
     return dcgc, Δ
 end
