@@ -12,6 +12,22 @@ function isunitary(cgc::CircuitGateChain)
     Qaintessent.matrix(cgc) * Qaintessent.matrix(Base.adjoint(cgc)) ≈ I
 end
 
+@testset ExtendedTestSet "moments" begin
+    N = 3
+    @test_throws ErrorException cgc_ref = CircuitGateChain{N}([
+        Moment{N}(
+        [single_qubit_circuit_gate(2, X, N),
+        single_qubit_circuit_gate(2, HadamardGate(), N),
+        single_qubit_circuit_gate(3, HadamardGate(), N)]
+        ),
+        Moment{N}(
+        [single_qubit_circuit_gate(1, Z, N),
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(1, Y, N)]
+        ),
+    ])
+end
+
 @testset ExtendedTestSet "circuit gates" begin
     # Y acting on second wire
     cg = CircuitGate((2,), Y, 3)
@@ -136,10 +152,9 @@ end
         # final swap gate
         two_qubit_circuit_gate(1, 3, SwapGate(), N),
     ])
-
-    @test cgc[1] == single_qubit_circuit_gate(1, HadamardGate(), N)
-    for (index, gate) in enumerate(cgc)
-        @test gate == cgc[index]
+    @test cgc[1] ≈ Moment{N}(single_qubit_circuit_gate(1, HadamardGate(), N))
+    for (index, moment) in enumerate(cgc)
+        @test moment == cgc[index]
     end
 
     @test Qaintessent.matrix(cgc) ≈ [exp(2*π*1im*j*k/2^N)/sqrt(2^N) for j in 0:(2^N-1), k in 0:(2^N-1)]
