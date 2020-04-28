@@ -205,6 +205,18 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ψ::AbstractVector) whe
     return reshape(A, :)
 end
 
+"""
+    apply(cgc, ψ)
+
+Apply Moment to quantum state vector
+"""
+function apply(m::Moment{N}, ψ::AbstractVector) where {N}
+    for gate in m
+        ψ = apply(gate, ψ)
+    end
+    return ψ
+end
+
 
 """
     apply(cgc, ψ)
@@ -212,8 +224,10 @@ end
 Apply CircuitGateChain to quantum state vector
 """
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
-    for gate in cgc
-        ψ = apply(gate, ψ)
+    for moment in cgc.moments
+        for gate in moment
+            ψ = apply(gate, ψ)
+        end
     end
     return ψ
 end
