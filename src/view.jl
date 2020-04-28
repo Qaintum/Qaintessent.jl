@@ -94,7 +94,7 @@ function wire_enum(N::Int)
     return wires, gaps
 end
 
-function Base.show(io::IO, m::Moment{N}) where {N}
+function momentdiagram(io::IO, m::Moment{N}) where {N}
     w, g = wire_enum(N)
     i = Int[]
     w = w .* "...|"
@@ -121,6 +121,19 @@ function Base.show(io::IO, m::Moment{N}) where {N}
     println(io, "")
     for c in circuit
         println(io, c)
+    end
+    println(io, "")
+end
+
+function Base.show(io::IO, m::AbstractVector{Moment{N}}) where {N}
+    for moment in m
+        momentdiagram(io, moment)
+    end
+end
+
+function Base.show(io::IO, m::Moment{N}) where {N}
+    for gate in m
+        println(io, gate)
     end
 end
 

@@ -87,10 +87,10 @@ end
         "         |      |   \n" *
         "    4 ...|——————|...\n" *
         "         |      |   \n" *
-        "    5 ...|——————|...\n"
-
+        "    5 ...|——————|...\n" *
+        "\n"
     io = IOBuffer()
-    show(io, m)
+    show(io, [m])
     @test String(take!(io)) == m_refstring
 
     m = Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
@@ -108,10 +108,62 @@ end
         "         |        |   |   \n" *
         "    4 ...|———————[H ]—|...\n" *
         "         |            |   \n" *
-        "    5 ...|—[Pϕ]———————|...\n"
+        "    5 ...|—[Pϕ]———————|...\n" *
+        "\n"
+
+    io = IOBuffer()
+    show(io, [m])
+    @test String(take!(io)) == m_refstring
+
+    m = [Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
+        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
+        single_qubit_circuit_gate(1, RyGate(1.4π), N),
+        controlled_circuit_gate((2), (4), HadamardGate(), N)]),
+        Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
+        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
+        single_qubit_circuit_gate(1, RyGate(1.4π), N),
+        controlled_circuit_gate((2), (4), HadamardGate(), N)]),
+        ]
+
+    m_refstring =
+        "Array{Moment{5},1}[\n" *
+        "    1 ...|—[Ry]———————|...\n" *
+        "         |            |   \n" *
+        "    2 ...|————————•———|...\n" *
+        "         |        |   |   \n" *
+        "    3 ...|—[Rθ]———————|...\n" *
+        "         |        |   |   \n" *
+        "    4 ...|———————[H ]—|...\n" *
+        "         |            |   \n" *
+        "    5 ...|—[Pϕ]———————|...\n" *
+        "\n" *
+        "\n" *
+        "    1 ...|—[Ry]———————|...\n" *
+        "         |            |   \n" *
+        "    2 ...|————————•———|...\n" *
+        "         |        |   |   \n" *
+        "    3 ...|—[Rθ]———————|...\n" *
+        "         |        |   |   \n" *
+        "    4 ...|———————[H ]—|...\n" *
+        "         |            |   \n" *
+        "    5 ...|—[Pϕ]———————|...\n" *
+        "\n]"
+
+    io = IOBuffer()
+    show(io, [m])
+    @test String(take!(io)) == m_refstring
+
+    m = Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
+        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
+        controlled_circuit_gate((2), (4), HadamardGate(), N),
+        single_qubit_circuit_gate(1, RyGate(1.4π), N)])
+    m_refstring =
+    "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
+    "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
+    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()))\n" *
+    "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]))\n"
 
     io = IOBuffer()
     show(io, m)
     @test String(take!(io)) == m_refstring
-
 end
