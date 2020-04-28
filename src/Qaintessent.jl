@@ -32,6 +32,8 @@ include("circuit.jl")
 export
     AbstractCircuitGate,
     CircuitGate,
+    AbstractMoment,
+    Moment,
     single_qubit_circuit_gate,
     two_qubit_circuit_gate,
     controlled_circuit_gate,

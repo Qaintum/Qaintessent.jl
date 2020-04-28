@@ -116,6 +116,67 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
     CircuitGate((icntrl..., itarget...), ControlledGate{M,K+M}(U), N)
 end
 
+"""
+    Moment{N}
+
+Represents an intermediary state within a given circuit. `N` is the overall number of quantum "wires" of the circuit.
+"""
+
+abstract type AbstractMoment{N} end
+
+struct Moment{N} <: AbstractMoment{N}
+    gates::AbstractVector{<:AbstractCircuitGate{N}}
+    function Moment{N}(g::AbstractCircuitGate{N}) where {N}
+        new([g])
+    end
+
+    function Moment{N}(g::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
+        wires = Integer[]
+        for gate in g
+            length(intersect(wires, gate.iwire)) == 0 || error("Only gates on different wires are allowed in a Moment")
+            append!(wires, gate.iwire)
+        end
+        new(g)
+    end
+end
+
+function Base.adjoint(m::Moment{N}) where {N}
+    return Moment{N}(Base.adjoint.(reverse(m.gates)))
+end
+
+# make Moment iterable and indexable
+function Base.getindex(m::Moment{N}, i::Integer) where {N}
+    1 <= i <= length(m.gates) || throw(BoundsError(m, i))
+    return m.gates[i]
+end
+
+function Base.iterate(m::Moment{N}, state=1) where {N}
+    return state > length(m.gates) ? nothing : (m[state], state+1)
+end
+
+# implement methods required for iteration
+function Base.firstindex(m::Moment{N}) where {N}
+    return 1
+end
+
+function Base.lastindex(m::Moment{N}) where {N}
+    return length(m.gates)
+end
+
+function Base.length(m::Moment{N}) where {N}
+    return length(m.gates)
+end
+
+function Base.isapprox(m1::Moment{N}, m2::Moment{N}) where {N}
+    length(m1) == length(m2) || return false
+    for (g1, g2) in zip(m1, m2)
+        if !(g1 ≈ g2)
+            return false
+        end
+    end
+    return true
+end
+
 
 """
     rdm(N, iwire, ψ, χ)
@@ -169,24 +230,48 @@ end
 Chain of quantum circuit gates.
 """
 mutable struct CircuitGateChain{N}
-    gates::AbstractVector{<:AbstractCircuitGate{N}}
+    moments::AbstractVector{<:AbstractMoment{N}}
+    # gates::AbstractVector{<:AbstractCircuitGate{N}}
+    function CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
+        moments = map(Moment{N}, gates)
+        new(moments)
+    end
+
+    function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
+        new(moments)
+    end
+
+    function CircuitGateChain(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
+        moments = map(Moment{N}, gates)
+        new{N}(moments)
+    end
+
+    function CircuitGateChain(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
+        new{N}(moments)
+    end
 end
 
 # unitary matrix representation of a sequence of circuit gates
 function matrix(cgc::CircuitGateChain{N}) where {N}
-    prod(Tuple(matrix(g) for g in reverse(cgc.gates)))
+    gates = AbstractCircuitGate{N}[]
+    for moment in cgc
+        append!(gates, moment.gates)
+    end
+    prod(Tuple(matrix(g) for g in reverse(gates)))
 end
 
-Base.adjoint(cgc::CircuitGateChain{N}) where {N} = CircuitGateChain{N}(Base.adjoint.(reverse(cgc.gates)))
+function Base.adjoint(cgc::CircuitGateChain{N}) where {N}
+    return CircuitGateChain{N}(Base.adjoint.(reverse(cgc.moments)))
+end
 
 # make CircuitGateChain iterable and indexable
 function Base.getindex(cgc::CircuitGateChain{N}, i::Integer) where {N}
-    1 <= i <= length(cgc.gates) || throw(BoundsError(S, i))
-    return cgc.gates[i]
+    1 <= i <= length(cgc.moments) || throw(BoundsError(cgc, i))
+    return cgc.moments[i]
 end
 
 function Base.iterate(cgc::CircuitGateChain{N}, state=1) where {N}
-    return state > length(cgc.gates) ? nothing : (cgc[state], state+1)
+    return state > length(cgc.moments) ? nothing : (cgc[state], state+1)
 end
 
 # implement methods required for iteration
@@ -195,20 +280,20 @@ function Base.firstindex(cgc::CircuitGateChain{N}) where {N}
 end
 
 function Base.lastindex(cgc::CircuitGateChain{N}) where {N}
-    return length(cgc.gates)
+    return length(cgc.moments)
 end
 
 function Base.length(cgc::CircuitGateChain{N}) where {N}
-    return length(cgc.gates)
+    return length(cgc.moments)
 end
 
 function Base.:*(cgc1::CircuitGateChain{N}, cgc2::CircuitGateChain{N}) where {N}
-    append!(cgc1.gates, cgc2.gates)
+    append!(cgc1.moments, cgc2.moments)
     return cgc1
 end
 
 function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
-    append!(cgc.gates, g)
+    append!(cgc.moments, Moment([g]))
 end
 
 """
@@ -264,12 +349,12 @@ end
 
 # make CircuitGateChain iterable and indexable
 function Base.getindex(c::Circuit{N}, i::Integer) where {N}
-    1 <= i <= length(c.cgc.gates) || throw(BoundsError(S, i))
-    return c.cgc.gates[i]
+    1 <= i <= length(c.cgc.moments) || throw(BoundsError(c, i))
+    return c.cgc.moments[i]
 end
 
 function Base.iterate(c::Circuit{N}, state=1) where {N}
-    return state > length(c.cgc.gates) ? nothing : (c.cgc[state], state+1)
+    return state > length(c.cgc.moments) ? nothing : (c.cgc[state], state+1)
 end
 
 # implement methods required for iteration
@@ -278,7 +363,7 @@ function Base.firstindex(c::Circuit{N}) where {N}
 end
 
 function Base.lastindex(c::Circuit{N}) where {N}
-    return length(c.cgc.gates)
+    return length(c.cgc.moments)
 end
 
 function distribution(c::Circuit{N}, ψ::AbstractVector) where {N}
