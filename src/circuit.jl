@@ -124,7 +124,7 @@ Represents an intermediary state within a given circuit. `N` is the overall numb
 
 abstract type AbstractMoment{N} end
 
-struct Moment{N} <: AbstractMoment{N}
+mutable struct Moment{N} <: AbstractMoment{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
     function Moment{N}(g::AbstractCircuitGate{N}) where {N}
         new([g])
