@@ -94,12 +94,14 @@ function wire_enum(N::Int)
     return wires, gaps
 end
 
-function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
+function Base.show(io::IO, m::Moment{N}) where {N}
     w, g = wire_enum(N)
     i = Int[]
+    w = w .* "...|"
+    g = g .* "   |"
     nw = fill("——————", N)
     ng = fill("      ", N-1)
-    for gate in c
+    for gate in m
         r = min(gate.iwire...):max(gate.iwire...)
         if length(intersect(i, r)) == 0
             i = union(i, r)
@@ -111,6 +113,36 @@ function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
             nw = fill("——————", N)
             ng = fill("      ", N-1)
             nw, ng = updatecol(gate, nw, ng)
+        end
+    end
+    w = w .* nw .* "|..."
+    g = g .* ng .* "|   "
+    circuit = interleave(w, g)
+    println(io, "")
+    for c in circuit
+        println(io, c)
+    end
+end
+
+function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
+    w, g = wire_enum(N)
+    i = Int[]
+    nw = fill("——————", N)
+    ng = fill("      ", N-1)
+    for moment in c
+        for gate in moment
+            r = min(gate.iwire...):max(gate.iwire...)
+            if length(intersect(i, r)) == 0
+                i = union(i, r)
+                nw, ng = updatecol(gate, nw, ng)
+            else
+                i = r
+                w = w .* nw
+                g = g .* ng
+                nw = fill("——————", N)
+                ng = fill("      ", N-1)
+                nw, ng = updatecol(gate, nw, ng)
+            end
         end
     end
     w = w .* nw
