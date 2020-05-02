@@ -188,6 +188,9 @@ function Base.lastindex(cgc::CircuitGateChain{N}) where {N}
     return length(cgc.gates)
 end
 
+function Base.length(cgc::CircuitGateChain{N}) where {N}
+    return length(cgc.gates)
+end
 
 """
     comm(A, B)
