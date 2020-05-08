@@ -42,6 +42,8 @@ function Base.isapprox(cg1::CircuitGate{M, N, G}, cg2::CircuitGate{M, N, G}) whe
     return true
 end
 
+LinearAlgebra.ishermitian(cg::CircuitGate) = LinearAlgebra.ishermitian(cg.gate)
+
 function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     # convert to array
     iwire = collect(cg.iwire)
