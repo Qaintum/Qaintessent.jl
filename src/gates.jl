@@ -170,7 +170,13 @@ function matrix(g::RotationGate)
     cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
-ishermitian(::RotationGate) = false
+function ishermitian(g::RotationGate)
+    if norm(g.nθ + g.nθ) < eps()
+        return true
+    end
+    return false
+end
+
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 

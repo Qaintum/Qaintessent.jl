@@ -21,6 +21,13 @@ end
         @test Qaintessent.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
     end
 
+    θ = 6π
+    for g in [RxGate(θ), RyGate(θ), RzGate(θ), PhaseShiftGate(θ)]
+        @test isunitary(g)
+        gdag = adjoint(g)
+        @test Qaintessent.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
+    end
+
     @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
     @test Qaintessent.matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.matrix(RyGate(θ))
     @test Qaintessent.matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.matrix(RzGate(θ))
