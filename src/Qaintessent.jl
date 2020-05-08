@@ -25,8 +25,7 @@ export
     PhaseShiftGate,
     SwapGate,
     ControlledGate,
-    controlled_not,
-    ishermitian
+    controlled_not
 
 
 include("circuit.jl")
