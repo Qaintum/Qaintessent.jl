@@ -17,6 +17,15 @@ end
 
     for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ), controlled_not()]
         @test isunitary(g)
+        gdag = adjoint(g)
+        @test LinearAlgebra.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
+    end
+
+    θ = 6π
+    for g in [RxGate(θ), RyGate(θ), RzGate(θ), PhaseShiftGate(θ)]
+        @test isunitary(g)
+        gdag = adjoint(g)
+        @test LinearAlgebra.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
     end
 
     @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
