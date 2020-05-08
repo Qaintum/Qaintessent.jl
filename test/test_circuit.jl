@@ -29,6 +29,22 @@ end
 end
 
 @testset ExtendedTestSet "circuit gates" begin
+    θ = 0.7*π
+    ϕ = 0.4*π
+    n = randn(3); n /= norm(n)
+
+    # single qubit gates
+    for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        cg = CircuitGate((2,), g, 3)
+        @test LinearAlgebra.ishermitian(cg) == (Qaintessent.matrix(cg) == Qaintessent.matrix(adjoint(cg)))
+    end
+
+    # two qubit gates
+    for g in [controlled_not()]
+        cg = CircuitGate((2, 3), g, 3)
+        @test LinearAlgebra.ishermitian(cg) == (Qaintessent.matrix(cg) == Qaintessent.matrix(adjoint(cg)))
+    end
+
     # Y acting on second wire
     cg = CircuitGate((2,), Y, 3)
     @test Qaintessent.matrix(cg) ≈ kron(kron(Matrix(I, 2, 2), Qaintessent.matrix(Y)), Matrix(I, 2, 2))
