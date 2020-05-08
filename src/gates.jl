@@ -1,3 +1,4 @@
+using LinearAlgebra
 
 """
     pauli_vector(x, y, z)
@@ -25,6 +26,10 @@ matrix(::XGate) = [0.  1.; 1.  0.]
 matrix(::YGate) = [0. -im; im  0.]
 matrix(::ZGate) = [1.  0.; 0. -1.]
 
+LinearAlgebra.ishermitian(::XGate) = true
+LinearAlgebra.ishermitian(::YGate) = true
+LinearAlgebra.ishermitian(::ZGate) = true
+
 # Pauli matrices are Hermitian
 Base.adjoint(X::XGate) = X
 Base.adjoint(Y::YGate) = Y
@@ -42,6 +47,7 @@ struct HadamardGate <: AbstractGate{1} end
 
 matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
 
+LinearAlgebra.ishermitian(::HadamardGate) = true
 # Hadamard gate is Hermitian
 Base.adjoint(H::HadamardGate) = H
 
@@ -59,6 +65,12 @@ matrix(::TGate) = [1. 0.; 0. exp(im*π/4)]
 
 matrix(::SdagGate) = [1. 0.; 0. -im]
 matrix(::TdagGate) = [1. 0.; 0. exp(-im*π/4)]
+
+LinearAlgebra.ishermitian(::SGate) = false
+LinearAlgebra.ishermitian(::TGate) = false
+
+LinearAlgebra.ishermitian(::SdagGate) = false
+LinearAlgebra.ishermitian(::TdagGate) = false
 
 Base.adjoint(::SGate) = SdagGate()
 Base.adjoint(::TGate) = TdagGate()
@@ -83,6 +95,13 @@ function matrix(g::RxGate)
     [c -im*s; -im*s c]
 end
 
+function LinearAlgebra.ishermitian(g::RxGate)
+    if mod2pi(g.θ[]) < eps()
+        return true
+    end
+    return false
+end
+
 struct RyGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
@@ -97,6 +116,13 @@ function matrix(g::RyGate)
     [c -s; s c]
 end
 
+function LinearAlgebra.ishermitian(g::RyGate)
+    if mod2pi(g.θ[]) < eps()
+        return true
+    end
+    return false
+end
+
 struct RzGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
@@ -107,6 +133,13 @@ end
 
 function matrix(g::RzGate)
     [exp(-im*g.θ[]/2) 0; 0 exp(im*g.θ[]/2)]
+end
+
+function LinearAlgebra.ishermitian(g::RzGate)
+    if mod2pi(g.θ[]) < eps()
+        return true
+    end
+    return false
 end
 
 Base.adjoint(g::RxGate) = RxGate(-g.θ[])
@@ -138,6 +171,13 @@ function matrix(g::RotationGate)
     cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
+function LinearAlgebra.ishermitian(g::RotationGate)
+    if norm(g.nθ + g.nθ) < eps()
+        return true
+    end
+    return false
+end
+
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 
@@ -153,7 +193,15 @@ end
 
 matrix(g::PhaseShiftGate) = [1 0; 0 exp(im*g.ϕ[])]
 
+function LinearAlgebra.ishermitian(g::PhaseShiftGate)
+    if g.ϕ[] == 0
+        return true
+    end
+    return false
+end
+
 Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
+
 
 
 # swap gate
@@ -163,7 +211,9 @@ struct SwapGate <: AbstractGate{2} end
 matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 
 # swap gate is Hermitian
+LinearAlgebra.ishermitian(::SwapGate) = true
 Base.adjoint(s::SwapGate) = s
+
 
 
 # general controlled gate
@@ -185,6 +235,9 @@ function matrix(g::ControlledGate{M,N}) where {M,N}
     return CU
 end
 
+function LinearAlgebra.ishermitian(g::ControlledGate{M,N}) where {M,N}
+    return LinearAlgebra.ishermitian(g.U)
+end
 Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
 
 controlled_not() = ControlledGate{1,2}(X)
