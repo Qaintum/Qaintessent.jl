@@ -313,6 +313,7 @@ Pairwise commuting measurement operators (Hermitian matrices).
 """
 struct MeasurementOps{N}
     mops::AbstractVector{<:AbstractMatrix}
+    cgs::AbstractVector{<:CircuitGate}
 
     function MeasurementOps{N}(mop::AbstractMatrix) where {N}
         # TODO: support general "qudits"
@@ -336,6 +337,35 @@ struct MeasurementOps{N}
         end
         new(mops)
     end
+
+    function MeasurementOps{N}(cg::CircuitGate) where {N}
+        # TODO: support general "qudits"
+        d = 2
+        # consistency checks
+        mop = matrix(cg)
+        size(mop) == (d^N, d^N) || error("Measurement operator must be a 2^N × 2^N matrix.")
+        mop ≈ Base.adjoint(mop) || error("Measurement operator must be Hermitian.")
+        new([mop], [cg])
+    end
+
+    function MeasurementOps{N}(cgs::AbstractVector{<:CircuitGate}) where {N}
+        # TODO: support general "qudits"
+        d = 2
+        # consistency checks
+        mops = AbstractMatrix[]
+        for cg in cgs
+            push!(mops, matrix(cg))
+        end
+        for m in mops
+            size(m) == (d^N, d^N) || error("Measurement operator must be a 2^N × 2^N matrix.")
+            m ≈ Base.adjoint(m) || error("Measurement operator must be Hermitian.")
+            for n in mops
+                norm(comm(m, n))/d^N < 1e-13 || error("Measurement operators must pairwise commute.")
+            end
+        end
+        new(mops, cgs)
+    end
+
 end
 
 
