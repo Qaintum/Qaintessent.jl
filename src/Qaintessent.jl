@@ -10,6 +10,8 @@ export
     X,
     Y,
     Z,
+    IGate,
+    IIGate,
     XGate,
     YGate,
     ZGate,
@@ -27,7 +29,6 @@ export
     ControlledGate,
     controlled_not
 
-
 include("circuit.jl")
 export
     AbstractCircuitGate,
@@ -43,6 +44,10 @@ export
     Circuit,
     distribution
 
+include("commute.jl")
+    export
+        comm
+
 include("apply.jl")
 export
     apply
@@ -54,5 +59,19 @@ export
 
 include("gradients.jl")
 include("view.jl")
+
+include("graphs.jl")
+export
+    Dag,
+    lshift,
+    rshift,
+    insert,
+    insert!,
+    remove,
+    remove!,
+    append!,
+    opt_hadamard,
+    opt_adjoint,
+    get_controls
 
 end
