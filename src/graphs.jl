@@ -65,7 +65,7 @@ end
 """
 
 mutable struct Dag
-    iwire::Union{AbstractVector{DagGate}, Nothing}
+    iwire::AbstractVector{Union{DagGate, Nothing}}
     function Dag(size::Integer)
         dgs = DagGate[]
         for i in 1:size
@@ -374,7 +374,7 @@ function hcxh_opt(d::RefDagGate)
     cntrl, wires = get_controls(d[].next.cg)
 
     con = RefDagGate[]
-    cg = controlled_circuit_gate(wires[1], cntrl[1], Z, length(d[].next.cg.iwire))
+    cg = controlled_circuit_gate(cntrl[1], wires[1], Z, length(d[].next.cg.iwire))
 
     d[].next.cg = cg
     c = d[].next.connected[1]
@@ -388,7 +388,7 @@ function hczh_opt(d::RefDagGate)
     cntrl, wires = get_controls(d[].next.cg)
 
     con = RefDagGate[]
-    cg = controlled_circuit_gate(wires[1], cntrl[1], X, length(d[].next.cg.iwire))
+    cg = controlled_circuit_gate(cntrl[1], wires[1], X, length(d[].next.cg.iwire))
 
     d[].next.cg = cg
     c = d[].next.connected[1]
@@ -487,4 +487,46 @@ function Base.show(io::IO, dag::Dag)
     for daggate in dag.iwire
         println(daggate)
     end
+end
+
+
+
+"""
+    append_gate!
+        cgs::AbstractVector{CircuitGate}
+        dg::DagGate
+"""
+    function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag, dg::DagGate) where {N}
+        for j in dg.cg.iwire
+            while !(dag.iwire[j].cg === dg.cg)
+                dag = append_gate!(cgs, dag, dag.iwire[j])
+            end
+            dag.iwire[j] = dag.iwire[j].next
+        end
+        push!(cgs, dg.cg)
+        return dag
+    end
+
+"""
+    CircuitGateChain
+        dag::Dag
+
+    method to convert DAG back to a CGC
+"""
+
+function CircuitGateChain(dag_ref::Dag)
+    dag = deepcopy(dag_ref)
+    N = length(dag.iwire)
+    cgs = AbstractCircuitGate{N}[]
+
+    for i in 1:N
+        dag.iwire[i] = dag.iwire[i].next
+    end
+
+    for i in 1:N
+        while !isnothing(dag.iwire[i])
+            dag = append_gate!(cgs, dag, dag.iwire[i])
+        end
+    end
+    CircuitGateChain(cgs)
 end
