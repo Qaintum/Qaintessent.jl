@@ -74,4 +74,10 @@ export
     opt_adjoint,
     get_controls
 
+
+include("contraction_order.jl")
+export
+    tree_decomposition,
+    contraction_order
+    
 end
