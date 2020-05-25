@@ -30,18 +30,23 @@ using Qaintessent
         single_qubit_circuit_gate(2, Y, N),
     ])
     cgc1 = cgc(θ, ϕ, χ, ωn)
-    println(cgc1)
     meas(M) = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)])
 
     d = Dag(cgc1)
 
-    println(cgc2)
     d = opt_hadamard(d)
     d = opt_adjoint(d)
-    println("")
-    println(d)
 
     cgc = CircuitGateChain(d)
-    println(cgc)
+
+    cgc_refstring =
+        "\n" *
+        "    1 —[X ]—————————————\n" *
+        "        |               \n" *
+        "    2 ——•————[Z ]——[Y ]—\n"
+
+    io = IOBuffer()
+    show(io, cgc)
+    @test String(take!(io)) == cgc_refstring
 
 end
