@@ -46,7 +46,7 @@ export
 
 include("commute.jl")
     export
-        comm
+        iscommuting
 
 include("apply.jl")
 export
