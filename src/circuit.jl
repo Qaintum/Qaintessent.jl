@@ -179,6 +179,11 @@ function Base.isapprox(m1::Moment{N}, m2::Moment{N}) where {N}
     return true
 end
 
+function Base.reverse(m::Moment{N}) where {N}
+    m.gates = reverse(m.gates)
+    return m
+end
+
 
 """
     rdm(N, iwire, ψ, χ)
@@ -272,6 +277,11 @@ function Base.getindex(cgc::CircuitGateChain{N}, i::Integer) where {N}
     return cgc.moments[i]
 end
 
+function Base.setindex!(cgc::CircuitGateChain{N}, m::Moment{N}, i::Integer) where {N}
+    1 <= i <= length(cgc.moments) || throw(BoundsError(cgc, i))
+    cgc.moments[i] = m
+end
+
 function Base.iterate(cgc::CircuitGateChain{N}, state=1) where {N}
     return state > length(cgc.moments) ? nothing : (cgc[state], state+1)
 end
@@ -292,6 +302,14 @@ end
 function Base.:*(cgc1::CircuitGateChain{N}, cgc2::CircuitGateChain{N}) where {N}
     append!(cgc1.moments, cgc2.moments)
     return cgc1
+end
+
+function Base.reverse(cgc::CircuitGateChain{N}) where {N}
+    for i in length(cgc)
+        cgc[i] = reverse(cgc[i])
+    end
+    cgc.moments = reverse(cgc.moments)
+    return cgc
 end
 
 function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
