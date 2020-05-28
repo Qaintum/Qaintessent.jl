@@ -208,7 +208,7 @@ function check_comm(d1::RefDagGate, d2::RefDagGate)
     temp = d1[].prev
     d1cg = d1[].cg
     while !(d2[].cg === temp.cg)
-        if !comm(temp.cg,d1cg)
+        if !iscommuting(temp.cg,d1cg)
             return false
         end
         temp = temp.prev
@@ -324,30 +324,34 @@ end
     basic dag operations to move gates around. inserts d into given Dag representation
 
 """
+
+"""
 N = 1
-hadamard_inverse_cgc = CircuitGateChain{N}([single_qubit_circuit_gate(1,HadamardGate(),N),
-                                single_qubit_circuit_gate(1,HadamardGate(),N)])
+"""
+
+hadamard_inverse_cgc = CircuitGateChain{1}([single_qubit_circuit_gate(1, HadamardGate(), 1),
+                                single_qubit_circuit_gate(1, HadamardGate(), 1)])
 hadamard_inverse = Dag(hadamard_inverse_cgc).iwire[1].next
 
-hxh_cgc = CircuitGateChain{N}([single_qubit_circuit_gate(1,HadamardGate(),N),
-                                single_qubit_circuit_gate(1,X,N),
-                                single_qubit_circuit_gate(1,HadamardGate(),N)])
+hxh_cgc = CircuitGateChain{1}([single_qubit_circuit_gate(1, HadamardGate(), 1),
+                                single_qubit_circuit_gate(1, X, 1),
+                                single_qubit_circuit_gate(1, HadamardGate(), 1)])
 hxh = Dag(hxh_cgc).iwire[1].next
-hzh_cgc = CircuitGateChain{N}([single_qubit_circuit_gate(1,HadamardGate(),N),
-                                single_qubit_circuit_gate(1,Z,N),
-                                single_qubit_circuit_gate(1,HadamardGate(),N)])
+hzh_cgc = CircuitGateChain{1}([single_qubit_circuit_gate(1, HadamardGate(), 1),
+                                single_qubit_circuit_gate(1, Z, 1),
+                                single_qubit_circuit_gate(1, HadamardGate(), 1)])
 hzh = Dag(hzh_cgc).iwire[1].next
-
+"""
 N = 2
-
-hcxh_cgc = CircuitGateChain{N}([single_qubit_circuit_gate(1,HadamardGate(),N),
-                                controlled_circuit_gate((2),1,X,N),
-                                single_qubit_circuit_gate(1,HadamardGate(),N)])
+"""
+hcxh_cgc = CircuitGateChain{2}([single_qubit_circuit_gate(1, HadamardGate(), 2),
+                                controlled_circuit_gate((2), 1, X, 2),
+                                single_qubit_circuit_gate(1, HadamardGate(), 2)])
 hcxh = Dag(hcxh_cgc).iwire[1].next
 
-hczh_cgc = CircuitGateChain{N}([single_qubit_circuit_gate(1,HadamardGate(),N),
-                                controlled_circuit_gate((2),1,Z,N),
-                                single_qubit_circuit_gate(1,HadamardGate(),N)])
+hczh_cgc = CircuitGateChain{2}([single_qubit_circuit_gate(1, HadamardGate(), 2),
+                                controlled_circuit_gate((2), 1, Z, 2),
+                                single_qubit_circuit_gate(1, HadamardGate(), 2)])
 hczh = Dag(hczh_cgc).iwire[1].next
 
 function hadamard_inverse_opt(d::RefDagGate)
@@ -488,7 +492,6 @@ function Base.show(io::IO, dag::Dag)
         println(daggate)
     end
 end
-
 
 
 """
