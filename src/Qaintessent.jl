@@ -25,7 +25,8 @@ export
     PhaseShiftGate,
     SwapGate,
     ControlledGate,
-    controlled_not
+    controlled_not,
+    MatrixGate
 
 
 include("circuit.jl")
