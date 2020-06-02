@@ -14,17 +14,6 @@ function qft_circuit(N)
 end
 
 """
-    qfa_circuit(N)
-
-Construct the quantum fourier addition circuit for `N` qubits
-"""
-# TODO: Write unit-tests for qfa_circuit
-function qfa_circuit(N)
-    main = vcat([[controlled_circuit_gate(j, i+N, PhaseShiftGate(1/(2^i)), 2*N) for j in i:N] for i in 1:N]...)
-    CircuitGateChain{2*N}(main)
-end
-
-"""
     toffoli_circuit(cntrl, trg, N)
 
 Construct the decomposed toffoli circuit for `N` qubits based on Nielson and Chung's decomposition
@@ -379,7 +368,9 @@ function qcla_inplace_adder_circuit(N)
     # ## Teardown
     teardown = CircuitGate{<:Any, M, <:Any}[]
 
-    push!(teardown, controlled_circuit_gate( (a(0), b(0)), G(1), X, M))
+    if N > 1
+        push!(teardown, controlled_circuit_gate( (a(0), b(0)), G(1), X, M))
+    end
     push!(teardown, single_qubit_circuit_gate(b(0), X, M))
     for i in 1:N-2
         push!(teardown, controlled_circuit_gate(a(i), b(i), X, M))
