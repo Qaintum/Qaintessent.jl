@@ -33,14 +33,12 @@ end
     ψ = fill(0.0+0.0*im, 2^N)
     ψ[2^N-1] = 1.0
     ψ = apply(cgc, ψ)
-    println(ψ)
     result = findmax(real.(ψ))[2]
     @test result == 2^N
 
     ψ = fill(0.0+0.0*im, 2^N)
     ψ[2^N] = 1.0
     ψ = apply(cgc, ψ)
-    println(ψ)
     result = findmax(real.(ψ))[2]
     @test result == 2^N-1
 
@@ -77,20 +75,21 @@ end
 
         a = abs(rand(Int, 1)[])%(2^N)
         b = abs(rand(Int, 1)[])%(2^N)
+        for a in 1:2^N-1
+            index = b << N + a
+            ψ = fill(0.0+0.0*im, 2^M)
 
-        index = b << N + a
-        ψ = fill(0.0+0.0*im, 2^M)
+            ψ[index+1] = 1.0
 
-        ψ[index+1] = 1.0
-
-        ψ = apply(cgc, ψ)
-        answer = (findall(x->x==1, ψ)[1] - 1) >> 2N
-        @test answer == a+b
+            ψ = apply(cgc, ψ)
+            answer = (findall(x->x==1, ψ)[1] - 1) >> 2N
+            @test answer == a+b
+        end
     end
 end
 
 @testset ExtendedTestSet "qcla in place adder test" begin
-    for N in 1:5
+    for N in 1:6
         n = 1
         anc= 0
         while 2^n < N
@@ -110,6 +109,8 @@ end
 
         ψ = apply(cgc, ψ)
         answer = (findall(x->x==1, ψ)[1] - 1) >> N
+        println("Testing: " * string(a) * " + " * string(b))
         @test answer == a+b
+
     end
 end
