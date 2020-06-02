@@ -18,6 +18,7 @@ end
 
 Construct the quantum fourier addition circuit for `N` qubits
 """
+# TODO: Write unit-tests for qfa_circuit
 function qfa_circuit(N)
     main = vcat([[controlled_circuit_gate(j, i+N, PhaseShiftGate(1/(2^i)), 2*N) for j in i:N] for i in 1:N]...)
     CircuitGateChain{2*N}(main)
@@ -48,27 +49,6 @@ function toffoli_circuit(cntrl::Tuple{Int, Int} , trg::Int, N::Int)
             controlled_circuit_gate(cntrl[1], cntrl[2], X, N),
             ]
     CircuitGateChain{N}(main)
-end
-
-"""
-    mod5_circuit(N)
-
-Construct the mod5 circuit for `5` qubits. Based on circuit on
-    D. Maslov, “Reversible logic synthesis http://webhome.cs.uvic.ca/dmaslov/“
-"""
-function mod5_circuit()
-    N = 5
-    main1 = CircuitGateChain{N}([
-        controlled_circuit_gate(1, 3, X, N),
-        controlled_circuit_gate(2, 4, X, N),
-        ])
-    main2 = toffoli_circuit((3,4), 5, N)
-    main3 = CircuitGateChain{N}([
-        controlled_circuit_gate(3, 4, X, N),
-        controlled_circuit_gate(4, 5, X, N),
-        ])
-
-    return main1*main2*main3
 end
 
 """
@@ -412,97 +392,4 @@ function qcla_inplace_adder_circuit(N)
     return cgc
 end
 
-# """
-#     qcla_comparator_circuit(N)
-#
-# Create circuit for QCLA comparator for 2 integers represented by `N` qubits.
-# Based on quantum carry-lookahead comparator circuit on Draper et. al in quant-ph/0406142
-# """
-#
-# function qcla_comparator_circuit(N)
-#
-#     n = 1
-#     anc = N - floor(Int, log(2, N-1)) - 2
-#     M = 3N + anc
-#
-#     function a(m::Int)
-#         m < N || error("a only takes m < N")
-#         M - m
-#     end
-#
-#     function b(m::Int)
-#         m < N || error("b only takes m < N")
-#         M - N - m
-#     end
-#
-#     function G(m::Int)
-#         m > 0 || error("G only takes positive integers")
-#         anc + m
-#     end
-#
-#     function s(m::Int)
-#         m <= N || error("a only takes m <= N")
-#         if m < N
-#             return b(m)
-#         end
-#         G(m)
-#     end
-#
-#     function P(l::Int, m::Int)
-#         if l == 0
-#             return b(m)
-#         end
-#
-#         while l > 1
-#             m += floor(Int, N/2^(l-1)-1)
-#             l -= 1
-#         end
-#         m
-#     end
-#
-#     # setup
-#     setup = CircuitGate{<:Any, M, <:Any}[]
-#         push!(setup, single_qubit_circuit_gate(a(0), X, M))
-#         push!(setup, controlled_circuit_gate((a(0), b(0)), G(1), X, M))
-#     for i in 1:N-1
-#         push!(setup, single_qubit_circuit_gate(a(i), X, M))
-#         push!(setup, controlled_circuit_gate((a(i), b(i)), G(i+1), X, M))
-#         push!(setup, controlled_circuit_gate(a(i), b(i), X, M))
-#     end
-#
-#     setup = CircuitGateChain{M}(setup)
-#
-#     # Add gates for P rounds
-#     pchain = p_round(P, M, N)
-#     cgc = CircuitGateChain{M}(pchain)
-#
-#     # Add gates for G rounds
-#     gchain = g_round(P, G, M, N)
-#     cgc *= CircuitGateChain{M}(gchain)
-#
-#     if N > 1
-#         gchain2 = g_round(P, G, M, N, N-1)
-#     else
-#         gchain2 = CircuitGate{<:Any, M, <:Any}[]
-#     end
-#
-#     cgc *= CircuitGateChain{M}(reverse(gchain2)) * CircuitGateChain{M}(reverse(pchain))
-#
-#     # Run intermediate circuit
-#     teardown = CircuitGate{<:Any, M, <:Any}[]
-#     push!(teardown, controlled_circuit_gate((a(0), b(0)), G(1), X, M))
-#     push!(teardown, single_qubit_circuit_gate(a(0), X, M))
-#     for i in 1:N-2
-#         push!(teardown, controlled_circuit_gate((a(i), b(i)), G(i+1), X, M))
-#         push!(teardown, controlled_circuit_gate(a(i), b(i), X, M))
-#         push!(teardown, single_qubit_circuit_gate(a(i), X, M))
-#     end
-#     if N > 1
-#         push!(teardown, controlled_circuit_gate(a(N-1), b(N-1), X, M))
-#         push!(teardown, single_qubit_circuit_gate(a(N-1), X, M))
-#     end
-#     push!(teardown, single_qubit_circuit_gate(G(N), X, M))
-#
-#     cgc = setup * cgc * CircuitGateChain{M}(teardown)
-#     return cgc
-# end
+# TODO: Add comparator circuit for QCLA adder

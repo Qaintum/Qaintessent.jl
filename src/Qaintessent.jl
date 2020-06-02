@@ -54,8 +54,7 @@ export
     toffoli_circuit,
     vbe_adder_circuit,
     qcla_out_adder_circuit,
-    qcla_inplace_adder_circuit,
-    qcla_comparator_circuit
+    qcla_inplace_adder_circuit
 
 include("gradients.jl")
 include("view.jl")
