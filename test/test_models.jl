@@ -3,9 +3,11 @@ using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
 
+
 function isunitary(cb::CircuitGateChain)
     Qaintessent.matrix(cb) * Qaintessent.matrix(Base.adjoint(cb)) ≈ I
 end
+
 
 @testset ExtendedTestSet "quantum Fourier transform" begin
     for N in 1:4
@@ -18,31 +20,17 @@ end
     end
 end
 
+
 @testset ExtendedTestSet "toffoli circuit test" begin
     N = 3
-    cgc = toffoli_circuit((1,2), 3, N)
+    cgc = toffoli_circuit((1, 2), 3, N)
 
-    for i in 1:2^N-2
-        ψ = fill(0.0+0.0*im, 2^N)
-        ψ[i] = 1.0
-        ψ = apply(cgc, ψ)
-        result = findmax(real.(ψ))[2]
-        @test result == i
-    end
+    # reference
+    toffoli = ControlledGate{1,N}(X)
 
-    ψ = fill(0.0+0.0*im, 2^N)
-    ψ[2^N-1] = 1.0
-    ψ = apply(cgc, ψ)
-    result = findmax(real.(ψ))[2]
-    @test result == 2^N
-
-    ψ = fill(0.0+0.0*im, 2^N)
-    ψ[2^N] = 1.0
-    ψ = apply(cgc, ψ)
-    result = findmax(real.(ψ))[2]
-    @test result == 2^N-1
-
+    @test Qaintessent.matrix(toffoli) ≈ Qaintessent.matrix(cgc)
 end
+
 
 @testset ExtendedTestSet "vbe adder test" begin
     for N in 1:4
@@ -61,10 +49,11 @@ end
     end
 end
 
+
 @testset ExtendedTestSet "qcla out of place adder test" begin
     for N in 1:5
         n = 1
-        anc= 0
+        anc = 0
         while 2^n < N
             anc += N ÷ 2^n -1
             n += 1
@@ -87,6 +76,7 @@ end
         end
     end
 end
+
 
 @testset ExtendedTestSet "qcla in place adder test" begin
     for N in 1:6

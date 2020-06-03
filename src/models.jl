@@ -16,35 +16,33 @@ end
 """
     toffoli_circuit(cntrl, trg, N)
 
-Construct the decomposed toffoli circuit for `N` qubits based on Nielson and Chung's decomposition
+Construct the circuit for decomposing the Toffoli gate in Figure 4.9 of the Nielsen and Chuang textbook.
 """
-
-function toffoli_circuit(cntrl::Tuple{Int, Int} , trg::Int, N::Int)
-    main = [
-            single_qubit_circuit_gate(trg, HadamardGate(),N),
-            controlled_circuit_gate(cntrl[2], trg, X, N),
-            single_qubit_circuit_gate(trg, TdagGate(),N),
-            controlled_circuit_gate(cntrl[1], trg, X, N),
-            single_qubit_circuit_gate(trg, TGate(),N),
-            controlled_circuit_gate(cntrl[2], trg, X, N),
-            single_qubit_circuit_gate(trg, TdagGate(),N),
-            controlled_circuit_gate(cntrl[1], trg, X, N),
-            single_qubit_circuit_gate(trg, TGate(),N),
-            single_qubit_circuit_gate(cntrl[2], TGate(),N),
-            controlled_circuit_gate(cntrl[1], cntrl[2], X, N),
-            single_qubit_circuit_gate(trg, HadamardGate(),N),
-            single_qubit_circuit_gate(cntrl[1], TGate(),N),
-            single_qubit_circuit_gate(cntrl[2], TdagGate(),N),
-            controlled_circuit_gate(cntrl[1], cntrl[2], X, N),
-            ]
-    CircuitGateChain{N}(main)
+function toffoli_circuit(cntrl::Tuple{<:Integer, <:Integer} , trg::Integer, N::Integer)
+    CircuitGateChain{N}([
+        single_qubit_circuit_gate(trg,                HadamardGate(), N),
+        controlled_circuit_gate(  cntrl[2], trg,      X,              N),
+        single_qubit_circuit_gate(trg,                TdagGate(),     N),
+        controlled_circuit_gate(  cntrl[1], trg,      X,              N),
+        single_qubit_circuit_gate(trg,                TGate(),        N),
+        controlled_circuit_gate(  cntrl[2], trg,      X,              N),
+        single_qubit_circuit_gate(trg,                TdagGate(),     N),
+        controlled_circuit_gate(  cntrl[1], trg,      X,              N),
+        single_qubit_circuit_gate(trg,                TGate(),        N),
+        single_qubit_circuit_gate(cntrl[2],           TGate(),        N),
+        controlled_circuit_gate(  cntrl[1], cntrl[2], X,              N),
+        single_qubit_circuit_gate(trg,                HadamardGate(), N),
+        single_qubit_circuit_gate(cntrl[1],           TGate(),        N),
+        single_qubit_circuit_gate(cntrl[2],           TdagGate(),     N),
+        controlled_circuit_gate(  cntrl[1], cntrl[2], X,              N),
+    ])
 end
 
 """
     vbe_adder_circuit(N)
 
 Construct an in-place adder for 2 integers represented by `N` qubits.
-Based on ripple-carry adder circuit on Vedral et. al in quant-ph/9511018“
+Based on ripple-carry adder circuit in Vedral et. al (Phys. Rev. A 54, 147 (1996), arXiv:quant-ph/9511018)
     Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
     If the two added integers are represented as:
         A = a0*1 + a1*2 + a2*4 + .. + aN*2^N
@@ -57,7 +55,7 @@ Based on ripple-carry adder circuit on Vedral et. al in quant-ph/9511018“
     The output index will be in the form a0a1a2...aNc0c1c2...cN where
         C = (A+B) % (2^N + 1) = c0*1 + c1*2 + c2*4 + ... + cN*2^N
 """
-function vbe_adder_circuit(N)
+function vbe_adder_circuit(N::Integer)
     M = 3*N + 1
     carry(a,b,c,d) = CircuitGateChain{M}(
     [
@@ -100,7 +98,7 @@ end
     p_round(P, M, N)
         execute a P round for qcla algorithms
 """
-function p_round(P::Function, M::Int, N::Int)
+function p_round(P::Function, M::Integer, N::Integer)
     # Add gates for P rounds
     pchain = CircuitGate{<:Any, M, <:Any}[]
     tmax = floor(Int, log(2, N)) - 1
@@ -113,7 +111,7 @@ function p_round(P::Function, M::Int, N::Int)
     return pchain
 end
 
-function p_round(P::Function, M::Int, N::Int, Ñ::Int)
+function p_round(P::Function, M::Integer, N::Integer, Ñ::Integer)
     # Add gates for P rounds
     pchain = CircuitGate{<:Any, M, <:Any}[]
     tmax = floor(Int, log(2, Ñ)) - 1
@@ -130,7 +128,7 @@ end
     g_round(P, M, N)
         execute a P round for qcla algorithms
 """
-function g_round(P::Function, G::Function, M::Int, N::Int)
+function g_round(P::Function, G::Function, M::Integer, N::Integer)
     # Add gates for G rounds
     gchain = CircuitGate{<:Any, M, <:Any}[]
     tmax = floor(Int, log(2, N))
@@ -143,7 +141,7 @@ function g_round(P::Function, G::Function, M::Int, N::Int)
     return gchain
 end
 
-function g_round(P::Function, G::Function, M::Int, N::Int, Ñ::Int)
+function g_round(P::Function, G::Function, M::Integer, N::Integer, Ñ::Integer)
     # Add gates for G rounds
     gchain = CircuitGate{<:Any, M, <:Any}[]
     tmax = floor(Int, log(2, Ñ))
@@ -159,7 +157,7 @@ end
 """
     c_round(P, G, M, N)
 """
-function c_round(P::Function, G::Function, M::Int, N::Int)
+function c_round(P::Function, G::Function, M::Integer, N::Integer)
     cchain = CircuitGate{<:Any, M, <:Any}[]
     tmax = floor(Int, log(2, 2N/3))
     for t in tmax:-1:1
@@ -171,7 +169,7 @@ function c_round(P::Function, G::Function, M::Int, N::Int)
     return cchain
 end
 
-function c_round(P::Function, G::Function, M::Int, N::Int, Ñ::Int)
+function c_round(P::Function, G::Function, M::Integer, N::Integer, Ñ::Integer)
     cchain = CircuitGate{<:Any, M, <:Any}[]
     tmax = floor(Int, log(2, 2Ñ/3))
     for t in tmax:-1:1
@@ -187,9 +185,8 @@ end
     qcla_out_adder_circuit(N)
 
 Specify wire functions for an out-of-place adder for 2 integers represented by `N` qubits.
-Based on quantum carry-lookahead adder circuit on Draper et. al in quant-ph/0406142
+Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
 """
-
 function qcla_out_adder_circuit(N)
 
     n = 1
@@ -200,23 +197,23 @@ function qcla_out_adder_circuit(N)
     end
     M = 3N + anc + 1
 
-    function a(m::Int)
+    function a(m::Integer)
         M - m
     end
 
-    function b(m::Int)
+    function b(m::Integer)
         M - N - m
     end
 
-    function s(m::Int)
+    function s(m::Integer)
         M - 2N - m
     end
 
-    function G(m::Int)
+    function G(m::Integer)
         s(m)
     end
 
-    function P(l::Int, m::Int)
+    function P(l::Integer, m::Integer)
         if l == 0
             return b(m)
         end
@@ -270,9 +267,8 @@ end
     qcla_inplace_adder_circuit(N)
 
 Specify wire functions for an out-of-place adder for 2 integers represented by `N` qubits.
-Based on quantum carry-lookahead adder circuit on Draper et. al in quant-ph/0406142
+Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
 """
-
 function qcla_inplace_adder_circuit(N)
 
     n = 1
@@ -283,22 +279,22 @@ function qcla_inplace_adder_circuit(N)
     end
     M = 3N + anc
 
-    function a(m::Int)
+    function a(m::Integer)
         m < N || error("a only takes m < N")
         M - m
     end
 
-    function b(m::Int)
+    function b(m::Integer)
         m < N || error("b only takes m < N")
         M - N - m
     end
 
-    function G(m::Int)
+    function G(m::Integer)
         m > 0 || error("G only takes positive integers")
         anc + m
     end
 
-    function s(m::Int)
+    function s(m::Integer)
         m <= N || error("a only takes m <= N")
         if m < N
             return b(m)
@@ -306,7 +302,7 @@ function qcla_inplace_adder_circuit(N)
         G(m)
     end
 
-    function P(l::Int, m::Int)
+    function P(l::Integer, m::Integer)
         if l == 0
             return b(m)
         end
