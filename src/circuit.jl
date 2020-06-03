@@ -2,7 +2,7 @@
 """
     AbstractCircuitGate{N}
 
-Abtract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
+Abstract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
 """
 abstract type AbstractCircuitGate{N} end
 
@@ -119,12 +119,13 @@ function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M
 end
 
 """
-    Moment{N}
+    AbstractMoment{N}
 
-Represents an intermediary state within a given circuit. `N` is the overall number of quantum "wires" of the circuit.
+Represents an intermediate state within a given circuit.
+`N` is the overall number of quantum "wires" of the circuit.
 """
-
 abstract type AbstractMoment{N} end
+
 
 mutable struct Moment{N} <: AbstractMoment{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
@@ -238,7 +239,7 @@ Chain of quantum circuit gates.
 """
 mutable struct CircuitGateChain{N}
     moments::AbstractVector{<:AbstractMoment{N}}
-    # gates::AbstractVector{<:AbstractCircuitGate{N}}
+
     function CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
         moments = map(Moment{N}, gates)
         new(moments)
@@ -246,15 +247,6 @@ mutable struct CircuitGateChain{N}
 
     function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
         new(moments)
-    end
-
-    function CircuitGateChain(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
-        moments = map(Moment{N}, gates)
-        new{N}(moments)
-    end
-
-    function CircuitGateChain(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
-        new{N}(moments)
     end
 end
 
