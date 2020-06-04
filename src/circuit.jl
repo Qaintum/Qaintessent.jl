@@ -7,9 +7,6 @@ Abstract unitary quantum circuit gate. `N` is the overall number of quantum "wir
 abstract type AbstractCircuitGate{N} end
 
 
-"utility function for enumerating cartesian tuples"
-cartesian_tuples(d::Integer, N::Integer) = Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
-
 struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "ordered wire indices which this gate acts on"
     iwire::NTuple{M, <:Integer}
@@ -307,13 +304,6 @@ end
 function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     append!(cgc.moments, Moment([g]))
 end
-
-"""
-    comm(A, B)
-
-Matrix commutator [A, B].
-"""
-comm(A::AbstractMatrix, B::AbstractMatrix) = A*B - B*A
 
 
 """

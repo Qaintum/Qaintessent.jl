@@ -1,12 +1,5 @@
 using LinearAlgebra
 
-"""
-    pauli_vector(x, y, z)
-
-Assemble the "Pauli vector" matrix.
-"""
-pauli_vector(x, y, z) = [z x-im*y; x+im*y -z]
-
 
 """
     AbstractGate{N}

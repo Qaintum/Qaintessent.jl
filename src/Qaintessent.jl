@@ -4,6 +4,8 @@ using LinearAlgebra
 using SparseArrays
 
 
+include("util.jl")
+
 include("gates.jl")
 export
     AbstractGate,
@@ -47,6 +49,12 @@ export
 include("apply.jl")
 export
     apply
+
+include("density_matrix.jl")
+export
+    DensityMatrix,
+    pauli_group_matrix,
+    density_from_statevector
 
 include("models.jl")
 export
