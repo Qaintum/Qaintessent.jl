@@ -221,13 +221,11 @@ end
 """
     apply(cgc, ψ)
 
-Apply CircuitGateChain to quantum state vector
+Apply CircuitGateChain to quantum state vector.
 """
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
-    for moment in cgc.moments
-        for gate in moment
-            ψ = apply(gate, ψ)
-        end
+    for m in cgc.moments
+        ψ = apply(m, ψ)
     end
     return ψ
 end
@@ -244,3 +242,146 @@ function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
 end
 
 (c::Circuit)(ψ) = apply(c, ψ)
+
+
+"""Tailored apply to density matrix for XGate"""
+function apply!(ρ::DensityMatrix{N}, cg::CircuitGate{1,N,XGate}) where {N}
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+        # X I X =  I,
+        # X X X =  X,
+        # X Y X = -Y,
+        # X Z X = -Z
+        if pt[j] == 2 || pt[j] == 3
+            ρ.v[i] *= -1
+        end
+    end
+    return ρ
+end
+
+"""Tailored apply to density matrix for XGate"""
+function apply(cg::CircuitGate{1,N,XGate}, ρ::DensityMatrix{N}) where {N}
+    ρ = DensityMatrix{N}(copy(ρ.v))
+    apply!(ρ, cg)
+    return ρ
+end
+
+
+"""Tailored apply to density matrix for YGate"""
+function apply!(ρ::DensityMatrix{N}, cg::CircuitGate{1,N,YGate}) where {N}
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+        # Y I Y =  I,
+        # Y X Y = -X,
+        # Y Y Y =  Y,
+        # Y Z Y = -Z
+        if pt[j] == 1 || pt[j] == 3
+            ρ.v[i] *= -1
+        end
+    end
+    return ρ
+end
+
+"""Tailored apply to density matrix for YGate"""
+function apply(cg::CircuitGate{1,N,YGate}, ρ::DensityMatrix{N}) where {N}
+    ρ = DensityMatrix{N}(copy(ρ.v))
+    apply!(ρ, cg)
+    return ρ
+end
+
+
+"""Tailored apply to density matrix for ZGate"""
+function apply!(ρ::DensityMatrix{N}, cg::CircuitGate{1,N,ZGate}) where {N}
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+        # Z I Z =  I,
+        # Z X Z = -X,
+        # Z Y Z = -Y,
+        # Z Z Z =  Z
+        if pt[j] == 1 || pt[j] == 2
+            ρ.v[i] *= -1
+        end
+    end
+    return ρ
+end
+
+"""Tailored apply to density matrix for ZGate"""
+function apply(cg::CircuitGate{1,N,ZGate}, ρ::DensityMatrix{N}) where {N}
+    ρ = DensityMatrix{N}(copy(ρ.v))
+    apply!(ρ, cg)
+    return ρ
+end
+
+
+"""Tailored apply to density matrix for HadamardGate"""
+function apply(cg::CircuitGate{1,N,HadamardGate}, ρ::DensityMatrix{N}) where {N}
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    jbasefac = 4^(j-1)
+    v = similar(ρ.v)
+    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+        if pt[j] == 0
+            # H I H = I
+            v[i] = ρ.v[i]
+        elseif pt[j] == 1
+            # H Z H = X
+            v[i] = ρ.v[i+2*jbasefac]
+        elseif pt[j] == 2
+            # H Y H = -Y
+            v[i] = -ρ.v[i]
+        elseif pt[j] == 3
+            # H X H = Z
+            v[i] = ρ.v[i-2*jbasefac]
+        end
+    end
+    return DensityMatrix{N}(v)
+end
+
+
+"""Tailored apply to density matrix for SGate"""
+function apply(cg::CircuitGate{1,N,SGate}, ρ::DensityMatrix{N}) where {N}
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    jbasefac = 4^(j-1)
+    v = similar(ρ.v)
+    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+        if pt[j] == 0 || pt[j] == 3
+            # S I S^† = I,
+            # S Z S^† = Z
+            v[i] = ρ.v[i]
+        elseif pt[j] == 1
+            # S Y S^† = -X
+            v[i] = -ρ.v[i+jbasefac]
+        elseif pt[j] == 2
+            # S X S^† = Y
+            v[i] = ρ.v[i-jbasefac]
+        end
+    end
+    return DensityMatrix{N}(v)
+end
+
+
+"""Tailored apply to density matrix for SdagGate"""
+function apply(cg::CircuitGate{1,N,SdagGate}, ρ::DensityMatrix{N}) where {N}
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    jbasefac = 4^(j-1)
+    v = similar(ρ.v)
+    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+        if pt[j] == 0 || pt[j] == 3
+            # S^† I S = I,
+            # S^† Z S = Z
+            v[i] = ρ.v[i]
+        elseif pt[j] == 1
+            # S^† Y S = X
+            v[i] = ρ.v[i+jbasefac]
+        elseif pt[j] == 2
+            # S^† X S = -Y
+            v[i] = -ρ.v[i-jbasefac]
+        end
+    end
+    return DensityMatrix{N}(v)
+end

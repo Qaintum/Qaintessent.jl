@@ -46,15 +46,15 @@ export
     Circuit,
     distribution
 
-include("apply.jl")
-export
-    apply
-
 include("density_matrix.jl")
 export
     DensityMatrix,
     pauli_group_matrix,
     density_from_statevector
+
+include("apply.jl")
+export
+    apply
 
 include("models.jl")
 export

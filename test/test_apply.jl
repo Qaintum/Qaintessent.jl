@@ -41,3 +41,19 @@ using Qaintessent
 
     @test apply(cg, ψ) ≈ apply(cga, ψ)
 end
+
+
+@testset ExtendedTestSet "density matrix apply" begin
+
+    N = 5
+    ψ = randn(ComplexF64, 2^N)
+    ρ = density_from_statevector(ψ)
+
+    for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate()]
+        cg = CircuitGate((rand(1:N),), g, N)
+        ψs = apply(cg, ψ)
+        ρsref = density_from_statevector(ψs)
+        ρs = apply(cg, ρ)
+        @test ρs.v ≈ ρsref.v
+    end
+end
