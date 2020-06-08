@@ -1,11 +1,13 @@
+const Edge = Tuple{Int64, Int64, Any}
+
 mutable struct MultiGraph
     nodes::AbstractVector{Any}                  # labels of the nodes
-    edges::AbstractVector{Tuple{Int, Int, Any}} # edges and their labels
+    edges::AbstractVector{Edge} # edges and their labels
     adj_node_node::AbstractVector{Set{Int}}     # adjacency between nodes
-    adj_node_edge::AbstractVector{Set{Tuple{Int, Int, Any}}} # adj. between nodes and edges
+    adj_node_edge::AbstractVector{Set{Edge}} # adj. between nodes and edges
 
     function MultiGraph()
-        return new(Any[], Tuple{Int, Int, Any}[], Set{Int}[], Set{Tuple{Int, Int, Any}}[])
+        return new(Any[], Edge[], Set{Int}[], Set{Edge}[])
     end
 
     function MultiGraph(nodes, edges)
@@ -25,7 +27,7 @@ Base.length(G::MultiGraph) = length(G.nodes)
 function add_node!(G, label)
     push!(G.nodes, label)
     push!(G.adj_node_node,Set{Int}())
-    push!(G.adj_node_edge,Set{Tuple{Int, Int, Any}}())
+    push!(G.adj_node_edge,Set{Edge}())
     nothing
 end
 
@@ -70,13 +72,49 @@ function simple_dag(cgc::CircuitGateChain{N}) where N
     return G
 end
 
-"""
-    line_graph(G::MultiGraph)
+function delete_repeated_edges(G::MultiGraph)
+    G = MultiGraph(G.nodes, G.edges)
+    total_repeated = Set{Edge}()
+    for n in 1:length(G)
+        c = 1
+        node_edges = collect(G.adj_node_edge[n])
+        while c < length(node_edges)
+            e1 = node_edges[c]
+            repeated = []
+            for e2 in node_edges[c+1:end]
+                if (e1[1] == e2[1]) & (e1[2] == e2[2])
+                    push!(repeated, e2)
+                end
+            end
+            mask = [e ∉ repeated for e in node_edges]
+            node_edges = node_edges[mask]
+            if length(repeated) > 0
+                push!(total_repeated, repeated...)
+            end
+            c += 1
+        end
+        G.adj_node_edge[n] = Set{Edge}(node_edges)
+    end
+    mask = [e ∉ total_repeated for e in collect(G.edges)]
+    G.edges = G.edges[mask]
+    return G
+end
 
-Creates the line graph of G.
+
+
 """
-function line_graph(G::MultiGraph)
+    line_graph(G; ignore_repeated = true)
+
+Creates the line graph of G. If `ignore_repeated` first deletes all
+repeated edges of G.
+"""
+function line_graph(G::MultiGraph, ignore_repeated = true)
     LG = MultiGraph()
+
+    if ignore_repeated
+        G = delete_repeated_edges(G)
+    end
+
     for i in 1:length(G)
         node_edges = collect(G.adj_node_edge[i]) # transform to array so that enumerate works always the same
         for (j, e1) in enumerate(node_edges)
