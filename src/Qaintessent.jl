@@ -77,15 +77,11 @@ export
 
 include("contraction_order.jl")
 export
-    tree_decomposition,
-    contraction_order
-
-include("multigraph.jl")
-    MultiGraph,
-    add_node!,
-    add_edge!,
-    get_node_idx,
     simple_dag,
-    line_graph
-
+    line_graph,
+    interaction_graph,
+    is_tree_decomposition,
+    tree_decomposition,
+    py_tree_decomposition,
+    py_contraction_order
 end
