@@ -18,21 +18,21 @@ abstract type AbstractGate{N} end
 """
 Pauli X Matrix
 
-``A_{m,n} =
-\\begin{pmatrix}
-a_{1,1} & a_{1,2} & \\cdots & a_{1,n} \\\\
-a_{2,1} & a_{2,2} & \\cdots & a_{2,n} \\\\
-\\vdots  & \\vdots  & \\ddots & \\vdots \\\\
-a_{m,1} & a_{m,2} & \\cdots & a_{m,n} \\\\
-\\end{pmatrix}``
-
-``\\frac{n!}{k!(n - k)!} = \\binom{n}{k}``
-
+``X = \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}``
 """
 struct XGate <: AbstractGate{1} end
-"Pauli Y Matrix"
+"""
+Pauli Y Matrix
+
+``Y = \\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}``
+"""
 struct YGate <: AbstractGate{1} end
-"Pauli Z Matrix"
+
+"""
+Pauli Z Matrix
+
+``Z = \\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}``
+"""
 struct ZGate <: AbstractGate{1} end
 
 matrix(::XGate) = [0.  1.; 1.  0.]
@@ -54,6 +54,11 @@ Y = YGate()
 Z = ZGate()
 
 
+"""
+Hadamard Matrix
+
+``H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}``
+"""
 struct HadamardGate <: AbstractGate{1} end
 
 matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
@@ -64,11 +69,30 @@ Base.adjoint(H::HadamardGate) = H
 
 
 # S & T gates
+"""
+S Matrix
 
+``S = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
+"""
 struct SGate <: AbstractGate{1} end
+"""
+T Matrix
+
+``T = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
+"""
 struct TGate <: AbstractGate{1} end
 
+"""
+S† Matrix
+
+``S† = \\begin{pmatrix} 1 & 0 \\\\ 0 & -i \\end{pmatrix}``
+"""
 struct SdagGate <: AbstractGate{1} end
+"""
+T† Matrix
+
+``T† = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{-iπ}{4}} \\end{pmatrix}``
+"""
 struct TdagGate <: AbstractGate{1} end
 
 matrix(::SGate) = [1. 0.; 0. im]
@@ -91,7 +115,11 @@ Base.adjoint(::TdagGate) = TGate()
 
 
 # rotation gates
+"""
+Rotation X Matrix
 
+``R_{X}(θ) = \\begin{pmatrix} cos(\\frac{θ}{2}) & -isin(\\frac{θ}{2}) \\\\ -isin(\\frac{θ}{2}) & cos(\\frac{θ}{2}) \\end{pmatrix}``
+"""
 struct RxGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
@@ -113,6 +141,11 @@ function LinearAlgebra.ishermitian(g::RxGate)
     return false
 end
 
+"""
+Rotation Y Matrix
+
+``R_{Y}(θ) = \\begin{pmatrix} cos(\\frac{θ}{2}) & -sin(\\frac{θ}{2}) \\\\ sin(\\frac{θ}{2}) & cos(\\frac{θ}{2}) \\end{pmatrix}``
+"""
 struct RyGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
@@ -134,6 +167,11 @@ function LinearAlgebra.ishermitian(g::RyGate)
     return false
 end
 
+"""
+Rotation Z Matrix
+
+``R_{Z}(θ) = \\begin{pmatrix} e^{\\frac{-iθ}{2}} & 0 \\\\ 0 & e^{\\frac{iθ}{2}} \\end{pmatrix}``
+"""
 struct RzGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
@@ -158,6 +196,11 @@ Base.adjoint(g::RyGate) = RyGate(-g.θ[])
 Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # general rotation operator gate
+"""
+General Rotation Matrix
+
+``R_{\\overrightarrow{n}}}(θ) = cos(\\frac{θ}{2})I - isin(\\frac{θ}{2})\\overrightarrow{n}}σ, \\ σ = [X, Y, Z]``
+"""
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
 
@@ -193,7 +236,10 @@ Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 
 # phase shift gate
-
+"""
+Phase Shift Gate
+``P(ϕ) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{iϕ} \\end{pmatrix}``
+"""
 struct PhaseShiftGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     ϕ::Vector{<:Real}
