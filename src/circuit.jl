@@ -11,6 +11,8 @@ abstract type AbstractCircuitGate{N} end
 cartesian_tuples(d::Integer, N::Integer) = Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
 
 """
+    CircuitGate{M,N,G} <: AbstractCircuitGate{N}
+
 Abstract unitary quantum circuit gate. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
 """
 struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
@@ -19,7 +21,7 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "actual gate"
     gate::G
 
-    """
+    @doc """
         CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G) where {M,N,G}
 
     creates CircuitGate{M,N,G} object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
@@ -193,7 +195,7 @@ Represents an intermediate state within a given circuit.
 mutable struct Moment{N} <: AbstractMoment{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 
-    """
+    @doc """
         Moment{N}(g::AbstractCircuitGate{N}) where {N}
 
     creates a Moment{N} object consisting of a single CircuitGate{N} object.
@@ -202,7 +204,7 @@ mutable struct Moment{N} <: AbstractMoment{N}
         new([g])
     end
 
-    """
+    @doc """
         Moment{N}(g::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 
     creates a Moment{N} object consisting of multiple CircuitGate{N} objects.
@@ -319,7 +321,7 @@ Chain of quantum circuit gates in a circuit of `N` qubits.
 mutable struct CircuitGateChain{N}
     moments::AbstractVector{<:AbstractMoment{N}}
 
-    """
+    @doc """
         CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from list of CircuitGate{N}.
@@ -329,7 +331,7 @@ mutable struct CircuitGateChain{N}
         new(moments)
     end
 
-    """
+    @doc """
         CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits, constructing from list of Moment{N} objects.
@@ -424,7 +426,7 @@ struct MeasurementOps{N}
     mops::AbstractVector{<:AbstractMatrix}
     cgs::AbstractVector{<:CircuitGate}
 
-    """
+    @doc """
         MeasurementOps{N}(mop::AbstractMatrix) where {N}
 
     constructs MeasurementOps{N} object for circuit of size `N` from single ``2^{N} \\times 2^{N}`` matrix.
@@ -438,7 +440,7 @@ struct MeasurementOps{N}
         new([mop])
     end
 
-    """
+    @doc """
         MeasurementOps{N}(mops::AbstractVector{<:AbstractMatrix}) where {N}
 
     constructs MeasurementOps{N} object for circuit of size `N` from vector of ``2^{N} \\times 2^{N}`` matrix.
@@ -457,7 +459,7 @@ struct MeasurementOps{N}
         new(mops)
     end
 
-    """
+    @doc """
         MeasurementOps{N}(cg::CircuitGate) where {N}
 
     constructs MeasurementOps{N} object for circuit of size `N` from CircuitGate{N} object.
@@ -472,7 +474,7 @@ struct MeasurementOps{N}
         new([mop], [cg])
     end
 
-    """
+    @doc """
         MeasurementOps{N}(cg::CircuitGate) where {N}
 
     constructs MeasurementOps{N} object for circuit of size `N` from vector of CircuitGate{N} objects.
