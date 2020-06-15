@@ -121,7 +121,7 @@ struct RxGate <: AbstractGate{1}
     """
     Rotation X Matrix
 
-    ``R_{X}(θ) = \\begin{pmatrix} cos(\\frac{θ}{2}) & -isin(\\frac{θ}{2}) \\\\ -isin(\\frac{θ}{2}) & cos(\\frac{θ}{2}) \\end{pmatrix}``
+    ``R_{X}(\\theta) = \\begin{pmatrix} cos(\\frac{\\theta}{2}) & -isin(\\frac{\\theta}{2}) \\\\ -isin(\\frac{\\theta}{2}) & cos(\\frac{\\theta}{2}) \\end{pmatrix}``
     """
     function RxGate(θ::Real)
         new([θ])
@@ -148,7 +148,7 @@ struct RyGate <: AbstractGate{1}
     """
     Rotation Y Matrix
 
-    ``R_{Y}(θ) = \\begin{pmatrix} cos(\\frac{θ}{2}) & -sin(\\frac{θ}{2}) \\\\ sin(\\frac{θ}{2}) & cos(\\frac{θ}{2}) \\end{pmatrix}``
+    ``R_{Y}(\\theta) = \\begin{pmatrix} cos(\\frac{\\theta}{2}) & -sin(\\frac{\\theta}{2}) \\\\ sin(\\frac{\\theta}{2}) & cos(\\frac{\\theta}{2}) \\end{pmatrix}``
     """
     function RyGate(θ::Real)
         new([θ])
@@ -174,7 +174,7 @@ struct RzGate <: AbstractGate{1}
     """
     Rotation Z Matrix
 
-    ``R_{Z}(θ) = \\begin{pmatrix} e^{\\frac{-iθ}{2}} & 0 \\\\ 0 & e^{\\frac{iθ}{2}} \\end{pmatrix}``
+    ``R_{Z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}{2}} & 0 \\\\ 0 & e^{\\frac{i\\theta}{2}} \\end{pmatrix}``
     """
     θ::Vector{<:Real}
     function RzGate(θ::Real)
@@ -198,7 +198,11 @@ Base.adjoint(g::RyGate) = RyGate(-g.θ[])
 Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # general rotation operator gate
+"""
+General Rotation Matrix
 
+``R_{\\overrightarrow{n}}}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})\\overrightarrow{n}}σ, \\ σ = [X, Y, Z]``
+"""
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
 
@@ -207,11 +211,6 @@ struct RotationGate <: AbstractGate{1}
         new(nθ)
     end
 
-    """
-    General Rotation Matrix
-
-    ``R_{\\overrightarrow{n}}}(θ) = cos(\\frac{θ}{2})I - isin(\\frac{θ}{2})\\overrightarrow{n}}σ, \\ σ = [X, Y, Z]``
-    """
     function RotationGate(θ::Real, n::AbstractVector{<:Real})
         length(n) == 3 || error("Rotation axis vector must have length 3.")
         norm(n) ≈ 1 || error("Norm of rotation axis vector must be 1.")
@@ -244,7 +243,7 @@ struct PhaseShiftGate <: AbstractGate{1}
     ϕ::Vector{<:Real}
     """
     Phase Shift Gate
-    ``P(ϕ) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{iϕ} \\end{pmatrix}``
+    ``P(ϕ) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\phi} \\end{pmatrix}``
     """
     function PhaseShiftGate(ϕ::Real)
         new([ϕ])
