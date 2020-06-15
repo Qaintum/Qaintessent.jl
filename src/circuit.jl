@@ -184,7 +184,12 @@ Represents an intermediate state within a given circuit.
 """
 abstract type AbstractMoment{N} end
 
+"""
+    AbstractMoment{N}
 
+Represents an intermediate state within a given circuit.
+`N` is the overall number of quantum "wires" of the circuit.
+"""
 mutable struct Moment{N} <: AbstractMoment{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
 
@@ -212,6 +217,11 @@ mutable struct Moment{N} <: AbstractMoment{N}
     end
 end
 
+"""
+    Base.adjoint(m::Moment{N}) where {N}
+
+returns Moment{N} object that is the adjoint of `N`.
+"""
 function Base.adjoint(m::Moment{N}) where {N}
     return Moment{N}(Base.adjoint.(reverse(m.gates)))
 end
