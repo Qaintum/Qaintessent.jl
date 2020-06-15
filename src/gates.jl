@@ -15,11 +15,21 @@ Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 """
 abstract type AbstractGate{N} end
 
-
-# Pauli matrices
-
+"""
+Pauli X Matrix
+``A_{m,n} =
+\begin{pmatrix}
+a_{1,1} & a_{1,2} & \cdots & a_{1,n} \\
+a_{2,1} & a_{2,2} & \cdots & a_{2,n} \\
+\vdots  & \vdots  & \ddots & \vdots  \\
+a_{m,1} & a_{m,2} & \cdots & a_{m,n}
+\end{pmatrix}
+``
+"""
 struct XGate <: AbstractGate{1} end
+"Pauli Y Matrix"
 struct YGate <: AbstractGate{1} end
+"Pauli Z Matrix"
 struct ZGate <: AbstractGate{1} end
 
 matrix(::XGate) = [0.  1.; 1.  0.]
@@ -40,8 +50,6 @@ X = XGate()
 Y = YGate()
 Z = ZGate()
 
-
-# Hadamard gate
 
 struct HadamardGate <: AbstractGate{1} end
 
