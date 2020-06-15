@@ -475,7 +475,7 @@ struct MeasurementOps{N}
     end
 
     @doc """
-        MeasurementOps{N}(cg::CircuitGate) where {N}
+        MeasurementOps{N}(cgs::AbstractVector{<:CircuitGate}) where {N}
 
     constructs MeasurementOps{N} object for circuit of size `N` from vector of CircuitGate{N} objects.
     """
