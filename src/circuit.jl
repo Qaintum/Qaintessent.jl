@@ -35,6 +35,11 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     end
 end
 
+"""
+    CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) where {M}
+
+creates CircuitGate{M,N,G} object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+"""
 function CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) where {M}
     CircuitGate{M,N,typeof(gate)}(iwire, gate)
 end
@@ -182,6 +187,12 @@ abstract type AbstractMoment{N} end
 
 mutable struct Moment{N} <: AbstractMoment{N}
     gates::AbstractVector{<:AbstractCircuitGate{N}}
+
+    """
+        Moment{N}(g::AbstractCircuitGate{N}) where {N}
+
+    creates a Moment{N} object consisting of a single CircuitGate{N} object.
+    """
     function Moment{N}(g::AbstractCircuitGate{N}) where {N}
         new([g])
     end
@@ -309,7 +320,7 @@ mutable struct CircuitGateChain{N}
     end
 
     """
-        CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
+        CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits, constructing from list of Moment{N} objects.
     """
