@@ -201,7 +201,7 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 """
 General Rotation Matrix
 
-``R_{\\overrightarrow{n}}}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})\\overrightarrow{n}}\\sigma, \\\\ \\sigma = [X, Y, Z]``
+``R_{n}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})n\\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
