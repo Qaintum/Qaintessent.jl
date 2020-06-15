@@ -201,7 +201,7 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 """
 General Rotation Matrix
 
-``R_{n}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})n\\sigma, \\\\ \\sigma = [X, Y, Z]``
+``R_{\\overrightarrow{n}}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})\\overrightarrow{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
@@ -241,7 +241,6 @@ Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 Phase Shift Gate
 ``P(\\phi) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\phi} \\end{pmatrix}``
 """
-# phase shift gate
 struct PhaseShiftGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     ϕ::Vector{<:Real}
