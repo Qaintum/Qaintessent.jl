@@ -67,7 +67,7 @@ LinearAlgebra.ishermitian(cg::CircuitGate) = LinearAlgebra.ishermitian(cg.gate)
 """
     matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
 
-returns matrix representation of circuit gate that can applied to a state vector consisting of `N` qubits.
+returns matrix representation of a `CircuitGate{M,N,G}` object that can applied to a state vector of `N` qubits.
 """
 function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     # convert to array
@@ -345,7 +345,7 @@ end
 """
     matrix(cgc::CircuitGateChain{N}) where {N}
 
-returns matrix representation of `CircuitGateChain{N}` object that can be applied to a state vector of `N` qubits.
+returns matrix representation of a `CircuitGateChain{N}` object that can be applied to a state vector of `N` qubits.
 """
 function matrix(cgc::CircuitGateChain{N}) where {N}
     gates = AbstractCircuitGate{N}[]
