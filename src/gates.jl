@@ -200,8 +200,9 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 # general rotation operator gate
 """
 General Rotation Matrix
+Rotation by angle `θ` around unit vector `n⃗`.
 
-``R_{\\overrightarrow{n}}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})\\overrightarrow{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
+``R_{\\vec{n}}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})\\vec{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
@@ -239,6 +240,7 @@ Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 """
 Phase Shift Gate
+
 ``P(\\phi) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\phi} \\end{pmatrix}``
 """
 struct PhaseShiftGate <: AbstractGate{1}

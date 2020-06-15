@@ -24,7 +24,7 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     @doc """
         CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G) where {M,N,G}
 
-    creates CircuitGate{M,N,G} object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+    creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
     """
     function CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G) where {M,N,G}
         M ≥ 1 || error("Need at least one wire to act on.")
@@ -40,7 +40,7 @@ end
 """
     CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) where {M}
 
-creates CircuitGate{M,N,G} object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
 """
 function CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) where {M}
     CircuitGate{M,N,typeof(gate)}(iwire, gate)
@@ -65,7 +65,7 @@ end
 LinearAlgebra.ishermitian(cg::CircuitGate) = LinearAlgebra.ishermitian(cg.gate)
 
 """
-    matrix(cg::CircuitGate{M,N,G})
+    matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
 
 returns matrix representation of circuit gate that can applied to a state vector consisting of `N` qubits.
 """
@@ -113,7 +113,7 @@ end
 """
     Base.adjoint(cg::CircuitGate{M,N,G}) where {M,N,G}
 
-returns CircuitGate{M,N,H} object where H is the adjoint of gate type G
+returns a `CircuitGate{M,N,H}` object where `H` is the adjoint of `AbstractGate` `G`
 """
 function Base.adjoint(cg::CircuitGate{M,N,G}) where {M,N,G}
     adj_gate = Base.adjoint(cg.gate)
@@ -123,7 +123,7 @@ end
 """
     single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer)
 
-returns a CircuitGate{1,N,G} object of basic gate type `gate` affecting wire `iwire`.
+returns a `CircuitGate{1,N,G}` object of basic gate type `gate` affecting wire `iwire`.
 """
 single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) =
     CircuitGate((iwire,), gate, N)
@@ -132,7 +132,7 @@ single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) =
 """
     two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
 
-returns a CircuitGate{2,N,G} object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
+returns a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
 """
 two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer) =
     CircuitGate((iwire1, iwire2), gate, N)
@@ -142,7 +142,7 @@ two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, 
 """
     controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer)
 
-returns a CircuitGate{2,N,G} object of basic gate type `U` controlled by wire `icntrl` and affecting wire `itarget`.
+returns a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wire `itarget`.
 """
 controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer) =
     controlled_circuit_gate((icntrl,), (itarget,), U, N)
@@ -151,7 +151,7 @@ controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N
 """
     controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {M}
 
-returns a CircuitGate{M+1,N,G} object of basic gate type `U` controlled by wire `icntrl` and affecting wires in tuple `itarget`.
+returns a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wires in tuple `itarget`.
 """
 controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {M} =
     controlled_circuit_gate((icntrl,), itarget, U, N)
@@ -160,7 +160,7 @@ controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::Abstr
 """
     controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K}
 
-returns a CircuitGate{K+1,N,G} object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wire `itarget`.
+returns a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wire `itarget`.
 """
 controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K} =
     controlled_circuit_gate(icntrl, (itarget,), U, N)
@@ -168,7 +168,7 @@ controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::Abstr
 """
     controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
 
-returns a CircuitGate{M+K,N,G} object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
+returns a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
 """
 function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
     # consistency checks
@@ -198,7 +198,7 @@ mutable struct Moment{N} <: AbstractMoment{N}
     @doc """
         Moment{N}(g::AbstractCircuitGate{N}) where {N}
 
-    creates a Moment{N} object consisting of a single CircuitGate{N} object.
+    creates a `Moment{N}` object consisting of a single `CircuitGate{N}` object.
     """
     function Moment{N}(g::AbstractCircuitGate{N}) where {N}
         new([g])
@@ -207,7 +207,7 @@ mutable struct Moment{N} <: AbstractMoment{N}
     @doc """
         Moment{N}(g::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 
-    creates a Moment{N} object consisting of multiple CircuitGate{N} objects.
+    creates a `Moment{N}` object consisting of multiple `CircuitGate{N}` objects.
     """
     function Moment{N}(g::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
         wires = Integer[]
@@ -222,7 +222,7 @@ end
 """
     Base.adjoint(m::Moment{N}) where {N}
 
-returns Moment{N} object that is the adjoint of `N`.
+returns a `Moment{N}` object that is the adjoint of `m`.
 """
 function Base.adjoint(m::Moment{N}) where {N}
     return Moment{N}(Base.adjoint.(reverse(m.gates)))
@@ -324,7 +324,7 @@ mutable struct CircuitGateChain{N}
     @doc """
         CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 
-    Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from list of CircuitGate{N}.
+    Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `CircuitGate{N}` objects.
     """
     function CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
         moments = map(Moment{N}, gates)
@@ -334,7 +334,7 @@ mutable struct CircuitGateChain{N}
     @doc """
         CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
 
-    Chain of quantum circuit gates in a circuit of `N` qubits, constructing from list of Moment{N} objects.
+    Chain of quantum circuit gates in a circuit of `N` qubits, constructing from vector of `Moment{N}` objects.
     """
     function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
         new(moments)
@@ -345,7 +345,7 @@ end
 """
     matrix(cgc::CircuitGateChain{N}) where {N}
 
-returns matrix representation of CircuitGateChain{N} object that can be applied to a state vector of `N` qubits.
+returns matrix representation of `CircuitGateChain{N}` object that can be applied to a state vector of `N` qubits.
 """
 function matrix(cgc::CircuitGateChain{N}) where {N}
     gates = AbstractCircuitGate{N}[]
@@ -358,7 +358,7 @@ end
 """
     Base.adjoint(cgc::CircuitGateChain{N}) where {N}
 
-returns CircuitGateChain{N} object that is the adjoint of `cgc`.
+returns a `CircuitGateChain{N}` object that is the adjoint of `cgc`.
 """
 function Base.adjoint(cgc::CircuitGateChain{N}) where {N}
     return CircuitGateChain{N}(Base.adjoint.(reverse(cgc.moments)))
@@ -429,7 +429,7 @@ struct MeasurementOps{N}
     @doc """
         MeasurementOps{N}(mop::AbstractMatrix) where {N}
 
-    constructs MeasurementOps{N} object for circuit of size `N` from single ``2^{N} \\times 2^{N}`` matrix.
+    constructs a `MeasurementOps{N}` object for circuit of size `N` from single ``2^{N} \\times 2^{N}`` matrix.
     """
     function MeasurementOps{N}(mop::AbstractMatrix) where {N}
         # TODO: support general "qudits"
@@ -443,7 +443,7 @@ struct MeasurementOps{N}
     @doc """
         MeasurementOps{N}(mops::AbstractVector{<:AbstractMatrix}) where {N}
 
-    constructs MeasurementOps{N} object for circuit of size `N` from vector of ``2^{N} \\times 2^{N}`` matrix.
+    constructs a `MeasurementOps{N}` object for a circuit of size `N` from a vector of ``2^{N} \\times 2^{N}`` matrices.
     """
     function MeasurementOps{N}(mops::AbstractVector{<:AbstractMatrix}) where {N}
         # TODO: support general "qudits"
@@ -462,7 +462,7 @@ struct MeasurementOps{N}
     @doc """
         MeasurementOps{N}(cg::CircuitGate) where {N}
 
-    constructs MeasurementOps{N} object for circuit of size `N` from CircuitGate{N} object.
+    constructs a `MeasurementOps{N}` object for a circuit of size `N` from a single `CircuitGate{N}` object.
     """
     function MeasurementOps{N}(cg::CircuitGate) where {N}
         # TODO: support general "qudits"
@@ -477,7 +477,7 @@ struct MeasurementOps{N}
     @doc """
         MeasurementOps{N}(cgs::AbstractVector{<:CircuitGate}) where {N}
 
-    constructs MeasurementOps{N} object for circuit of size `N` from vector of CircuitGate{N} objects.
+    constructs a `MeasurementOps{N}` object for a circuit of size `N` from a vector of `CircuitGate{N}` objects.
     """
     function MeasurementOps{N}(cgs::AbstractVector{<:CircuitGate}) where {N}
         # TODO: support general "qudits"
