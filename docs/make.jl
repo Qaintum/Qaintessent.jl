@@ -15,4 +15,5 @@ makedocs(
 
 deploydocs(
     repo = "github.com/Qaintum/Qaintessent.jl.git",
+    push_preview = true
 )
