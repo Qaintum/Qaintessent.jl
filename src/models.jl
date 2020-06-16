@@ -41,6 +41,25 @@ function toffoli_circuit(cntrl::Tuple{<:Integer, <:Integer} , trg::Integer, N::I
 end
 
 
+"""
+    vbe_adder_circuit(N)
+
+Construct an in-place adder for 2 integers represented by `N` qubits.
+Based on ripple-carry adder circuit in Vedral et. al (Phys. Rev. A 54, 147 (1996), arXiv:quant-ph/9511018)
+Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
+
+If the two added integers are represented as:
+
+``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
+
+The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` with ``a_{0}`` as the fastest running index
+
+The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}c_{0}c_{1}c_{2}..c_{N} + 1`` where:
+
+``C = (A+B) \\% (2^{N} + 1) = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N} \\times 2^{N}``
+
+An example of the code can be seen below
+
 ```jldoctest
 N = 4
 adder = vbe_adder_circuit(N)
@@ -58,35 +77,6 @@ index = b << N + a
 
 8
 ```
-
-"""
-    vbe_adder_circuit(N)
-
-Construct an in-place adder for 2 integers represented by `N` qubits.
-Based on ripple-carry adder circuit in Vedral et. al (Phys. Rev. A 54, 147 (1996), arXiv:quant-ph/9511018)
-Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
-
-If the two added integers are represented as:
-
-``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
-
-The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` with ``a_{0}`` as the fastest running index
-
-i.e.
-
-    input = fill(0, 2^(3N+1))
-    index = b << N + a
-    input[index+1] = 1
-
-The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}c_{0}c_{1}c_{2}..c_{N} + 1`` where:
-
-``C = (A+B) % (2^{N} + 1) = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N} \\times 2^{N}``
-
-i.e.
-
-    output = apply(adder, input)
-    answer = ((findall(x->x==1, output)[1]-1)%(2^2N)) >> N
-    @ test answer == (a+b)%(2^N)
 """
 function vbe_adder_circuit(N::Integer)
     M = 3*N + 1
@@ -214,6 +204,25 @@ function c_round(P::Function, G::Function, M::Integer, N::Integer, Ñ::Integer)
     return cchain
 end
 
+"""
+    qcla_out_adder_circuit(N)
+
+Construct an out-of-place adder for 2 integers represented by `N` qubits. returns a `CircuitGateChain{3N+1}` object.
+Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
+Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
+
+If the two added integers are represented as:
+
+``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
+
+The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
+
+The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N}c_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
+
+``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
+
+An example of the code can be seen below
+
 ```jldoctest
 N = 4
 adder = qcla_out_adder_circuit(N)
@@ -233,35 +242,6 @@ index = b << N + a
 
 8
 ```
-
-"""
-    qcla_out_adder_circuit(N)
-
-Construct an out-of-place adder for 2 integers represented by `N` qubits. returns a `CircuitGateChain{3N+1}` object.
-Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
-Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
-
-If the two added integers are represented as:
-
-``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
-
-The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
-
-i.e.
-
-    input = fill(0, 2^(3N+1))
-    index = b << N + a
-    input[index+1] = 1
-
-The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N}c_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
-
-``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
-
-i.e.
-
-    output = apply(adder, input)
-    answer = (findall(x->x==1, ψ)[1] - 1) >> 2N
-    @ test answer == a+b
 """
 function qcla_out_adder_circuit(N)
 
@@ -372,21 +352,29 @@ If the two added integers are represented as:
 
 The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
 
-i.e.
-
-    input = fill(0, 2^(3N+1))
-    index = b << N + a
-    input[index+1] = 1
-
 The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
 
 ``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
 
-i.e.
+```jldoctest
+N = 4
+adder = qcla_out_adder_circuit(N)
+ψ = fill(0.0+0.0*im, 2^M)
+a = 2
+b = 3
 
-    output = apply(adder, input)
-    answer = (findall(x->x==1, ψ)[1] - 1) >> N
-    @ test answer == a+b
+index = b << N + a
+ψ = fill(0.0+0.0*im, 2^M)
+
+ψ[index+1] = 1.0
+
+ψ = apply(cgc, ψ)
+(findall(x->x==1, ψ)[1] - 1) >> 2N
+
+# output
+
+5
+```
 """
 function qcla_inplace_adder_circuit(N)
 
