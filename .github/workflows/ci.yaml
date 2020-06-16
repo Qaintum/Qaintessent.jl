@@ -21,7 +21,6 @@ on:
       - master
     tags: '*'
   pull_request:
-      - master
 
 jobs:
   build:
