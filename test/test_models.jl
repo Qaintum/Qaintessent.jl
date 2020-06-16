@@ -98,8 +98,7 @@ end
         ψ[index+1] = 1.0
 
         ψ = apply(cgc, ψ)
-        answer = (findall(x->x==1, ψ)[1] - 1) >> N
-        println("Testing: " * string(a) * " + " * string(b))
+        answer = (findall(x->x==1, ψ)[1] - 1) >> N        
         @test answer == a+b
 
     end
