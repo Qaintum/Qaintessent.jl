@@ -268,6 +268,7 @@ Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
 # swap gate
 """
 Swap Gate
+
 ``SWAP = \\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 0 & 1 \\end{pmatrix}``
 """
 struct SwapGate <: AbstractGate{2} end
