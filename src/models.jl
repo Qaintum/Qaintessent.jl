@@ -60,6 +60,8 @@ The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}c_{0}c_{1}c_{2}..c_
 
 An example of the code can be seen below
 
+# Examples
+
 ```jldoctest
 N = 4
 adder = vbe_adder_circuit(N)
@@ -223,6 +225,8 @@ The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_
 
 An example of the code can be seen below
 
+# Examples
+
 ```jldoctest
 N = 4
 adder = qcla_out_adder_circuit(N)
@@ -318,27 +322,6 @@ function qcla_out_adder_circuit(N)
     return cgc
 end
 
-```jldoctest
-N = 4
-adder = qcla_inplace_adder_circuit(N)
-ψ = fill(0.0+0.0*im, 2^M)
-a = 6
-b = 4
-
-index = b << N + a
-ψ = fill(0.0+0.0*im, 2^M)
-
-ψ[index+1] = 1.0
-
-ψ = apply(cgc, ψ)
-(findall(x->x==1, ψ)[1] - 1) >> N
-
-# output
-
-10
-```
-
-
 """
     qcla_inplace_adder_circuit(N)
 
@@ -355,6 +338,8 @@ The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` a
 The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
 
 ``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
+
+# Examples
 
 ```jldoctest
 N = 4
