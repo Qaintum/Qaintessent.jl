@@ -10,7 +10,7 @@ function iscommuting(A::CircuitGate{L,M,G},B::CircuitGate{N,M,H}) where {L,N,M,G
     cntrlA,gateA = get_controls(A)
     cntrlB,gateB = get_controls(B)
 
-    if length(intersect(gateA, gateB)) == 0
+    if length(intersect([cntrlA..., gateA...], [cntrlB..., gateB...])) == 0
         return true
     end
 
