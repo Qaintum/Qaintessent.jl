@@ -1,6 +1,3 @@
-function view(g::IGate, i::Vector{Int64})
-    ["—[I ]—"], i
-end
 
 function view(g::HadamardGate, i::Vector{Int64})
     ["—[H ]—"], i
@@ -52,10 +49,6 @@ end
 
 function view(g::TdagGate, i::Vector{Int64})
     ["—[T†]—"], i
-end
-
-function view(g::IIGate, i::Vector{Int64})
-    ["—[I ]—", "—[I ]—"], i
 end
 
 function view(g::SwapGate, i::Vector{Int64})
