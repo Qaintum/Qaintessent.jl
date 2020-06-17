@@ -54,8 +54,11 @@ export
 
 include("models.jl")
 export
-    qft_circuit
-
+    qft_circuit,
+    toffoli_circuit,
+    vbe_adder_circuit,
+    qcla_out_adder_circuit,
+    qcla_inplace_adder_circuit
 
 include("gradients.jl")
 include("view.jl")

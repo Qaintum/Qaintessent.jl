@@ -175,4 +175,9 @@ function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
     end
 end
 
+"""
+    Base.show(io::IO, c::Circuit) = Base.show(io, c.cgc)
+
+extends base `show` method to draw visual representation of a `Circuit{N}` object.
+"""
 Base.show(io::IO, c::Circuit) = Base.show(io, c.cgc)
