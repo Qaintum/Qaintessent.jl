@@ -64,16 +64,15 @@ end
 
         a = abs(rand(Int, 1)[])%(2^N)
         b = abs(rand(Int, 1)[])%(2^N)
-        for a in 1:2^N-1
-            index = b << N + a
-            ψ = fill(0.0+0.0*im, 2^M)
 
-            ψ[index+1] = 1.0
+        index = b << N + a
+        ψ = fill(0.0+0.0*im, 2^M)
 
-            ψ = apply(cgc, ψ)
-            answer = (findall(x->x==1, ψ)[1] - 1) >> 2N
-            @test answer == a+b
-        end
+        ψ[index+1] = 1.0
+
+        ψ = apply(cgc, ψ)
+        answer = (findall(x->x==1, ψ)[1] - 1) >> 2N
+        @test answer == a+b
     end
 end
 
@@ -98,7 +97,7 @@ end
         ψ[index+1] = 1.0
 
         ψ = apply(cgc, ψ)
-        answer = (findall(x->x==1, ψ)[1] - 1) >> N        
+        answer = (findall(x->x==1, ψ)[1] - 1) >> N
         @test answer == a+b
 
     end
