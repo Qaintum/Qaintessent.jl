@@ -10,8 +10,6 @@ export
     X,
     Y,
     Z,
-    IGate,
-    IIGate,
     XGate,
     YGate,
     ZGate,

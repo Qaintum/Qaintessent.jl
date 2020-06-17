@@ -15,18 +15,6 @@ Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 """
 abstract type AbstractGate{N} end
 
-# for testing
-
-struct IGate <: AbstractGate{1} end
-matrix(::IGate) = [1. 0.; 0. 1.]
-LinearAlgebra.ishermitian(::IGate) = true
-Base.adjoint(I::IGate) = IGate()
-
-struct IIGate <: AbstractGate{2} end
-matrix(::IIGate) = [1. 0. 0. 0.; 0. 1. 0. 0.; 0. 0. 1. 0.; 0. 0. 0. 1.]
-LinearAlgebra.ishermitian(::IIGate) = true
-Base.adjoint(I::IIGate) = IIGate()
-
 """
 Pauli X Matrix
 
