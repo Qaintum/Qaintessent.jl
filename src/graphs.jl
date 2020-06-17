@@ -96,6 +96,18 @@ mutable struct Dag
 
 end
 
+function Base.size(d::Dag)
+    count = 0
+    for i in 1:length(d.iwire)
+        wire = d.iwire[i]
+        while wire.next != nothing
+            count += 1
+            wire = wire.next
+        end
+    end
+    count
+end
+
 """
     remove!
         d::DagGate
@@ -431,7 +443,7 @@ end
     opt_adjoint
         dag::Dag
 
-    basic dag operations to move gates around. inserts given DagGate into given Dag representation
+    basic optimization to remove adjoint gates
 
 """
 function opt_adjoint(dag::Dag)
@@ -441,10 +453,15 @@ function opt_adjoint(dag::Dag)
             ref = Ref(d[].next)
             adj = typeof(adjoint(d[].cg))
             while !isnothing(ref[]) && !isnothing(ref[].cg)
-                if typeof(ref[].cg) == adj && ref[].cg.iwire == d[].cg.iwire
+                iscomm = true
+                if typeof(ref[].cg) == adj && get_controls(ref[].cg) == get_controls(d[].cg)
                     for (rtemp,dtemp) in zip(ref[].connected,d[].connected)
-                        check_comm(rtemp,dtemp) || return false
+                        if !check_comm(rtemp,dtemp)
+                            iscomm = false
+                            break
+                        end
                     end
+                    iscomm || break
                     for (rtemp,dtemp) in zip(ref[].connected,d[].connected)
                         remove!(rtemp)
                         remove!(dtemp)
@@ -531,5 +548,5 @@ function CircuitGateChain(dag_ref::Dag)
             dag = append_gate!(cgs,dag,dag.iwire[i])
         end
     end
-    CircuitGateChain(cgs)
+    CircuitGateChain{N}(cgs)
 end
