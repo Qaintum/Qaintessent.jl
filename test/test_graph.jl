@@ -3,7 +3,7 @@ using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
 
-@testset ExtendedTestSet "circuit gradients" begin
+@testset ExtendedTestSet "DAG Implementation" begin
     N = 2
     # construct parametrized circuit
 
@@ -19,11 +19,7 @@ using Qaintessent
     cgc(θ, ϕ, χ, ωn) = CircuitGateChain{N}([
         single_qubit_circuit_gate(1, X, N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
-        two_qubit_circuit_gate(1, 2, IIGate(), N),
-        two_qubit_circuit_gate(1, 2, IIGate(), N),
         controlled_circuit_gate((2), 1, Z, N),
-        two_qubit_circuit_gate(1, 2, IIGate(), N),
-        two_qubit_circuit_gate(1, 2, IIGate(), N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
         single_qubit_circuit_gate(1, X, N),
         single_qubit_circuit_gate(2, Z, N),
@@ -49,4 +45,39 @@ using Qaintessent
     show(io, cgc)
     @test String(take!(io)) == cgc_refstring
 
+end
+
+@testset ExtendedTestSet "Optimize VBE Adder" begin
+    for N in 1:3
+        M = 3N + 1
+
+        # construct parametrized circuit
+        adderref = vbe_adder_circuit(N)
+
+        d = Dag(adderref)
+
+        size_new = size(d)
+        size_old = Inf
+
+        d = opt_hadamard(d)
+        d = opt_adjoint(d)
+
+        adder = CircuitGateChain(d)
+
+        ψ = fill(0.0+0.0*im, 2^M)
+
+        a = abs(rand(Int, 1)[])%(2^N)
+        b = abs(rand(Int, 1)[])%(2^N)
+        index = b << N + a
+        ψ[index+1] = 1.0
+
+        # get reference solution from reference circuit
+        ψref = apply(adderref, ψ)
+        answerref = ((findall(x->x==1, ψref)[1]-1)%(2^2N)) >> N
+
+        ψsol = apply(adder, ψ)
+        answersol = ((findall(x->x==1, ψsol)[1]-1)%(2^2N)) >> N
+
+        @test answersol ≈ answerref
+    end
 end
