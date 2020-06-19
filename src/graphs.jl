@@ -333,7 +333,7 @@ end
     opt_hadamard
         dag::Dag
 
-    basic dag operations to move gates around. inserts d into given Dag representation
+    optimizes Dag object by attempting to remove Hadamard gates. based on optimization algorithm from arXiv:1710.07345v2
 
 """
 
@@ -443,7 +443,7 @@ end
     opt_adjoint
         dag::Dag
 
-    basic optimization to remove adjoint gates
+    basic optimization to remove adjoint gates. based on optimization algorithm from arXiv:1710.07345v2.
 
 """
 function opt_adjoint(dag::Dag)
