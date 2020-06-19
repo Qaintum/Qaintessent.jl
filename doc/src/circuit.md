@@ -80,6 +80,7 @@ CircuitGateChains can be constructed in two ways, either by providing a Vector o
 CircuitGateChain
 CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 apply(c::CircuitGateChain{N}, ψ::AbstractVector) where {N}
+optimize!(cgc::CircuitGateChain{N}) where {N}
 ```
 
 ### CircuitGateChain Example

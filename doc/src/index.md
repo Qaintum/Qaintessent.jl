@@ -2,7 +2,7 @@
 
 ## Table of Contents
 ```@contents
-Pages = ["index.md", "gates.md", "circuit.md", "models.md", "view.md"]
+Pages = ["index.md", "gates.md", "circuit.md", "models.md", "view.md", "optimize.md]
 ```
 
 ```@meta
