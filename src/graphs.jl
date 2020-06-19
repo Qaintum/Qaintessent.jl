@@ -2,18 +2,18 @@
 """
     DagGate
 
-    Construct a Vertex in the Dag,contains gate information
-    cg::Union{CircuitGate,Nothing}
-        circuit gate contained at vertex
+Construct a Vertex in the Dag,contains gate information
+cg::Union{CircuitGate,Nothing}
+    circuit gate contained at vertex
 
-    prev::Union{DagGate,Nothing}
-        previous vertex in this DAG
+prev::Union{DagGate,Nothing}
+    previous vertex in this DAG
 
-    next::Union{DagGate,Nothing}
-        next vertex in this DAG
+next::Union{DagGate,Nothing}
+    next vertex in this DAG
 
-    connected::Union{AbstractVector{Ref{DagGate}},Nothing}
-        all other vertices in this multi-wire DAG
+connected::Union{AbstractVector{Ref{DagGate}},Nothing}
+    all other vertices in this multi-wire DAG
 """
 
 mutable struct DagGate
@@ -59,9 +59,9 @@ end
 """
     Dag
 
-    Construct a Directed Acyclic Graph to represent a cgc
-    iwire::Union{AbstractVector{DagGate},Nothing}
-        vector of all wires in circuit
+Construct a Directed Acyclic Graph to represent a cgc
+iwire::Union{AbstractVector{DagGate},Nothing}
+    vector of all wires in circuit
 """
 
 mutable struct Dag
@@ -74,7 +74,11 @@ mutable struct Dag
         new(dgs)
     end
 
+    @doc """
+        Dag(cgc::CircuitGateChain{N}) where {N}
 
+    creates a `Dag{N}` object from a `CircuitGateChain{N}` object
+    """
     function Dag(cgc::CircuitGateChain{N}) where {N}
         dgs = DagGate[]
         for i in 1:N
@@ -96,6 +100,11 @@ mutable struct Dag
 
 end
 
+"""
+    Base.size(d::Dag)
+
+custom size function to get gate size of `Dag` object
+"""
 function Base.size(d::Dag)
     count = 0
     for i in 1:length(d.iwire)
@@ -109,13 +118,10 @@ function Base.size(d::Dag)
 end
 
 """
-    remove!
-        d::DagGate
+    remove!(d::RefDagGate)
 
-    basic dag operations to move gates around. removes d from given Dag representation
-
+removes `RefDagGate` object `d` from given `Dag` object
 """
-
 function remove!(d::RefDagGate)
     !isnothing(d[].cg) || error("Cannot remove empty gate!")
     if isnothing(d[].next)
@@ -130,17 +136,10 @@ function remove!(d::RefDagGate)
 end
 
 """
-    insert!
-        loc::RefDagGate
-            position to insert gate after
+    insert!(loc::RefDagGate, d::RefDagGate)
 
-        d::DagGate
-            gate to be inserted
-
-    basic dag operations to move gates around. inserts d after loc
-
+inserts `RefDagGate` object `d` after `RefDagGate` located at `loc`
 """
-
 function insert!(loc::RefDagGate, d::RefDagGate)
     if isnothing(loc[].next)
         loc[].next = d[]
@@ -156,17 +155,10 @@ end
 
 
 """
-    firstinsert!
-        loc::RefDagGate
-            position to insert gate before
+    firstinsert!(loc::RefDagGate, d::RefDagGate)
 
-        d::DagGate
-            gate to be inserted
-
-    basic dag operations to move gates around. inserts d before loc
-
+inserts `RefDagGate` object `d` before `RefDagGate` located at `loc`
 """
-
 function firstinsert!(loc::RefDagGate, d::RefDagGate)
     copy = DagGate(loc[].cg)
     insert!(loc::RefDagGate,Ref(copy))
@@ -175,13 +167,10 @@ function firstinsert!(loc::RefDagGate, d::RefDagGate)
 end
 
 """
-    get_controls
-        cg::CircuitGate
+    get_controls(cg::CircuitGate{N,M,G}) where {N,M,G <:ControlledGate{O,P}} where {O,P}
 
-    get control wires from circuit gate
-
+returns control wires and target wires of `ControlledGate` object
 """
-
 function get_controls(cg::CircuitGate{N,M,G}) where {N,M,G <:ControlledGate{O,P}} where {O,P}
     num_gate_wires = O
     num_total_wires = P
@@ -191,17 +180,20 @@ function get_controls(cg::CircuitGate{N,M,G}) where {N,M,G <:ControlledGate{O,P}
     (cntrl,gate)
 end
 
+"""
+    get_controls(cg::CircuitGate)
+
+returns control wires and target wires of `CircuitGate` object
+"""
 function get_controls(cg::CircuitGate)
     ((),cg.iwire)
 end
 
 """
-    get_total_wires
-        cg::CircuitGate
+    get_total_wires(cg::CircuitGate{N,M,G}) where {N,M,G}
 
-    get total wires from circuit gate
+get total number of wires in `CircuitGate{N,M,G}` object
 """
-
 function get_total_wires(cg::CircuitGate{N,M,G}) where {N,M,G}
     return M
 end
@@ -230,14 +222,10 @@ end
 
 
 """
-    match
-        dag1::DagGate
-        dag2::DagGate
+    match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
 
-    check if given DagGate sequence matches a pattern
-
+returns true if given `ControlledGate{N}` objects `g1` and `g2` have the same base `AbstractGate` type
 """
-
 function match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
     if typeof(g1.U) != typeof(g2.U)
         return false
@@ -245,6 +233,11 @@ function match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
     return true
 end
 
+"""
+    match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
+
+returns true if given `AbstractGate{N}` objects `g1` and `g2` have the same type
+"""
 function match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
     if typeof(g1) != typeof(g2)
         return false
@@ -252,9 +245,19 @@ function match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
     return true
 end
 
+"""
+    match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N}
+
+returns false as `AbstractGate` objects target a different number of wires
+"""
 match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N} = false
 
 
+"""
+    match!(dag_ref::RefDagGate,pattern_ref::DagGate)
+
+checks if `RefDagGate` object `dag_ref` matches `DagGate` object `pattern_ref`
+"""
 function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
     if !match(dag_ref[].cg.gate,pattern_ref.cg.gate)
         return false
@@ -329,13 +332,7 @@ function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
 end
 
 
-"""
-    opt_hadamard
-        dag::Dag
 
-    optimizes Dag object by attempting to remove Hadamard gates. based on optimization algorithm from arXiv:1710.07345v2
-
-"""
 
 """
 N = 1
@@ -421,6 +418,11 @@ hadamard_patterns = IdDict(hadamard_inverse => hadamard_inverse_opt,
                             hczh => hczh_opt,
                         )
 
+"""
+    opt_hadamard(dag::Dag)
+
+optimizes `Dag` object by removing Hadamard gates. based on optimization algorithm from arXiv:1710.07345v2
+"""
 function opt_hadamard(dag::Dag)
     for i in 1:length(dag.iwire)
         d = Ref(Ref(dag.iwire,i)[].next)
@@ -440,11 +442,9 @@ function opt_hadamard(dag::Dag)
 end
 
 """
-    opt_adjoint
-        dag::Dag
+    opt_adjoint(dag::Dag)
 
-    basic optimization to remove adjoint gates. based on optimization algorithm from arXiv:1710.07345v2.
-
+basic optimization to remove adjoint gates. based on optimization algorithm from arXiv:1710.07345v2.
 """
 function opt_adjoint(dag::Dag)
     for i in 1:length(dag.iwire)
@@ -476,7 +476,11 @@ function opt_adjoint(dag::Dag)
     return dag
 end
 
+"""
+    Base.show(io::IO,daggate::DagGate)
 
+custom `Base.show` function to print `DagGate` objects
+"""
 function Base.show(io::IO,daggate::DagGate)
 
     print("[")
@@ -498,12 +502,23 @@ function Base.show(io::IO,daggate::DagGate)
     print("]")
 end
 
+"""
+    Base.show(io::IO,wires::AbstractVector{DagGate})
+
+custom `Base.show` function to print `AbstractVector{DagGate}` objCircuitGateChain
+        dag::Dagects
+"""
 function Base.show(io::IO,wires::AbstractVector{DagGate})
     for daggate in wires
         println(daggate)
     end
 end
 
+"""
+    Base.show(io::IO, dag::Dag)
+
+custom `Base.show` function to print `Dag` objects
+"""
 function Base.show(io::IO, dag::Dag)
     for daggate in dag.iwire
         println(daggate)
@@ -512,9 +527,9 @@ end
 
 
 """
-    append_gate!
-        cgs::AbstractVector{CircuitGate}
-        dg::DagGate
+    append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag,dg::DagGate) where {N}
+
+appends `DagGate` object to `AbstractVector`
 """
     function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag,dg::DagGate) where {N}
         for j in dg.cg.iwire
@@ -528,10 +543,9 @@ end
     end
 
 """
-    CircuitGateChain
-        dag::Dag
+    CircuitGateChain(dag_ref::Dag)
 
-    method to convert DAG back to a CGC
+converts `Dag` object to `CircuitGateChain` object
 """
 
 function CircuitGateChain(dag_ref::Dag)
