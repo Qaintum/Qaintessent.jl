@@ -564,3 +564,25 @@ function CircuitGateChain(dag_ref::Dag)
     end
     CircuitGateChain{N}(cgs)
 end
+
+
+"""
+    optimize!(cgc::CircuitGateChain{N}) where {N}
+
+optimizes `CircuitGateChain` object using `Dag` representation
+"""
+
+function optimize!(cgc::CircuitGateChain{N}) where {N}
+    d = Dag(deepcopy(cgc))
+    size_new = size(d)
+    size_old = Inf
+    while size_new < size_old
+        d = opt_hadamard(d)
+        d = opt_adjoint(d)
+
+        size_old = size_new
+        size_new = size(d)
+    end
+
+    CircuitGateChain(d)
+end

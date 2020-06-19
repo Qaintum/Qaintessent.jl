@@ -25,15 +25,10 @@ using Qaintessent
         single_qubit_circuit_gate(2, Z, N),
         single_qubit_circuit_gate(2, Y, N),
     ])
-    cgc1 = cgc(θ, ϕ, χ, ωn)
+
     meas(M) = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)])
 
-    d = Dag(cgc1)
-
-    d = opt_hadamard(d)
-    d = opt_adjoint(d)
-
-    cgc = CircuitGateChain(d)
+    cgc = optimize!(cgc(θ, ϕ, χ, ωn))
 
     cgc_refstring =
         "\n" *
@@ -54,15 +49,7 @@ end
         # construct parametrized circuit
         adderref = vbe_adder_circuit(N)
 
-        d = Dag(adderref)
-
-        size_new = size(d)
-        size_old = Inf
-
-        d = opt_hadamard(d)
-        d = opt_adjoint(d)
-
-        adder = CircuitGateChain(d)
+        adder = optimize!(adderref)
 
         ψ = fill(0.0+0.0*im, 2^M)
 
