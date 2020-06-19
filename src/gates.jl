@@ -1,4 +1,4 @@
-u\\sing LinearAlgebra
+using LinearAlgebra
 
 """
     pauli_vector(x, y, z)
