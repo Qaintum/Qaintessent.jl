@@ -569,7 +569,7 @@ end
 """
     optimize!(cgc::CircuitGateChain{N}) where {N}
 
-optimizes `CircuitGateChain` object using `Dag` representation
+optimizes `CircuitGateChain` object using `Dag` representation. removes adjoint gates and hadamard gates when possible.
 """
 
 function optimize!(cgc::CircuitGateChain{N}) where {N}
