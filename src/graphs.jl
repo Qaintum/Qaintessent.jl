@@ -573,8 +573,7 @@ optimizes `CircuitGateChain` object using `Dag` representation
 """
 
 function optimize!(cgc::CircuitGateChain{N}) where {N}
-    dag = deepcopy(cgc)
-
+    d = Dag(deepcopy(cgc))
     size_new = size(d)
     size_old = Inf
     while size_new < size_old
@@ -585,5 +584,5 @@ function optimize!(cgc::CircuitGateChain{N}) where {N}
         size_new = size(d)
     end
 
-    CircuitGateChain(dag)
+    CircuitGateChain(d)
 end

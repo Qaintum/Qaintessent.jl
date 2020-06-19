@@ -64,15 +64,5 @@ include("view.jl")
 include("graphs.jl")
 export
     Dag,
-    lshift,
-    rshift,
-    insert,
-    insert!,
-    remove,
-    remove!,
-    append!,
-    opt_hadamard,
-    opt_adjoint,
-    get_controls
-
+    optimize!
 end
