@@ -1,4 +1,4 @@
-using LinearAlgebra
+u\\sing LinearAlgebra
 
 """
     pauli_vector(x, y, z)
@@ -85,13 +85,13 @@ struct TGate <: AbstractGate{1} end
 """
 S† Matrix
 
-``S† = \\begin{pmatrix} 1 & 0 \\\\ 0 & -i \\end{pmatrix}``
+``S^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & -i \\end{pmatrix}``
 """
 struct SdagGate <: AbstractGate{1} end
 """
 T† Matrix
 
-``T† = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{-\\frac{iπ}{4}} \\end{pmatrix}``
+``T^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{-\\frac{iπ}{4}} \\end{pmatrix}``
 """
 struct TdagGate <: AbstractGate{1} end
 
@@ -118,7 +118,7 @@ Base.adjoint(::TdagGate) = TGate()
 """
 Rotation X Matrix
 
-``R_{X}(\\theta) = \\begin{pmatrix} cos(\\frac{\\theta}{2}) & -isin(\\frac{\\theta}{2}) \\\\ -isin(\\frac{\\theta}{2}) & cos(\\frac{\\theta}{2}) \\end{pmatrix}``
+``R_{x}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -i\\sin(\\frac{\\theta}{2}) \\\\ -i\\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
 """
 struct RxGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
@@ -130,8 +130,8 @@ struct RxGate <: AbstractGate{1}
 end
 
 function matrix(g::RxGate)
-    c = cos(g.θ[]/2)
-    s = sin(g.θ[]/2)
+    c = \\cos(g.θ[]/2)
+    s = \\sin(g.θ[]/2)
     [c -im*s; -im*s c]
 end
 
@@ -145,7 +145,7 @@ end
 """
 Rotation Y Matrix
 
-``R_{Y}(\\theta) = \\begin{pmatrix} cos(\\frac{\\theta}{2}) & -sin(\\frac{\\theta}{2}) \\\\ sin(\\frac{\\theta}{2}) & cos(\\frac{\\theta}{2}) \\end{pmatrix}``
+``R_{y}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -\\sin(\\frac{\\theta}{2}) \\\\ \\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
 """
 struct RyGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
@@ -157,8 +157,8 @@ struct RyGate <: AbstractGate{1}
 end
 
 function matrix(g::RyGate)
-    c = cos(g.θ[]/2)
-    s = sin(g.θ[]/2)
+    c = \\cos(g.θ[]/2)
+    s = \\sin(g.θ[]/2)
     [c -s; s c]
 end
 
@@ -172,7 +172,7 @@ end
 """
 Rotation Z Matrix
 
-``R_{Z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}{2}} & 0 \\\\ 0 & e^{\\frac{i\\theta}{2}} \\end{pmatrix}``
+``R_{z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}{2}} & 0 \\\\ 0 & e^{\\frac{i\\theta}{2}} \\end{pmatrix}``
 """
 struct RzGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
@@ -202,7 +202,7 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 General Rotation Matrix
 Rotation by angle `θ` around unit vector `n⃗`.
 
-``R_{\\vec{n}}(\\theta) = cos(\\frac{\\theta}{2})I - isin(\\frac{\\theta}{2})\\vec{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
+``R_{\\vec{n}}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
@@ -225,7 +225,7 @@ function matrix(g::RotationGate)
         return Matrix{Complex{eltype(g.nθ)}}(I, 2, 2)
     end
     n = g.nθ/θ
-    cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
+    \\cos(θ/2)*I - im*\\sin(θ/2)*pauli_vector(n...)
 end
 
 function LinearAlgebra.ishermitian(g::RotationGate)
