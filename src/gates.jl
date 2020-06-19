@@ -130,8 +130,8 @@ struct RxGate <: AbstractGate{1}
 end
 
 function matrix(g::RxGate)
-    c = \\cos(g.θ[]/2)
-    s = \\sin(g.θ[]/2)
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
     [c -im*s; -im*s c]
 end
 
@@ -157,8 +157,8 @@ struct RyGate <: AbstractGate{1}
 end
 
 function matrix(g::RyGate)
-    c = \\cos(g.θ[]/2)
-    s = \\sin(g.θ[]/2)
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
     [c -s; s c]
 end
 
@@ -225,7 +225,7 @@ function matrix(g::RotationGate)
         return Matrix{Complex{eltype(g.nθ)}}(I, 2, 2)
     end
     n = g.nθ/θ
-    \\cos(θ/2)*I - im*\\sin(θ/2)*pauli_vector(n...)
+    cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
 function LinearAlgebra.ishermitian(g::RotationGate)
