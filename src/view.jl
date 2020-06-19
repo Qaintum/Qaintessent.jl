@@ -1,3 +1,4 @@
+
 function view(g::HadamardGate, i::Vector{Int64})
     ["—[H ]—"], i
 end
