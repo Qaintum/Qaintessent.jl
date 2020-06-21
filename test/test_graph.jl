@@ -35,7 +35,7 @@ using Qaintessent
 
     d = Dag(cgc1)
 
-    println(cgc2)
+    #println(cgc2)
     d = opt_hadamard(d)
     d = opt_adjoint(d)
     println("")

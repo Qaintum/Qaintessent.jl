@@ -1,5 +1,4 @@
 using LightGraphs
-using PyCall: pyimport
 
 function ⊂(A,B)
     for a in A
@@ -251,8 +250,7 @@ Checks if `(tree, bags)` forms a tree decomposition of `G`.
 """
 function is_tree_decomposition(G, tree, bags)
     # 1. check union property
-    println(sort(unique(vcat(bags...))))
-    if (unique(sort(vcat(bags...))) != collect(1:nv(G)) )
+    if sort(∪(bags...)) != collect(1:nv(G))
         @warn ("Union on bags is not equal to union of vertices")
         return false
     end
@@ -270,79 +268,61 @@ function is_tree_decomposition(G, tree, bags)
         end
     end
 
-    # TODO: 3. check tree property
+    # 3. check subtree property
+    subgraphs = [Int[] for i in 1:nv(G)] # subgraph[i] are the bags that contain `i`
+    for (i,b) in enumerate(bags)
+        for j in b
+            push!(subgraphs[j], i)
+        end
+    end
+
+    for (v, s) in enumerate(subgraphs)
+        if length(s) > 0
+            subtree, _ = induced_subgraph(tree, s)
+            if ! is_connected(subtree)
+                @warn("Subgraph for vertex $v not connected")
+                return false
+            end
+        end
+    end
     return true
 end
 
-
 """
-    py_tree_decomposition(adj)
+    contraction_order(cgc)
 
-Constructs a near-optimal tree decomposition of the graph whose adjacency matrix is adj.
-Calls library `Networkx`.
+Constructs a near optimal contracting order of cgc calling `tree_decomposition`,
+following Theorem 4.6 of [Markov & Shi, Simulating quantum computation by contracting tensor networks](https://arxiv.org/abs/quant-ph/0511069.)
 """
-function py_tree_decomposition(G0::Graph)
-    nx = pyimport("networkx")
-    graph_algorithms_approx = pyimport("networkx.algorithms.approximation")
-    adj = Array(adjacency_matrix(G0))
-    G = nx.from_numpy_matrix(adj)
-    G_star = G#nx.line_graph(G)
-    tw, tree = graph_algorithms_approx.treewidth_min_fill_in(G_star)
-    return tw, tree
-end
-
-"""
-    py_contraction_order(cgc)
-
-Constructs a near optimal contracting order calling `tree_decomposition`, following
-Theorem 4.6 of https://arxiv.org/abs/quant-ph/0511069.
-"""
-function py_contraction_order(cgc::CircuitGateChain{N}) where N
+function contraction_order(cgc::CircuitGateChain)
     H, edges = line_graph(simple_dag(cgc)[1])
-    tw, tree = py_tree_decomposition(H)
-    ordering = []
-    while length(tree.nodes) > 1
-        bags = collect(tree.nodes)
-        ind_leaf = findfirst(tree.degree.(bags) .== 1)
-        leaf = bags[ind_leaf]
-        neighs = collect(tree.neighbors(leaf)); neigh = neighs[1];
-        set_leaf = Set(leaf)
-        set_parent = Set(neigh)
-        edge_diff = setdiff(set_leaf, set_parent)
-        #println(edge_diff)
-        for edge in edge_diff
-            push!(ordering,edge)
-        end
-        tree.remove_node(leaf)
-    end
-    edges[ordering.+1]
-end
-
-function contraction_order(cgc::CircuitGateChain{N}) where N
-    H, edges = line_graph(simple_dag(cgc)[1])
-    tw, (tree, bags) = tree_decomposition(H)
+    tw, tree, bags = tree_decomposition(H)
     contr_order = []
     degrees = length.(tree.fadjlist)
     while maximum(degrees) > 0
-        leaf_idx = findfirst(degrees .== 1)
-        leaf = bags[leaf_idx]
+        leaves_idx = findall(degrees .== 1)
+        leaf_idx = leaves_idx[argmin(length.(bags[leaves_idx]))]
+        leaf_bag = bags[leaf_idx]
         neigh_idx = tree.fadjlist[leaf_idx][1] # only neighbor of leaf
-        neigh = bags[neigh_idx]
-        edge_diff_idx = setdiff(leaf, neigh)
-        println(edge_diff_idx)
-        for i in edge_diff_idx
+        neigh_bag = bags[neigh_idx]
+        diff_bag = setdiff(leaf_bag, neigh_bag)
+        for i in diff_bag
             push!(contr_order, edges[i])
         end
 
         # update tree and bags
         rem_vertex!(tree, leaf_idx)
-        if leaf_idx ≤ nv(tree)-1 # removed other than last vertex
-            moved_bag = pop!(bags)
+        moved_bag = pop!(bags)
+        if leaf_idx ≤ nv(tree) # if removed other than last vertex
             bags[leaf_idx] = moved_bag
-
         end
-
         degrees = length.(tree.fadjlist)
+    end
+
+    # check that only one bag left
+    @assert length(bags) == 1
+    for i in bags[1]
+        push!(contr_order, edges[i])
     end
     contr_order
 end

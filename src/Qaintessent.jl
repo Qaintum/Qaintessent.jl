@@ -82,6 +82,8 @@ export
     interaction_graph,
     is_tree_decomposition,
     tree_decomposition,
-    py_tree_decomposition,
-    py_contraction_order
+    contraction_order
+
+include("python_graphs.jl")
+
 end
