@@ -84,6 +84,6 @@ export
     tree_decomposition,
     contraction_order
 
-include("python_graphs.jl")
+include("python_contraction_order.jl")
 
 end
