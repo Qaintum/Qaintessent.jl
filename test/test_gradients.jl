@@ -34,6 +34,11 @@ end
 
     # construct parametrized circuit
     N = 4
+    A = rand(ComplexF64, 2 ,2)
+    i = rand(1:N)
+    U, R = qr(A)
+    U = Array(U)
+
     cgc(θ, ϕ, χ, ωn) = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
         controlled_circuit_gate((1, 4), 2, RzGate(θ), N),
@@ -41,6 +46,7 @@ end
         single_qubit_circuit_gate(3, PhaseShiftGate(ϕ), N),
         single_qubit_circuit_gate(3, RotationGate(ωn), N),
         single_qubit_circuit_gate(1, RyGate(χ), N),
+        single_qubit_circuit_gate(i, MatrixGate(U), N)
     ])
     # measurement operators
     meas(M) = MeasurementOps{N}([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)])

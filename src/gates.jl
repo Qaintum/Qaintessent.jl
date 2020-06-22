@@ -255,3 +255,7 @@ end
 function matrix(MG::MatrixGate{N}) where N
     MG.matrix
 end
+
+function Base.adjoint(MG::MatrixGate{N}) where N
+    return MatrixGate(Base.adjoint(MG.matrix))
+end

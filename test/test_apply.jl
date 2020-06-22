@@ -40,4 +40,34 @@ using Qaintessent
     cga = CircuitGate{2,N,AbstractGate{2}}(cg.iwire, cg.gate)
 
     @test apply(cg, ψ) ≈ apply(cga, ψ)
+
+    # MatrixGate: one qubit
+    d = 2
+    A = rand(ComplexF64, d, d)
+    U, R = qr(A)
+    U = Array(U);
+    g = MatrixGate(U)
+    i = rand(1:N)
+    cg = single_qubit_circuit_gate(i, g, N)
+    cga = CircuitGate{1,N,AbstractGate{1}}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
+
+    @test apply(cg, ψ) ≈ apply(cga, ψ)
+
+    #MatrixGate: k qubits
+    k = rand(1:N)
+    A = rand(ComplexF64, 2^k, 2^k)
+    U, R = qr(A)
+    U = Array(U);
+    g = MatrixGate(U)
+    iwire = [rand(1:N)]
+    for j in 1:k-1
+        l = rand(1:N-j)
+        i = setdiff([1:N...], iwire)[l]
+        push!(iwire, i)
+    end
+    sort!(iwire)
+    cga = CircuitGate{k,N,AbstractGate{k}}((iwire...,), g)
+
+    @test apply(cga, ψ) ≈ Qaintessent.matrix(cga)*ψ
+    
 end
