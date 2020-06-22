@@ -28,7 +28,6 @@ export
     controlled_not,
     MatrixGate
 
-
 include("circuit.jl")
 export
     AbstractCircuitGate,
@@ -44,16 +43,27 @@ export
     Circuit,
     distribution
 
+include("commute.jl")
+    export
+        iscommuting
+
 include("apply.jl")
 export
     apply
 
 include("models.jl")
 export
-    qft_circuit
-
+    qft_circuit,
+    toffoli_circuit,
+    vbe_adder_circuit,
+    qcla_out_adder_circuit,
+    qcla_inplace_adder_circuit
 
 include("gradients.jl")
 include("view.jl")
 
+include("graphs.jl")
+export
+    Dag,
+    optimize!
 end
