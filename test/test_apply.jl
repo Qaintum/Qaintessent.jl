@@ -49,7 +49,7 @@ end
     ψ = randn(ComplexF64, 2^N)
     ρ = density_from_statevector(ψ)
 
-    for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate()]
+    for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(-1.1), RyGate(0.7), RzGate(0.4), RotationGate([-0.3, 0.1, 0.23]), PhaseShiftGate(0.9)]
         cg = CircuitGate((rand(1:N),), g, N)
         ψs = apply(cg, ψ)
         ρsref = density_from_statevector(ψs)
