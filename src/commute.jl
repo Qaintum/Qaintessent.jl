@@ -1,5 +1,5 @@
 """
-    comm(A,B)
+    iscommuting(A,B)
 
 Matrix commutator [A,B]. Pre-defined commute methods for specific circuit gate combinations
 """
@@ -41,7 +41,7 @@ function iscommuting(A::AbstractGate{N},B::AbstractGate{N}) where {N}
     return false
 end
 
-iscommuting(A::AbstractGate{2},B::AbstractGate{1}) = comm(B::AbstractGate{1},A::AbstractGate{2})
+iscommuting(A::AbstractGate{2},B::AbstractGate{1}) = iscommuting(B::AbstractGate{1},A::AbstractGate{2})
 
 iscommuting(A::XGate,B::YGate) = false
 iscommuting(A::YGate,B::XGate) = false
