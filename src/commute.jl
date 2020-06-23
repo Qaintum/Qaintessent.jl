@@ -18,7 +18,7 @@ function iscommuting(A::CircuitGate{L,M,G},B::CircuitGate{N,M,H}) where {L,N,M,G
         if G == H
             return true
         end
-        return comm(A.gate, B.gate)
+        return iscommuting(A.gate, B.gate)
     end
 
     mA = Qaintessent.matrix(A)
