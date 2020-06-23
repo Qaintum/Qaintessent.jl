@@ -226,7 +226,9 @@ returns state vector of `N` qubits after applying a `CircuitGateChain{N}` object
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
     for moment in cgc.moments
         for gate in moment
-            ψ = apply(gate, ψ)
+            if all(cgc.creg[gate.ccntrl] .== 1)
+                ψ = apply(gate, ψ)
+            end
         end
     end
     return ψ
