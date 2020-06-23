@@ -280,8 +280,6 @@ matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 LinearAlgebra.ishermitian(::SwapGate) = true
 Base.adjoint(s::SwapGate) = s
 
-
-
 # general controlled gate
 struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
@@ -306,3 +304,10 @@ end
 Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
 
 controlled_not() = ControlledGate{1,2}(X)
+
+
+function Base.isapprox(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
+    return typeof(g1) == typeof(g2)
+end
+
+Base.isapprox(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M, N} = false
