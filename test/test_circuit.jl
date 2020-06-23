@@ -212,7 +212,7 @@ end
 
 @testset ExtendedTestSet "test classical registers" begin
 N = 3
-println(controlled_circuit_gate((1, 3), 2, HadamardGate(), N; ccntrl=[2]))
+
 @test_throws Exception CircuitGateChain{N}([
     single_qubit_circuit_gate(2, X, N; ccntrl=[1]),
     single_qubit_circuit_gate(2, Y, N),
