@@ -158,10 +158,10 @@ end
         controlled_circuit_gate((2), (4), HadamardGate(), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N)])
     m_refstring =
-    "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
-    "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
-    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()))\n" *
-    "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]))\n"
+    "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]), Int64[])\n" *
+    "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]), Int64[])\n" *
+    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()), Int64[])\n" *
+    "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]), Int64[])\n"
 
     io = IOBuffer()
     show(io, m)
