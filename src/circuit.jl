@@ -57,6 +57,9 @@ compares two circuit gates of basic type `G`. if the gates are not parametric, r
 """
 function Base.isapprox(cg1::CircuitGate{M, N, G}, cg2::CircuitGate{M, N, G}) where {M, N, G}
     fields = fieldnames(G)
+    if cg1.iwire != cg2.iwire
+        return false
+    end
     for name in fields
         if getfield(cg1.gate, name) ≈ getfield(cg2.gate, name)
         else
@@ -440,6 +443,13 @@ end
 
 function Base.:*(cgc1::CircuitGateChain{N}, cgc2::CircuitGateChain{N}) where {N}
     append!(cgc1.moments, cgc2.moments)
+    creg_length = length(cgc1.creg) - length(cgc2.creg)
+    if creg_length > 0
+        append!(cgc2.creg, fill(0, (creg_length,)))
+    elseif creg_length < 0
+        append!(cgc1.creg, fill(0, (abs(creg_length)),))
+    end
+    cgc1.creg = cgc1.creg .| cgc2.creg
     return cgc1
 end
 
