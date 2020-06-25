@@ -20,7 +20,7 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     iwire::NTuple{M, <:Integer}
     "actual gate"
     gate::G
-    "classical register"
+    "classical registers"
     ccntrl::AbstractVector{Int}
 
     @doc """
@@ -177,11 +177,26 @@ controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::Abstr
 returns a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
 """
 function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {K,M}
+    all(icntrl.!=0) || error("All control wires must not be 0")
+    k = K
+    if any(icntrl.<0)
+        length(ccntrl) == 0 || error("Both keyword argument `ccntrl` and negative control wires used. Please only use one format to input classical control wires")
+        append!(ccntrl, abs.(Iterators.filter(x->x<0, icntrl)))
+        length(ccntrl) == length(unique(ccntrl)) || error("Classical control wires must be unique")
+
+        icntrl = filter(x->x>0, icntrl)
+
+        if length(icntrl) == 0
+            return CircuitGate((itarget...,), U, N; ccntrl=ccntrl)
+        else
+            k = length(icntrl)
+        end
+    end
     # consistency checks
-    K + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
+    k + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
     length(intersect(icntrl, itarget)) == 0 || error("Control and target wires must be disjoint.")
 
-    CircuitGate((icntrl..., itarget...), ControlledGate{M,K+M}(U), N; ccntrl=ccntrl)
+    CircuitGate((icntrl..., itarget...), ControlledGate{M,k+M}(U), N; ccntrl=ccntrl)
 end
 
 """
