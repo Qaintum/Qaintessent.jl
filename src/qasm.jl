@@ -1,10 +1,13 @@
+using Printf
+using Formatting
+
 """
     custom_gate()
 
 creates template functions from OpenQASM style documentation
 """
 function custom_gate!(iwire_dict::Dict, cwire_dict::Dict, gate_dict::Dict, gate_name::String, gate_wires::String, gate_def::String; gate_vars::Union{String, Nothing}=nothing)
-    gate_var_expression = r"([a-z][a-zA-Z0-9\_]*)(\(*.*\)*) ([a-z0-9A-Z\[\],]*);"
+    gate_var_expression = r"([a-zA-Z][a-zA-Z0-9\_]*)(\(*.*\)*) ([a-z0-9A-Z\[\],]*);"
     if haskey(gate_dict, gate_name)
         return
     end
@@ -29,8 +32,10 @@ function custom_gate!(iwire_dict::Dict, cwire_dict::Dict, gate_dict::Dict, gate_
             end
         end
         for line in split(gate_def, "\n")
-
             m = Base.match(gate_var_expression, line)
+            println(line)
+            println(gate_var_expression)
+            println(m)
             if m != nothing
                 name = m.captures[1]
                 rvars = strip.(split(m.captures[2][2:end-1], ","))
@@ -53,7 +58,6 @@ function custom_gate!(iwire_dict::Dict, cwire_dict::Dict, gate_dict::Dict, gate_
                         end
                     end
                 end
-
                 haskey(gate_dict, name) || error(name * " has not been defined!")
                 cgs *= gate_dict[name](local_wires, local_vars, N)
             end
@@ -65,70 +69,121 @@ end
 
 """
     import_file(filename::String; type="QASM")
-converts a .QASM file to a CircuitGateChain
+converts an external file to a Circuit object
 """
 function import_file(filename::String; type="QASM")
+    if type == "QASM"
+        return import_qasm(filename::String)
+    end
+end
+
+h_func =
+function h_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], HadamardGate(), N)])
+end
+t_func =
+function t_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], TGate(), N)])
+end
+tdag_func =
+function tdag_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], TdagGate(), N)])
+end
+s_func =
+function s_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], SGate(), N)])
+end
+
+sdag_func =
+function sdag_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], SdagGate(), N)])
+end
+
+x_func =
+function x_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], XGate(), N)])
+end
+
+y_func =
+function y_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], YGate(), N)])
+end
+
+z_func =
+function z_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], ZGate(), N)])
+end
+
+rx_func =
+function rx_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], RxGate(vars[1]), N)])
+end
+
+ry_func =
+function ry_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], RyGate(vars[1]), N)])
+end
+
+rz_func =
+function rz_func(wires, vars, N)
+    CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], RzGate(vars[1]), N)])
+end
+
+cx_func =
+function cx_func(wires, vars, N)
+    if any(wires.<0)
+        creg = fill(0, min(abs.(wires)...))
+    else
+        creg = Int[]
+    end
+    CircuitGateChain{N}([controlled_circuit_gate(wires[1], wires[2], XGate(), N)]; creg=creg)
+end
+ccx_func =
+function ccx_func(wires, vars, N)
+    if any(wires.<0)
+        creg = fill(0, min(abs.(wires)...))
+    else
+        creg = Int[]
+    end
+    CircuitGateChain{N}([controlled_circuit_gate((wires[1], wires[2]), wires[3], XGate(), N)]; creg=creg)
+end
+
+u_func =
+function u_func(wires, vars, N)
+    CircuitGateChain{N}([
+    single_qubit_circuit_gate(wires[1], RzGate(vars[2]), N),
+    single_qubit_circuit_gate(wires[1], RyGate(vars[1]), N),
+    single_qubit_circuit_gate(wires[1], RzGate(vars[3]), N)
+    ])
+end
+
+swap_func =
+function swap_func(wires, vars, N)
+    CircuitGateChain{N}([two_qubit_circuit_gate(wires[1], wires[2], SwapGate(), N)])
+end
+
+gate_dict = Dict("x"=>x_func,
+                 "y"=>y_func,
+                 "z"=>z_func,
+                 "s"=>s_func,
+                 "sdag"=>sdag_func,
+                 "t"=>t_func,
+                 "tdag"=>tdag_func,
+                 "h"=>h_func,
+                 "swap"=>swap_func,
+                 "cx"=>cx_func,
+                 "CX"=>cx_func,
+                 "ccx"=>ccx_func,
+                 "CCX"=>ccx_func,
+                 "U"=>u_func,
+                 )
+
+"""
+    import_file(filename::String; type="QASM")
+converts a .QASM file to a CircuitGateChain
+"""
+function import_qasm(filename::String)
     isfile(filename) || error("File '"* filename * "' does not exist")
-    h_func =
-    function h_func(wires, vars, N)
-        if any(wires.<0)
-            creg = fill(0, min(abs.(wires)...))
-        else
-            creg = Int[]
-        end
-        CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], HadamardGate(), N)]; creg=creg)
-    end
-    x_func =
-    function x_func(wires, vars, N)
-        if any(wires.<0)
-            creg = fill(0, min(abs.(wires)...))
-        else
-            creg = Int[]
-        end
-        CircuitGateChain{N}([single_qubit_circuit_gate(wires[1], XGate(), N)]; creg=creg)
-    end
-    cx_func =
-    function cx_func(wires, vars, N)
-        if any(wires.<0)
-            creg = fill(0, min(abs.(wires)...))
-        else
-            creg = Int[]
-        end
-        CircuitGateChain{N}([controlled_circuit_gate(wires[1], wires[2], XGate(), N)]; creg=creg)
-    end
-    ccx_func =
-    function ccx_func(wires, vars, N)
-        if any(wires.<0)
-            creg = fill(0, min(abs.(wires)...))
-        else
-            creg = Int[]
-        end
-        CircuitGateChain{N}([controlled_circuit_gate((wires[1], wires[2]), wires[3], XGate(), N)]; creg=creg)
-    end
-    u_func =
-    function u_func(wires, vars, N)
-        if any(wires.<0)
-            creg = fill(0, min(abs.(wires)...))
-        else
-            creg = Int[]
-        end
-        CircuitGateChain{N}([
-        single_qubit_circuit_gate(wires[1], RxGate(vars[1]), N),
-        single_qubit_circuit_gate(wires[1], RyGate(vars[2]), N),
-        single_qubit_circuit_gate(wires[1], RzGate(vars[3]), N)
-        ]; creg=creg)
-    end
-    gate_dict = Dict("x"=>x_func,
-                     "X"=>x_func,
-                     "h"=>h_func,
-                     "H"=>h_func,
-                     "cx"=>cx_func,
-                     "CX"=>cx_func,
-                     "ccx"=>ccx_func,
-                     "CCX"=>ccx_func,
-                     "u"=>u_func,
-                     "U"=>u_func,
-                     )
     iwire_dict = Dict()
     cwire_dict = Dict()
     N = 0
@@ -162,7 +217,12 @@ function import_file(filename::String; type="QASM")
                 !haskey(cwire_dict, name) || error("QASM file redefines " * name * " classical register")
                 cwire_dict[name] = collect(M-1:-1:M-size)
                 M -= size
+            elseif startswith(line, "if")
+                error("Qaintessent.jl currently does not support the `if (creg===x)` command in OpenQASM`")
+            elseif startswith(line, "reset")
+                error("Qaintessent.jl currently does not support the `reset` command in OpenQASM`")
             elseif startswith(line, "gate")
+                println(line)
                 readuntil(f, "{"; keep=false)
                 gate_def = readuntil(f, "}"; keep=false)
                 m = Base.match(gate_var_expression, line)
@@ -177,6 +237,7 @@ function import_file(filename::String; type="QASM")
                     gate_vars = String(m[2])
                     gate_wires = String(m[3])
                 end
+                println(gate_name)
                 custom_gate!(iwire_dict, cwire_dict, gate_dict, gate_name, gate_wires, gate_def; gate_vars=gate_vars)
             end
         end
@@ -271,10 +332,93 @@ function import_file(filename::String; type="QASM")
     return Circuit{N}(cgs, MeasurementOps{N}(mops))
 end
 
+gate_name_dict = Dict(
+                    XGate => "x {1};\n",
+                    YGate => "y {1};\n",
+                    ZGate => "z {1};\n",
+                    RxGate => "rx({2}) {1};\n",
+                    RyGate => "ry({2}) {1};\n",
+                    RzGate => "rz({2}) {1};\n",
+                    TGate => "t {1};\n",
+                    TdagGate => "tdag {1};\n",
+                    SGate => "s {1};\n",
+                    SdagGate => "sdag {1};\n",
+                    HadamardGate => "h {1};\n",
+                    SwapGate => "swap {1};\n",
+                        )
+
+controlled_gate_name_dict = Dict(
+                            XGate => "cx {1};\n",
+                            YGate => "cy {1};\n",
+                            ZGate => "cz {1};\n",
+                            HadamardGate => "ch {1};\n",
+                            RzGate => "crz({2}) {1};\n",
+                            )
+"""
+    export_qasm(filename::String; type="QASM")
+Circuit to a QASM file
+"""
+function export_qasm(circuit::Circuit{N}, filename::String) where {N}
+    output = """OPENQASM 2.0;\ninclude "qelib1.inc";\n\n"""
+    M = length(circuit.cgc.creg)
+    if M > 0
+        output *= format("//Defining registers\nqreg q[{1}];\ncreg c[{2}];\n\n", N, M)
+    else
+        output *= format("//Defining registers\nqreg q[{1}];\n\n", N)
+    end
+
+    for moment in circuit.cgc
+        for circuit_gate in moment
+            if isa(circuit_gate.gate, ControlledGate)
+                if length(get_controls(circuit_gate)[1]) > 1
+                    error(format("Gate {1} has {2} control wires. Multi-control wires are currently not supported for the OpenQASM format.", circuit_gate, length(get_controls(circuit_gate)[1])))
+                end
+                abstract_gate = circuit_gate.gate.U
+                gate_type = typeof(abstract_gate)
+                fields = fieldnames(gate_type)
+                
+                if haskey(controlled_gate_name_dict, gate_type)
+                    frmt = controlled_gate_name_dict[gate_type]
+                else
+                    error("Controlled Gate " * string(gate_type) * " conversion to OpenQASM is currently not supported in Qaintessent.jl")
+                end
+            else
+                abstract_gate = circuit_gate.gate
+                gate_type = typeof(abstract_gate)
+                fields = fieldnames(gate_type)
+                if haskey(gate_name_dict, gate_type)
+                    frmt = gate_name_dict[gate_type]
+                else
+                    error("Gate " * string(gate_type) * " convertsion to OpenQASM is currently not supported in Qaintessent.jl")
+                end
+            end
+
+            vars = ""
+            for field in fields
+                vars *= string(getfield(abstract_gate, field)[1]) * ","
+            end
+            vars = vars[1:end-1]
+
+            wires = format("q[{1}]", circuit_gate.iwire[1]-1)
+            for wire in circuit_gate.iwire[2:end]
+                wires *= format(",q[{1}]", wire-1)
+            end
+
+            output *= format(frmt, wires, vars)
+
+            end
+        end
+    open(filename, "w+") do f
+        write(f, output)
+    end
+end
+
 """
     export_file(filename::String; type="QASM")
-CircuitGateChain or Circuit to a QASM file
+Circuit to a export file
 """
-function export_file(circuit::Circuit{N}; type="QASM") where {N}
-
+function export_file(circuit::Circuit{N}, filename::String; type="QASM") where {N}
+    if type == "QASM"
+        export_qasm(circuit, filename)
+    end
 end

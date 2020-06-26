@@ -68,5 +68,6 @@ export
 
 include("qasm.jl")
 export
-    import_file
+    import_file,
+    export_file
 end
