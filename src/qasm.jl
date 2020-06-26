@@ -171,7 +171,7 @@ function swap_func(wires, vars, N)
     CircuitGateChain{N}([two_qubit_circuit_gate(wires[1], wires[2], SwapGate(), N)])
 end
 
-gate_dict = Dict("x"=>x_func,
+ref_gate_dict = Dict("x"=>x_func,
                  "y"=>y_func,
                  "z"=>z_func,
                  "s"=>s_func,
@@ -193,6 +193,7 @@ gate_dict = Dict("x"=>x_func,
 converts a .QASM file to a CircuitGateChain
 """
 function import_qasm(filename::String)
+    gate_dict = deepcopy(ref_gate_dict)
     isfile(filename) || error("File '"* filename * "' does not exist")
     iwire_dict = Dict()
     cwire_dict = Dict()
@@ -272,27 +273,37 @@ function import_qasm(filename::String)
                 output_wires = m.captures[4]
                 input_register = iwire_dict[input]
                 output_register = cwire_dict[output]
-
                 if !isnothing(input_wires)
-                    input_wires = [input_register[parse(Int64, input_wires)+1]]
+                    input_wires = input_register[parse(Int64, input_wires)+1]
                     input_length = 1
                 else
+                    input_wires = input_register[1] # In case register is size 1
                     input_length = length(input_register)
                 end
 
                 if !isnothing(output_wires)
-                    output_wires = [output_register[parse(Int64, output_wires)+1]]
+                    output_wires = parse(Int64, output_wires)+1
                     output_length = 1
                 else
+                    output_wires = 1 # In case register is size 1
                     output_length = length(output_register)
                 end
 
                 input_length == output_length || error("Length of registers for measurement must match")
-                for i in 1:input_length
-                    output_register[i] = input_register[i]
-                    m = kron(Matrix{ComplexF64}(I, 2^(input_register[i]-1), 2^(input_register[i]-1)), Qaintessent.matrix(ZGate()))
-                    m = kron(m, Matrix{ComplexF64}(I, 2^(N-input_register[i]), 2^(N-input_register[i])))
 
+                if output_length > 1
+                    for i in 1:input_length
+                        output_register[i] = input_register[i]
+                        m = kron(Matrix{ComplexF64}(I, 2^(input_register[i]-1), 2^(input_register[i]-1)), Qaintessent.matrix(ZGate()))
+                        m = kron(m, Matrix{ComplexF64}(I, 2^(N-input_register[i]), 2^(N-input_register[i])))
+
+                        @assert size(m) == (2^N, 2^N)
+                        push!(mops, m)
+                    end
+                else
+                    output_register[output_wires] = input_wires
+                    m = kron(Matrix{ComplexF64}(I, 2^(input_wires-1), 2^(input_wires-1)), Qaintessent.matrix(ZGate()))
+                    m = kron(m, Matrix{ComplexF64}(I, 2^(N-input_wires), 2^(N-input_wires)))
                     @assert size(m) == (2^N, 2^N)
                     push!(mops, m)
                 end
