@@ -37,12 +37,18 @@ end
     filename = "import_adder_test.qasm"
     N = 10
     c = import_file(filename)
-
     ψ = fill(0.0+0.0im, 2^N)
     ψ[1] = 1.0+0.0im
 
     result = apply(c, ψ)
-    # println(result)
+    answer = 0
+    
+    for (i,flag) in enumerate(result)
+        if flag == -1
+            answer += 2^i
+        end
+    end
+    @test answer == 32
 end
 
 @testset ExtendedTestSet "qasm export test" begin

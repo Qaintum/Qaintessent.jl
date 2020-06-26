@@ -36,3 +36,4 @@ test(0.1,0.3) a[3], b[0], a[1];
 
 measure b -> ans;
 measure a[0] -> out;
+measure cin -> out[0];

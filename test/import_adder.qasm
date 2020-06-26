@@ -17,12 +17,11 @@ qreg cin[1];
 qreg a[4];
 qreg b[4];
 qreg cout[1];
-creg ans[5];
+creg ans[4];
+creg ans2[1]
 // set input states
-// a = 0100
-//x a;
-// b = 0001
-//x b;
+x a[0]; // a = 0001
+x b;    // b = 1111
 // add a to b, storing result in b
 majority cin[0],b[0],a[0];
 majority a[0],b[1],a[1];
@@ -33,13 +32,5 @@ unmaj a[2],b[3],a[3];
 unmaj a[1],b[2],a[2];
 unmaj a[0],b[1],a[1];
 unmaj cin[0],b[0],a[0];
-measure cin[0] -> ans[0];
-measure a[0] -> ans[0];
-measure a[1] -> ans[1];
-measure a[2] -> ans[2];
-measure a[3] -> ans[3];
-measure b[0] -> ans[0];
-measure b[1] -> ans[1];
-measure b[2] -> ans[2];
-measure b[3] -> ans[3];
-measure cout[0] -> ans[4];
+measure b -> ans;
+measure cout[0] -> ans2[0];
