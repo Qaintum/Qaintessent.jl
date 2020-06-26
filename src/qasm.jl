@@ -33,9 +33,6 @@ function custom_gate!(iwire_dict::Dict, cwire_dict::Dict, gate_dict::Dict, gate_
         end
         for line in split(gate_def, "\n")
             m = Base.match(gate_var_expression, line)
-            println(line)
-            println(gate_var_expression)
-            println(m)
             if m != nothing
                 name = m.captures[1]
                 rvars = strip.(split(m.captures[2][2:end-1], ","))
@@ -54,6 +51,7 @@ function custom_gate!(iwire_dict::Dict, cwire_dict::Dict, gate_dict::Dict, gate_
                         if haskey(local_vars_dict, local_var)
                             push!(local_vars, local_vars_dict[local_var])
                         else
+                            replace(local_var, "pi"=>"π")
                             push!(local_vars, parse(Float64, local_var))
                         end
                     end
@@ -157,6 +155,17 @@ function u_func(wires, vars, N)
     ])
 end
 
+cu1_func =
+function cu1_func(wires, vars, N)
+    CircuitGateChain{N}([
+    single_qubit_circuit_gate(wires[1], RzGate(vars[1]/2), N),
+    controlled_circuit_gate(wires[1], wires[2], XGate(), N),
+    single_qubit_circuit_gate(wires[1], RzGate(-vars[1]/2), N),
+    controlled_circuit_gate(wires[1], wires[2], XGate(), N),
+    single_qubit_circuit_gate(wires[1], RzGate(vars[1]/2), N),
+    ])
+end
+
 swap_func =
 function swap_func(wires, vars, N)
     CircuitGateChain{N}([two_qubit_circuit_gate(wires[1], wires[2], SwapGate(), N)])
@@ -176,6 +185,7 @@ gate_dict = Dict("x"=>x_func,
                  "ccx"=>ccx_func,
                  "CCX"=>ccx_func,
                  "U"=>u_func,
+                 "cu1"=>cu1_func
                  )
 
 """
@@ -222,7 +232,7 @@ function import_qasm(filename::String)
             elseif startswith(line, "reset")
                 error("Qaintessent.jl currently does not support the `reset` command in OpenQASM`")
             elseif startswith(line, "gate")
-                println(line)
+
                 readuntil(f, "{"; keep=false)
                 gate_def = readuntil(f, "}"; keep=false)
                 m = Base.match(gate_var_expression, line)
@@ -237,7 +247,7 @@ function import_qasm(filename::String)
                     gate_vars = String(m[2])
                     gate_wires = String(m[3])
                 end
-                println(gate_name)
+
                 custom_gate!(iwire_dict, cwire_dict, gate_dict, gate_name, gate_wires, gate_def; gate_vars=gate_vars)
             end
         end
@@ -280,8 +290,9 @@ function import_qasm(filename::String)
                 input_length == output_length || error("Length of registers for measurement must match")
                 for i in 1:input_length
                     output_register[i] = input_register[i]
-                    m = kron(Matrix{Float64}(I, 2^(input_register[i]-1), 2^(input_register[i]-1)), Qaintessent.matrix(ZGate()))
-                    m = kron(m, Matrix{Float64}(I, 2^(N-input_register[i]), 2^(N-input_register[i])))
+                    m = kron(Matrix{ComplexF64}(I, 2^(input_register[i]-1), 2^(input_register[i]-1)), Qaintessent.matrix(ZGate()))
+                    m = kron(m, Matrix{ComplexF64}(I, 2^(N-input_register[i]), 2^(N-input_register[i])))
+
                     @assert size(m) == (2^N, 2^N)
                     push!(mops, m)
                 end
@@ -295,7 +306,8 @@ function import_qasm(filename::String)
                         custom_var_match = Base.match(custom_var_expression, line)
                         custom_gate_vars = nothing
                         if !isnothing(custom_var_match) && !isnothing(custom_var_match.captures[2])
-                            custom_gate_vars = parse.(Float64, split(custom_var_match.captures[2], ","))
+                            custom_gate_vars = replace(custom_var_match.captures[2], "pi"=>"π")
+                            custom_gate_vars = eval.(Meta.parse.((split(custom_gate_vars, ","))))
                         end
                         custom_registers = [strip(x, [';', ' ']) for x in split(split(line;limit=2)[2], ",")]
                         custom_wires = []
@@ -376,7 +388,7 @@ function export_qasm(circuit::Circuit{N}, filename::String) where {N}
                 abstract_gate = circuit_gate.gate.U
                 gate_type = typeof(abstract_gate)
                 fields = fieldnames(gate_type)
-                
+
                 if haskey(controlled_gate_name_dict, gate_type)
                     frmt = controlled_gate_name_dict[gate_type]
                 else
