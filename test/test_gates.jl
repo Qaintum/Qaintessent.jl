@@ -38,7 +38,7 @@ end
     A = rand(ComplexF64, d^N ,d^N)
     U, R = qr(A)
     U = Array(U)
-    Q = diagm(rand([-0.9:0.1:0.9...], N))
+    Q = diagm(rand([-0.9:0.1:0.9...], d^N))
     UQ = U*Q
     GateU = MatrixGate(U)
 

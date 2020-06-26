@@ -317,7 +317,7 @@ struct MatrixGate{N} <: AbstractGate{N}
     function MatrixGate(m)
         d = 2
         @assert size(m,1) == size(m,2)
-        isunitary(m) || error("Quantum operators must be unitary")*
+        isunitary(m) || error("Quantum operators must be unitary")
         N = Int(log(d, size(m,1)))
         return new{N}(m)
     end
