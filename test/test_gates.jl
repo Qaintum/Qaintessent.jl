@@ -31,4 +31,19 @@ end
     @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
     @test Qaintessent.matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.matrix(RyGate(θ))
     @test Qaintessent.matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.matrix(RzGate(θ))
+
+    #Test MatrixGate
+    N = 3
+    d = 2
+    A = rand(ComplexF64, d^N ,d^N)
+    U, R = qr(A)
+    U = Array(U)
+    Q = diagm(rand([-0.9:0.1:0.9...], d^N))
+    UQ = U*Q
+    GateU = MatrixGate(U)
+
+    @test Qaintessent.matrix(GateU) ≈ U
+    @test isunitary(GateU)
+    @test_throws ErrorException MatrixGate(UQ)
+
 end

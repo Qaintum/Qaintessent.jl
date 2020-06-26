@@ -306,3 +306,27 @@ end
 Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
 
 controlled_not() = ControlledGate{1,2}(X)
+
+# MatrixGate: general gate constructed from an unitary matrix
+function isunitary(m::AbstractMatrix)
+    m * Base.adjoint(m) ≈ I
+end
+
+struct MatrixGate{N} <: AbstractGate{N}
+    matrix::AbstractMatrix
+    function MatrixGate(m)
+        d = 2
+        @assert size(m,1) == size(m,2)
+        isunitary(m) || error("Quantum operators must be unitary")
+        N = Int(log(d, size(m,1)))
+        return new{N}(m)
+    end
+end
+
+function matrix(MG::MatrixGate{N}) where N
+    MG.matrix
+end
+
+function Base.adjoint(MG::MatrixGate{N}) where N
+    return MatrixGate(Base.adjoint(MG.matrix))
+end
