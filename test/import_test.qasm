@@ -15,7 +15,7 @@ gate unmaj a,b,c
 }
 gate test(var1,var2) a,e,d
 {
-  u(0, var1, var2) e;
+  U(0, var1, var2) e;
   cx d,e;
   ccx a,d,e;
 }
@@ -24,7 +24,7 @@ qreg a[4];
 qreg b[4];
 qreg cout[1];
 creg ans[4];
-creg out[1]
+creg out[1];
 // set input states
 x a[0];
 x b;
