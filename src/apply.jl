@@ -66,6 +66,7 @@ function apply(cg::CircuitGate{1,N,XGate}, ψ::AbstractVector) where {N}
     return reshape(ψ[:,[2,1],:],:)
 end
 
+
 """Tailored apply for YGate"""
 function apply(cg::CircuitGate{1,N,YGate}, ψ::AbstractVector) where {N}
     i = cg.iwire[1]
@@ -75,6 +76,7 @@ function apply(cg::CircuitGate{1,N,YGate}, ψ::AbstractVector) where {N}
     A[:,2,:] .=  im.*ψ[:,1,:]
     return reshape(A,:)
 end
+
 
 """Tailored apply for ZGate"""
 function apply(cg::CircuitGate{1,N,ZGate}, ψ::AbstractVector) where {N}
@@ -86,6 +88,7 @@ function apply(cg::CircuitGate{1,N,ZGate}, ψ::AbstractVector) where {N}
     return reshape(A,:)
 end
 
+
 """Tailored apply for HadamardGate"""
 function apply(cg::CircuitGate{1,N,HadamardGate}, ψ::AbstractVector) where {N}
     i = cg.iwire[1]
@@ -95,6 +98,7 @@ function apply(cg::CircuitGate{1,N,HadamardGate}, ψ::AbstractVector) where {N}
     A[:,2,:] .= (ψ[:,1,:] .- ψ[:,2,:])./sqrt(2)
     return reshape(A,:)
 end
+
 
 """Tailored apply for SGate"""
 function apply(cg::CircuitGate{1,N,SGate}, ψ::AbstractVector) where {N}
@@ -106,6 +110,7 @@ function apply(cg::CircuitGate{1,N,SGate}, ψ::AbstractVector) where {N}
     return reshape(A, :)
 end
 
+
 """Tailored apply for SdagGate"""
 function apply(cg::CircuitGate{1,N,SdagGate}, ψ::AbstractVector) where {N}
     i = cg.iwire[1]
@@ -115,6 +120,7 @@ function apply(cg::CircuitGate{1,N,SdagGate}, ψ::AbstractVector) where {N}
     A[:,2,:] .= -im.*ψ[:,2,:]
     return reshape(A, :)
 end
+
 
 """Tailored apply for TGate"""
 function apply(cg::CircuitGate{1,N,TGate}, ψ::AbstractVector) where {N}
@@ -126,6 +132,7 @@ function apply(cg::CircuitGate{1,N,TGate}, ψ::AbstractVector) where {N}
     return reshape(A, :)
 end
 
+
 """Tailored apply for TdagGate"""
 function apply(cg::CircuitGate{1,N,TdagGate}, ψ::AbstractVector) where {N}
     i = cg.iwire[1]
@@ -135,6 +142,7 @@ function apply(cg::CircuitGate{1,N,TdagGate}, ψ::AbstractVector) where {N}
     A[:,2,:] .= exp(-im*π/4).*ψ[:,2,:]
     return reshape(A, :)
 end
+
 
 """Tailored apply for RzGate"""
 function apply(cg::CircuitGate{1,N,RzGate}, ψ::AbstractVector) where {N}
@@ -147,6 +155,7 @@ function apply(cg::CircuitGate{1,N,RzGate}, ψ::AbstractVector) where {N}
     return reshape(A, :)
 end
 
+
 """Tailored apply for PhaseShiftGate"""
 function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ψ::AbstractVector) where {N}
     i = cg.iwire[1]
@@ -156,6 +165,7 @@ function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ψ::AbstractVector) where {N
     A[:,2,:] .= exp(im*cg.gate.ϕ[]).*ψ[:,2,:]
     return reshape(A, :)
 end
+
 
 """Tailored apply for a general single qubit gate"""
 function apply(cg::CircuitGate{1,N,AbstractGate{1}}, ψ::AbstractVector) where {N}
@@ -167,6 +177,7 @@ function apply(cg::CircuitGate{1,N,AbstractGate{1}}, ψ::AbstractVector) where {
     A[:,2,:] .= U[2,1] .* ψ[:,1,:] .+ U[2,2] .* ψ[:,2,:]
     return reshape(A, :)
 end
+
 
 """Tailored apply for SwapGate"""
 function apply(cg::CircuitGate{2,N,SwapGate}, ψ::AbstractVector) where {N}
@@ -186,6 +197,7 @@ function apply(cg::CircuitGate{2,N,SwapGate}, ψ::AbstractVector) where {N}
     return reshape(A, :)
 end
 
+
 """Tailored apply for a general ControlledGate"""
 function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ψ::AbstractVector) where {M,N,T}
 
@@ -204,6 +216,7 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ψ::AbstractVector) whe
                                  fill(2, N-M+T)...)
     return reshape(A, :)
 end
+
 
 """
     apply(cgc, ψ)
@@ -245,74 +258,50 @@ end
 
 
 """Tailored apply to density matrix for XGate"""
-function apply!(ρ::DensityMatrix{N}, cg::CircuitGate{1,N,XGate}) where {N}
-    # qubit index the gate acts on
-    j = cg.iwire[1]
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        # X I X =  I,
-        # X X X =  X,
-        # X Y X = -Y,
-        # X Z X = -Z
-        if pt[j] == 2 || pt[j] == 3
-            ρ.v[i] *= -1
-        end
-    end
-    return ρ
-end
-
-"""Tailored apply to density matrix for XGate"""
 function apply(cg::CircuitGate{1,N,XGate}, ρ::DensityMatrix{N}) where {N}
-    ρ = DensityMatrix{N}(copy(ρ.v))
-    apply!(ρ, cg)
-    return ρ
-end
-
-
-"""Tailored apply to density matrix for YGate"""
-function apply!(ρ::DensityMatrix{N}, cg::CircuitGate{1,N,YGate}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        # Y I Y =  I,
-        # Y X Y = -X,
-        # Y Y Y =  Y,
-        # Y Z Y = -Z
-        if pt[j] == 1 || pt[j] == 3
-            ρ.v[i] *= -1
-        end
-    end
-    return ρ
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]     # X I X =  I
+    vs[:, 2, :] .=  ρv[:, 2, :]     # X X X =  X
+    vs[:, 3, :] .= -ρv[:, 3, :]     # X Y X = -Y
+    vs[:, 4, :] .= -ρv[:, 4, :]     # X Z X = -Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
+
 
 """Tailored apply to density matrix for YGate"""
 function apply(cg::CircuitGate{1,N,YGate}, ρ::DensityMatrix{N}) where {N}
-    ρ = DensityMatrix{N}(copy(ρ.v))
-    apply!(ρ, cg)
-    return ρ
-end
-
-
-"""Tailored apply to density matrix for ZGate"""
-function apply!(ρ::DensityMatrix{N}, cg::CircuitGate{1,N,ZGate}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        # Z I Z =  I,
-        # Z X Z = -X,
-        # Z Y Z = -Y,
-        # Z Z Z =  Z
-        if pt[j] == 1 || pt[j] == 2
-            ρ.v[i] *= -1
-        end
-    end
-    return ρ
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]     # Y I Y =  I
+    vs[:, 2, :] .= -ρv[:, 2, :]     # Y X Y = -X
+    vs[:, 3, :] .=  ρv[:, 3, :]     # Y Y Y =  Y
+    vs[:, 4, :] .= -ρv[:, 4, :]     # Y Z Y = -Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
+
 
 """Tailored apply to density matrix for ZGate"""
 function apply(cg::CircuitGate{1,N,ZGate}, ρ::DensityMatrix{N}) where {N}
-    ρ = DensityMatrix{N}(copy(ρ.v))
-    apply!(ρ, cg)
-    return ρ
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]     # Z I Z =  I
+    vs[:, 2, :] .= -ρv[:, 2, :]     # Z X Z = -X
+    vs[:, 3, :] .= -ρv[:, 3, :]     # Z Y Z = -Y
+    vs[:, 4, :] .=  ρv[:, 4, :]     # Z Z Z =  Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
@@ -320,24 +309,15 @@ end
 function apply(cg::CircuitGate{1,N,HadamardGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0
-            # H I H = I
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # H Z H = X
-            v[i] = ρ.v[i+2*jbasefac]
-        elseif pt[j] == 2
-            # H Y H = -Y
-            v[i] = -ρ.v[i]
-        elseif pt[j] == 3
-            # H X H = Z
-            v[i] = ρ.v[i-2*jbasefac]
-        end
-    end
-    return DensityMatrix{N}(v)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]     # H I H =  I
+    vs[:, 2, :] .=  ρv[:, 4, :]     # H Z H =  X
+    vs[:, 3, :] .= -ρv[:, 3, :]     # H Y H = -Y
+    vs[:, 4, :] .=  ρv[:, 2, :]     # H X H =  Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
@@ -345,22 +325,15 @@ end
 function apply(cg::CircuitGate{1,N,SGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 3
-            # S I S^† = I,
-            # S Z S^† = Z
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # S Y S^† = -X
-            v[i] = -ρ.v[i+jbasefac]
-        elseif pt[j] == 2
-            # S X S^† = Y
-            v[i] = ρ.v[i-jbasefac]
-        end
-    end
-    return DensityMatrix{N}(v)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]     # S I S^† =  I
+    vs[:, 2, :] .= -ρv[:, 3, :]     # S Y S^† = -X
+    vs[:, 3, :] .=  ρv[:, 2, :]     # S X S^† =  Y
+    vs[:, 4, :] .=  ρv[:, 4, :]     # S Z S^† =  Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
@@ -368,22 +341,15 @@ end
 function apply(cg::CircuitGate{1,N,SdagGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 3
-            # S^† I S = I,
-            # S^† Z S = Z
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # S^† Y S = X
-            v[i] = ρ.v[i+jbasefac]
-        elseif pt[j] == 2
-            # S^† X S = -Y
-            v[i] = -ρ.v[i-jbasefac]
-        end
-    end
-    return DensityMatrix{N}(v)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]     # S^† I S =  I
+    vs[:, 2, :] .=  ρv[:, 3, :]     # S^† Y S =  X
+    vs[:, 3, :] .= -ρv[:, 2, :]     # S^† X S = -Y
+    vs[:, 4, :] .=  ρv[:, 4, :]     # S^† Z S =  Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
@@ -391,22 +357,15 @@ end
 function apply(cg::CircuitGate{1,N,TGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 3
-            # T I T^† = I,
-            # T Z T^† = Z
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # (T X T^† - T Y T^†)/sqrt(2) = X
-            v[i] = (ρ.v[i] - ρ.v[i+jbasefac])/sqrt(2)
-        elseif pt[j] == 2
-            # (T X T^† + T Y T^†)/sqrt(2) = Y
-            v[i] = (ρ.v[i-jbasefac] + ρ.v[i])/sqrt(2)
-        end
-    end
-    return DensityMatrix{N}(v)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=  ρv[:, 1, :]                         # T I T^† = I
+    vs[:, 2, :] .= (ρv[:, 2, :] .- ρv[:, 3, :])/sqrt(2) # (T X T^† - T Y T^†)/sqrt(2) = X
+    vs[:, 3, :] .= (ρv[:, 2, :] .+ ρv[:, 3, :])/sqrt(2) # (T X T^† + T Y T^†)/sqrt(2) = Y
+    vs[:, 4, :] .=  ρv[:, 4, :]                         # T Z T^† = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
@@ -414,105 +373,74 @@ end
 function apply(cg::CircuitGate{1,N,TdagGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 3
-            # T^† I T = I,
-            # T^† Z T = Z
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # (T^† X T + T^† Y T)/sqrt(2) = X
-            v[i] = (ρ.v[i] + ρ.v[i+jbasefac])/sqrt(2)
-        elseif pt[j] == 2
-            # (-T^† X T + T^† Y T)/sqrt(2) = Y
-            v[i] = (-ρ.v[i-jbasefac] + ρ.v[i])/sqrt(2)
-        end
-    end
-    return DensityMatrix{N}(v)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=   ρv[:, 1, :]                            # T^† I T = I
+    vs[:, 2, :] .= ( ρv[:, 2, :] .+ ρv[:, 3, :])/sqrt(2)    # ( T^† X T + T^† Y T)/sqrt(2) = X
+    vs[:, 3, :] .= (-ρv[:, 2, :] .+ ρv[:, 3, :])/sqrt(2)    # (-T^† X T + T^† Y T)/sqrt(2) = Y
+    vs[:, 4, :] .=   ρv[:, 4, :]                            # T^† Z T = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
-"""Tailored apply to density for RxGate"""
+"""Tailored apply to density matrix for RxGate"""
 function apply(cg::CircuitGate{1,N,RxGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
     cosθ = cos(cg.gate.θ[])
     sinθ = sin(cg.gate.θ[])
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 1
-            # Rx(θ) I Rx(-θ) = I,
-            # Rx(θ) X Rx(-θ) = X
-            v[i] = ρ.v[i]
-        elseif pt[j] == 2
-            # cos(θ) Rx(θ) Y Rx(-θ) - sin(θ) Rx(θ) Z Rx(-θ) = Y
-            v[i] = cosθ*ρ.v[i] - sinθ*ρ.v[i+jbasefac]
-        elseif pt[j] == 3
-            # sin(θ) Rx(θ) Y Rx(-θ) + cos(θ) Rx(θ) Z Rx(-θ) = Z
-            v[i] = sinθ*ρ.v[i-jbasefac] + cosθ*ρ.v[i]
-        end
-    end
-    return DensityMatrix{N}(v)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=       ρv[:, 1, :]                        # Rx(θ) I Rx(-θ) = I
+    vs[:, 2, :] .=       ρv[:, 2, :]                        # Rx(θ) X Rx(-θ) = X
+    vs[:, 3, :] .= cosθ.*ρv[:, 3, :] .- sinθ.*ρv[:, 4, :]   # cos(θ) Rx(θ) Y Rx(-θ) - sin(θ) Rx(θ) Z Rx(-θ) = Y
+    vs[:, 4, :] .= sinθ.*ρv[:, 3, :] .+ cosθ.*ρv[:, 4, :]   # sin(θ) Rx(θ) Y Rx(-θ) + cos(θ) Rx(θ) Z Rx(-θ) = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
-"""Tailored apply to density for RyGate"""
+"""Tailored apply to density matrix for RyGate"""
 function apply(cg::CircuitGate{1,N,RyGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
     cosθ = cos(cg.gate.θ[])
     sinθ = sin(cg.gate.θ[])
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 2
-            # Ry(θ) I Ry(-θ) = I,
-            # Ry(θ) Y Ry(-θ) = Y
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # sin(θ) Ry(θ) Z Ry(-θ) + cos(θ) Ry(θ) X Ry(-θ) = X
-            v[i] = sinθ*ρ.v[i+2jbasefac] + cosθ*ρ.v[i]
-        elseif pt[j] == 3
-            # cos(θ) Ry(θ) Z Ry(-θ) - sin(θ) Ry(θ) X Ry(-θ) = Z
-            v[i] = cosθ*ρ.v[i] - sinθ*ρ.v[i-2jbasefac]
-        end
-    end
-    return DensityMatrix{N}(v)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=       ρv[:, 1, :]                        # Ry(θ) I Ry(-θ) = I
+    vs[:, 2, :] .= sinθ.*ρv[:, 4, :] .+ cosθ.*ρv[:, 2, :]   # sin(θ) Ry(θ) Z Ry(-θ) + cos(θ) Ry(θ) X Ry(-θ) = X
+    vs[:, 3, :] .=       ρv[:, 3, :]                        # Ry(θ) Y Ry(-θ) = Y
+    vs[:, 4, :] .= cosθ.*ρv[:, 4, :] .- sinθ.*ρv[:, 2, :]   # cos(θ) Ry(θ) Z Ry(-θ) - sin(θ) Ry(θ) X Ry(-θ) = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
-"""Tailored apply to density for RzGate"""
+"""Tailored apply to density matrix for RzGate"""
 function apply(cg::CircuitGate{1,N,RzGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
     cosθ = cos(cg.gate.θ[])
     sinθ = sin(cg.gate.θ[])
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 3
-            # Rz(θ) I Rz(-θ) = I,
-            # Rz(θ) Z Rz(-θ) = Z
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # cos(θ) Rz(θ) X Rz(-θ) - sin(θ) Rz(θ) Y Rz(-θ) = X
-            v[i] = cosθ*ρ.v[i] - sinθ*ρ.v[i+jbasefac]
-        elseif pt[j] == 2
-            # sin(θ) Rz(θ) X Rz(-θ) + cos(θ) Rz(θ) Y Rz(-θ) = Y
-            v[i] = sinθ*ρ.v[i-jbasefac] + cosθ*ρ.v[i]
-        end
-    end
-    return DensityMatrix{N}(v)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .=       ρv[:, 1, :]                        # Rz(θ) I Rz(-θ) = I
+    vs[:, 2, :] .= cosθ.*ρv[:, 2, :] .- sinθ.*ρv[:, 3, :]   # cos(θ) Rz(θ) X Rz(-θ) - sin(θ) Rz(θ) Y Rz(-θ) = X
+    vs[:, 3, :] .= sinθ.*ρv[:, 2, :] .+ cosθ.*ρv[:, 3, :]   # sin(θ) Rz(θ) X Rz(-θ) + cos(θ) Rz(θ) Y Rz(-θ) = Y
+    vs[:, 4, :] .=       ρv[:, 4, :]                        # Rz(θ) Z Rz(-θ) = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
-"""Tailored apply to density for RotationGate"""
+"""Tailored apply to density matrix for RotationGate"""
 function apply(cg::CircuitGate{1,N,RotationGate}, ρ::DensityMatrix{N}) where {N}
-    # qubit index the gate acts on
-    j = cg.iwire[1]
-    jbasefac = 4^(j-1)
     θ = norm(cg.gate.nθ)
     if θ == 0
         # for consistency, we return a copy here
@@ -521,46 +449,36 @@ function apply(cg::CircuitGate{1,N,RotationGate}, ρ::DensityMatrix{N}) where {N
     cosθ = cos(θ)
     sinθ = sin(θ)
     n = cg.gate.nθ/θ
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0
-            # Rn(θ) I Rn(-θ) = I
-            v[i] = ρ.v[i]
-        else
-            k0 =   pt[j]
-            k1 = ( pt[j]    % 3) + 1
-            k2 = ((pt[j]+1) % 3) + 1
-            δ1 = k1 - k0
-            δ2 = k2 - k0
-            # Rodrigues' rotation formula
-            v[i] = (cosθ*ρ.v[i] + sinθ*(n[k1]*ρ.v[i+δ2*jbasefac] - n[k2]*ρ.v[i+δ1*jbasefac])
-                    + (1 - cosθ)*(n[k0]*ρ.v[i] + n[k1]*ρ.v[i+δ1*jbasefac] + n[k2]*ρ.v[i+δ2*jbasefac])*n[k0])
-        end
-    end
-    return DensityMatrix{N}(v)
+
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    vs[:, 1, :] .= ρv[:, 1, :]      # Rn(θ) I Rn(-θ) = I
+    # Rodrigues' rotation formula
+    vs[:, 2, :] .= cosθ.*ρv[:, 2, :] .+ sinθ.*(n[2].*ρv[:, 4, :] .- n[3].*ρv[:, 3, :]) .+ ((1 - cosθ)*n[1]).*(n[1].*ρv[:, 2, :] .+ n[2].*ρv[:, 3, :] .+ n[3].*ρv[:, 4, :])
+    vs[:, 3, :] .= cosθ.*ρv[:, 3, :] .+ sinθ.*(n[3].*ρv[:, 2, :] .- n[1].*ρv[:, 4, :]) .+ ((1 - cosθ)*n[2]).*(n[1].*ρv[:, 2, :] .+ n[2].*ρv[:, 3, :] .+ n[3].*ρv[:, 4, :])
+    vs[:, 4, :] .= cosθ.*ρv[:, 4, :] .+ sinθ.*(n[1].*ρv[:, 3, :] .- n[2].*ρv[:, 2, :]) .+ ((1 - cosθ)*n[3]).*(n[1].*ρv[:, 2, :] .+ n[2].*ρv[:, 3, :] .+ n[3].*ρv[:, 4, :])
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
 
 
-"""Tailored apply to density for PhaseShiftGate"""
+"""Tailored apply to density matrix for PhaseShiftGate"""
 function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ρ::DensityMatrix{N}) where {N}
     # qubit index the gate acts on
     j = cg.iwire[1]
-    jbasefac = 4^(j-1)
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
     cosϕ = cos(cg.gate.ϕ[])
     sinϕ = sin(cg.gate.ϕ[])
-    v = similar(ρ.v)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        if pt[j] == 0 || pt[j] == 3
-            # P(ϕ) I P(-ϕ) = I,
-            # P(ϕ) Z P(-ϕ) = Z
-            v[i] = ρ.v[i]
-        elseif pt[j] == 1
-            # cos(ϕ) P(ϕ) X P(-ϕ) - sin(ϕ) P(ϕ) Y P(-ϕ) = X
-            v[i] = cosϕ*ρ.v[i] - sinϕ*ρ.v[i+jbasefac]
-        elseif pt[j] == 2
-            # sin(ϕ) P(ϕ) X P(-ϕ) + cos(ϕ) P(ϕ) Y P(-ϕ) = Y
-            v[i] = sinϕ*ρ.v[i-jbasefac] + cosϕ*ρ.v[i]
-        end
-    end
-    return DensityMatrix{N}(v)
+
+    # agrees with Rz(θ) since global prefactor cancels
+    vs = similar(ρv)
+    vs[:, 1, :] .=       ρv[:, 1, :]                        # P(ϕ) I P(-ϕ) = I
+    vs[:, 2, :] .= cosϕ.*ρv[:, 2, :] .- sinϕ.*ρv[:, 3, :]   # cos(ϕ) P(ϕ) X P(-ϕ) - sin(ϕ) P(ϕ) Y P(-ϕ) = X
+    vs[:, 3, :] .= sinϕ.*ρv[:, 2, :] .+ cosϕ.*ρv[:, 3, :]   # sin(ϕ) P(ϕ) X P(-ϕ) + cos(ϕ) P(ϕ) Y P(-ϕ) = Y
+    vs[:, 4, :] .=       ρv[:, 4, :]                        # P(ϕ) Z P(-ϕ) = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
 end
