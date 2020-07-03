@@ -55,7 +55,7 @@ function view(g::SwapGate, i::Vector{Int64})
     ["——x———", "——x———"], i
 end
 
-function Qaintessent.view(g::MatrixGate, i::Vector{Int64})
+function Qaintessent.view(g::AbstractGate, i::Vector{Int64})
   if length(i) == 1
       return ["——□———"], i
   else
