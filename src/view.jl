@@ -55,6 +55,14 @@ function view(g::SwapGate, i::Vector{Int64})
     ["——x———", "——x———"], i
 end
 
+function Qaintessent.view(g::MatrixGate, i::Vector{Int64})
+  if length(i) == 1
+      return ["——□———"], i
+  else
+      return ["——□———", "——□———"], i
+  end
+end
+
 view(g) = view(g, [1])
 
 Base.size(g::AbstractGate{N}) where {N} = N

@@ -8,6 +8,7 @@ using Qaintessent
     N = 5
     cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
+        single_qubit_circuit_gate(5, MatrixGate([0 1;1 0]), N),
         controlled_circuit_gate((1, 4), 2, RxGate(√0.2), N),
         controlled_circuit_gate((2,4), (1,5), SwapGate(), N),
         single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
@@ -27,7 +28,7 @@ using Qaintessent
         "              |     |           |   \n" *
         "    4 ————————•—————•———————————•———\n" *
         "                    |           |   \n" *
-        "    5 ——————————————x———————————x———\n"
+        "    5 ——□———————————x———————————x———\n"
 
     io = IOBuffer()
     show(io, cgc)
