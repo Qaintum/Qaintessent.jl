@@ -55,14 +55,6 @@ function view(g::SwapGate, i::Vector{Int64})
     ["——x———", "——x———"], i
 end
 
-function Qaintessent.view(g::AbstractGate, i::Vector{Int64})
-  if length(i) == 1
-      return ["——□———"], i
-  else
-      return ["——□———", "——□———"], i
-  end
-end
-
 view(g) = view(g, [1])
 
 Base.size(g::AbstractGate{N}) where {N} = N
@@ -71,6 +63,10 @@ function view(g::ControlledGate, i::Vector{Int64})
     gate = fill("——•———", length(i))
     gate[end-Base.size(g.U)+1:end] = view(g.U)[1]
     return gate, i
+end
+
+function view(g::AbstractGate, i::Vector{Int64})
+    fill("——□———", length(i)), i
 end
 
 function interleave(a::Vector{T}, b::Vector{T}) where {T}
