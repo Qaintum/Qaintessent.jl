@@ -20,7 +20,7 @@ function matrix(ρ::DensityMatrix{N}) where {N}
     # Pauli matrix basis (including identity matrix)
     halfpauli = [Matrix{Float64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
     mat = zeros(Complex{eltype(ρ.v)}, 2^N, 2^N)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+    for (i, pt) in enumerate(cartesian_tuples(4, N))
         mat += ρ.v[i] * kron([halfpauli[p+1] for p in pt]...)
     end
     return mat

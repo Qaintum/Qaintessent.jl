@@ -1,6 +1,7 @@
 using Test
 using TestSetExtensions
 using LinearAlgebra
+using Random
 using Qaintessent
 
 
@@ -47,10 +48,40 @@ end
 
     N = 5
     ψ = randn(ComplexF64, 2^N)
+    ψ /= norm(ψ)
     ρ = density_from_statevector(ψ)
 
     for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(-1.1), RyGate(0.7), RzGate(0.4), RotationGate([-0.3, 0.1, 0.23]), PhaseShiftGate(0.9)]
         cg = CircuitGate((rand(1:N),), g, N)
+        ψs = apply(cg, ψ)
+        ρsref = density_from_statevector(ψs)
+        ρs = apply(cg, ρ)
+        @test ρs.v ≈ ρsref.v
+
+        # generate same gate with type AbstractGate{1}
+        cga = CircuitGate{1,N,AbstractGate{1}}(cg.iwire, cg.gate)
+        ρsa = apply(cga, ρ)
+        @test ρs.v ≈ ρsa.v
+    end
+
+    # swap gate
+    begin
+        i = rand(1:N)
+        j = rand([1:i-1; i+1:N])
+        cg = CircuitGate((i, j), SwapGate(), N)
+        ψs = apply(cg, ψ)
+        ρsref = density_from_statevector(ψs)
+        ρs = apply(cg, ρ)
+        @test ρs.v ≈ ρsref.v
+    end
+
+    # controlled gate
+    begin
+        iwperm = Tuple(randperm(N))
+        # number of control and target wires
+        nc = rand(1:3)
+        nt = rand(1:2)
+        cg = controlled_circuit_gate(iwperm[1:nc], iwperm[nc+1:nc+nt], nt == 1 ? RotationGate(rand(3) .- 0.5) : SwapGate(), N)
         ψs = apply(cg, ψ)
         ρsref = density_from_statevector(ψs)
         ρs = apply(cg, ρ)

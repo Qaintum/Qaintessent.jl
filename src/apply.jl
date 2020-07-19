@@ -47,7 +47,7 @@ function apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
 
     ψ = ψ[indices]
 
-    ψr = reshape(ψ, size(gmat)[1], :)
+    ψr = reshape(ψ, size(gmat, 1), :)
 
     ψr = gmat * ψr
 
@@ -479,6 +479,131 @@ function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ρ::DensityMatrix{N}) where 
     vs[:, 2, :] .= cosϕ.*ρv[:, 2, :] .- sinϕ.*ρv[:, 3, :]   # cos(ϕ) P(ϕ) X P(-ϕ) - sin(ϕ) P(ϕ) Y P(-ϕ) = X
     vs[:, 3, :] .= sinϕ.*ρv[:, 2, :] .+ cosϕ.*ρv[:, 3, :]   # sin(ϕ) P(ϕ) X P(-ϕ) + cos(ϕ) P(ϕ) Y P(-ϕ) = Y
     vs[:, 4, :] .=       ρv[:, 4, :]                        # P(ϕ) Z P(-ϕ) = Z
+
+    return DensityMatrix{N}(reshape(vs, :))
+end
+
+
+"""Tailored apply to density matrix for a general single qubit gate"""
+function apply(cg::CircuitGate{1,N,AbstractGate{1}}, ρ::DensityMatrix{N}) where {N}
+    # Pauli matrix basis (including identity matrix)
+    pauli = [Matrix{Float64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
+    U = matrix(cg.gate)
+    # represent conjugation by U with respect to Pauli basis
+    U = [0.5*real(tr(pauli[i] * U * pauli[j] * U')) for i in 1:4, j in 1:4]
+
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    ρv = reshape(ρ.v, 4 .^[j-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    for i in 1:4
+        vs[:, i, :] .= sum(U[i, j] .* ρv[:, j, :] for j in 1:4)
+    end
+    return DensityMatrix{N}(reshape(vs, :))
+end
+
+
+"""Tailored apply to density matrix for SwapGate"""
+function apply(cg::CircuitGate{2,N,SwapGate}, ρ::DensityMatrix{N}) where {N}
+
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4 .^[i-1, 1, j-i-1, 1, N-j]...)
+
+    vs = similar(ρv)
+    for i in 1:4
+        for j in 1:4
+            vs[:, i, :, j, :] .= ρv[:, j, :, i, :]
+        end
+    end
+
+    return DensityMatrix{N}(reshape(vs, :))
+end
+
+
+"""Allow 'kron' to be called with a single matrix, simply returning the matrix."""
+Base.kron(a::AbstractMatrix{T}) where {T} = a
+
+
+"""Construct sliced index via target map (utility function)."""
+function sliced_index(idx, targetwires, N)
+    islice = Vector{Any}(fill(Colon(), N))
+    M = length(targetwires)
+    for k in 1:M
+        islice[targetwires[k]] = idx[k] + 1
+    end
+    return islice
+end
+
+
+"""Tailored apply to density matrix for a general ControlledGate"""
+function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) where {M,N,T}
+
+    # Pauli matrix basis (including identity matrix)
+    pauli = [Matrix{Float64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
+    halfpauli = [Matrix{Float64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
+
+    # M is the length of iwire, T is the number of target wires
+    # number of control wires
+    C = M - T
+
+    ttuples = reshape(cartesian_tuples(4, T), :)
+
+    # conjugation by |1><1| represented with respect to Pauli basis
+    conj1X1 = [
+         0.5   0     0    -0.5;
+         0     0     0     0  ;
+         0     0     0     0  ;
+        -0.5   0     0     0.5]
+
+    # tr(σi |1><1| σj I) for all i, j
+    mult_1X1_I = [
+         0.5   0     0    -0.5;
+         0     0.5   0.5im 0  ;
+         0    -0.5im 0.5   0  ;
+        -0.5   0     0     0.5]
+
+    U = matrix(cg.gate.U)
+
+    # represent conjugation by (U - I) with respect to Pauli basis
+    conjUI = [real(tr(kron([pauli[p+1] for p in it]...) * (U - I) * kron([halfpauli[p+1] for p in jt]...) * (U' - I)))
+                for it in ttuples,
+                    jt in ttuples]
+
+    # represent (U - I) with respect to Pauli basis
+    UI = [tr(kron([halfpauli[p+1] for p in it]...) * (U - I)) for it in ttuples]
+
+    # pairwise Pauli matrix multiplication phase factor table
+    pauli_mult_phase = [
+        1   1   1   1 ;
+        1   1   im -im;
+        1  -im  1   im;
+        1   im -im  1 ]
+
+    # represent multiplication by (U - I) from the left and I from the right with respect to Pauli basis;
+    # bitwise XOR gives index of Pauli matrix resulting from product of two Pauli matrices
+    mult_UI_I = [prod(pauli_mult_phase[jt[k]+1, it[k]+1] for k in 1:T) * UI[sum((jt[k] ⊻ it[k]) << 2(k-1) for k in 1:T) + 1]
+                for it in ttuples,
+                    jt in ttuples]
+
+    # represent conjugation by controlled-U with respect to Pauli basis;
+    # for a single control qubit:
+    # controlled-U = |0><0| x I + |1><1| x U = I + |1><1| x (U - I)
+    # (generalizes to several control qubits)
+    # TODO: do not explicitly construct 'conj_cU'
+    conj_cU = I + 2*real(kron(kron(fill(mult_1X1_I, C)...), mult_UI_I)) + kron(kron(fill(conj1X1, C)...), conjUI)
+
+    ρv = reshape(ρ.v, fill(4, N)...)
+
+    # apply conj_cU to circuit gate wires
+    vs = similar(ρv)
+    wenum = enumerate(reshape(cartesian_tuples(4, M), :))
+    for (i, it) in wenum
+        # maybe consider fast "continue" if conj_cU[i, j] == 0?
+        # cannot use .= here since broadcasting fails for scalar numbers
+        vs[sliced_index(it, reverse(cg.iwire), N)...] = sum(conj_cU[i, j] .* ρv[sliced_index(jt, reverse(cg.iwire), N)...] for (j, jt) in wenum)
+    end
 
     return DensityMatrix{N}(reshape(vs, :))
 end
