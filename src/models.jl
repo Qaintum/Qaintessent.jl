@@ -16,7 +16,9 @@ end
 """
     toffoli_circuit(cntrl, trg, N)
 
-Construct the circuit for decomposing the Toffoli gate in Figure 4.9 of the Nielsen and Chuang textbook.
+construct the circuit for decomposing the Toffoli gate in Figure 4.9 of Nielsen and Chuang (2000). the constructed toffoli gate acts in circuit of `N` qubits, has controls
+    on wires in Tuple `cntrl` and has target on wire `trg`.
+returns a `CircuitGateChain{N}` object.
 """
 function toffoli_circuit(cntrl::Tuple{<:Integer, <:Integer} , trg::Integer, N::Integer)
     CircuitGateChain{N}([
@@ -38,22 +40,23 @@ function toffoli_circuit(cntrl::Tuple{<:Integer, <:Integer} , trg::Integer, N::I
     ])
 end
 
+
 """
     vbe_adder_circuit(N)
 
 Construct an in-place adder for 2 integers represented by `N` qubits.
 Based on ripple-carry adder circuit in Vedral et. al (Phys. Rev. A 54, 147 (1996), arXiv:quant-ph/9511018)
-    Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
-    If the two added integers are represented as:
-        A = a0*1 + a1*2 + a2*4 + .. + aN*2^N
-        B = b0*1 + b1*2 + b2*4 + .. + bN*2^N
-    The input index should be a0a1a2..aNb0b1b2..bN+1
-    i.e.
-        input = fill(0, 2^(3N+1))
-        input[index+1] = 1
+Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
 
-    The output index will be in the form a0a1a2...aNc0c1c2...cN where
-        C = (A+B) % (2^N + 1) = c0*1 + c1*2 + c2*4 + ... + cN*2^N
+If the two added integers are represented as:
+
+``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
+
+The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` with ``a_{0}`` as the fastest running index
+
+The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}c_{0}c_{1}c_{2}..c_{N} + 1`` where:
+
+``C = (A+B) \\% (2^{N} + 1) = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N} \\times 2^{N}``
 """
 function vbe_adder_circuit(N::Integer)
     M = 3*N + 1
@@ -184,8 +187,19 @@ end
 """
     qcla_out_adder_circuit(N)
 
-Specify wire functions for an out-of-place adder for 2 integers represented by `N` qubits.
+Construct an out-of-place adder for 2 integers represented by `N` qubits. returns a `CircuitGateChain{3N+1}` object.
 Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
+Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
+
+If the two added integers are represented as:
+
+``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
+
+The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
+
+The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N}c_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
+
+``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
 """
 function qcla_out_adder_circuit(N)
 
@@ -262,12 +276,22 @@ function qcla_out_adder_circuit(N)
     return cgc
 end
 
-
 """
     qcla_inplace_adder_circuit(N)
 
-Specify wire functions for an out-of-place adder for 2 integers represented by `N` qubits.
+Construct an in-place adder for 2 integers represented by `N` qubits.
 Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
+Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
+
+If the two added integers are represented as:
+
+``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
+
+The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
+
+The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}c_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
+
+``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
 """
 function qcla_inplace_adder_circuit(N)
 

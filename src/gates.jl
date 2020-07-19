@@ -8,11 +8,24 @@ Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 """
 abstract type AbstractGate{N} end
 
+"""
+Pauli X Matrix
 
-# Pauli matrices
-
+``X = \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}``
+"""
 struct XGate <: AbstractGate{1} end
+"""
+Pauli Y Matrix
+
+``Y = \\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}``
+"""
 struct YGate <: AbstractGate{1} end
+
+"""
+Pauli Z Matrix
+
+``Z = \\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}``
+"""
 struct ZGate <: AbstractGate{1} end
 
 matrix(::XGate) = [0.  1.; 1.  0.]
@@ -34,8 +47,11 @@ Y = YGate()
 Z = ZGate()
 
 
-# Hadamard gate
+"""
+Hadamard Matrix
 
+``H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}``
+"""
 struct HadamardGate <: AbstractGate{1} end
 
 matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
@@ -46,11 +62,30 @@ Base.adjoint(H::HadamardGate) = H
 
 
 # S & T gates
+"""
+S Matrix
 
+``S = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
+"""
 struct SGate <: AbstractGate{1} end
+"""
+T Matrix
+
+``T = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
+"""
 struct TGate <: AbstractGate{1} end
 
+"""
+S† Matrix
+
+``S^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & -i \\end{pmatrix}``
+"""
 struct SdagGate <: AbstractGate{1} end
+"""
+T† Matrix
+
+``T^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{-\\frac{iπ}{4}} \\end{pmatrix}``
+"""
 struct TdagGate <: AbstractGate{1} end
 
 matrix(::SGate) = [1. 0.; 0. im]
@@ -73,10 +108,15 @@ Base.adjoint(::TdagGate) = TGate()
 
 
 # rotation gates
+"""
+Rotation X Matrix
 
+``R_{x}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -i\\sin(\\frac{\\theta}{2}) \\\\ -i\\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
+"""
 struct RxGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
+
     function RxGate(θ::Real)
         new([θ])
     end
@@ -95,9 +135,15 @@ function LinearAlgebra.ishermitian(g::RxGate)
     return false
 end
 
+"""
+Rotation Y Matrix
+
+``R_{y}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -\\sin(\\frac{\\theta}{2}) \\\\ \\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
+"""
 struct RyGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
+
     function RyGate(θ::Real)
         new([θ])
     end
@@ -116,6 +162,11 @@ function LinearAlgebra.ishermitian(g::RyGate)
     return false
 end
 
+"""
+Rotation Z Matrix
+
+``R_{z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}{2}} & 0 \\\\ 0 & e^{\\frac{i\\theta}{2}} \\end{pmatrix}``
+"""
 struct RzGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     θ::Vector{<:Real}
@@ -140,6 +191,12 @@ Base.adjoint(g::RyGate) = RyGate(-g.θ[])
 Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # general rotation operator gate
+"""
+General Rotation Matrix
+Rotation by angle `θ` around unit vector `n⃗`.
+
+``R_{\\vec{n}}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
+"""
 struct RotationGate <: AbstractGate{1}
     nθ::AbstractVector{<:Real}
 
@@ -174,11 +231,15 @@ end
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 
-# phase shift gate
+"""
+Phase Shift Gate
 
+``P(\\phi) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\phi} \\end{pmatrix}``
+"""
 struct PhaseShiftGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
     ϕ::Vector{<:Real}
+
     function PhaseShiftGate(ϕ::Real)
         new([ϕ])
     end
@@ -198,8 +259,13 @@ Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
 
 
 # swap gate
+"""
+Swap Gate
 
+``SWAP = \\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 0 & 1 \\end{pmatrix}``
+"""
 struct SwapGate <: AbstractGate{2} end
+
 
 matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 
@@ -210,7 +276,6 @@ Base.adjoint(s::SwapGate) = s
 
 
 # general controlled gate
-
 struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
     function ControlledGate{M,N}(U::AbstractGate{M}) where {M,N}
@@ -234,3 +299,27 @@ end
 Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
 
 controlled_not() = ControlledGate{1,2}(X)
+
+# MatrixGate: general gate constructed from an unitary matrix
+function isunitary(m::AbstractMatrix)
+    m * Base.adjoint(m) ≈ I
+end
+
+struct MatrixGate{N} <: AbstractGate{N}
+    matrix::AbstractMatrix
+    function MatrixGate(m)
+        d = 2
+        @assert size(m,1) == size(m,2)
+        isunitary(m) || error("Quantum operators must be unitary")
+        N = Int(log(d, size(m,1)))
+        return new{N}(m)
+    end
+end
+
+function matrix(MG::MatrixGate{N}) where N
+    MG.matrix
+end
+
+function Base.adjoint(MG::MatrixGate{N}) where N
+    return MatrixGate(Base.adjoint(MG.matrix))
+end

@@ -12,8 +12,6 @@ export
     X,
     Y,
     Z,
-    IGate,
-    IIGate,
     XGate,
     YGate,
     ZGate,
@@ -29,7 +27,8 @@ export
     PhaseShiftGate,
     SwapGate,
     ControlledGate,
-    controlled_not
+    controlled_not,
+    MatrixGate
 
 include("circuit.jl")
 export
@@ -52,6 +51,10 @@ export
     pauli_group_matrix,
     density_from_statevector
 
+include("commute.jl")
+    export
+        iscommuting
+
 include("apply.jl")
 export
     apply
@@ -67,4 +70,8 @@ export
 include("gradients.jl")
 include("view.jl")
 
+include("graphs.jl")
+export
+    Dag,
+    optimize!
 end

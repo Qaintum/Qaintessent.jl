@@ -22,9 +22,9 @@ function swap(w::AbstractArray, p1::Int, p2::Int)
 end
 
 """
-    apply(cg, ψ)
+    apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
 
-Apply general CircuitGate to quantum state vector
+returns state vector of `N` qubits after applying a `CircuitGate{M, N, G}` object to a quantum state vector of `N` qubits `ψ`.
 """
 function apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
     W = length(cg.iwire)
@@ -219,9 +219,9 @@ end
 
 
 """
-    apply(cgc, ψ)
+    apply(m::Moment{N}, ψ::AbstractVector) where {N}
 
-Apply Moment to quantum state vector
+returns state vector of `N` qubits after applying a `Moment{N}` object to a quantum state vector of `N` qubits `ψ`
 """
 function apply(m::Moment{N}, ψ::AbstractVector) where {N}
     for gate in m
@@ -232,7 +232,7 @@ end
 
 
 """
-    apply(cgc, ψ)
+    apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
 
 Apply CircuitGateChain to quantum state vector.
 """
@@ -245,9 +245,9 @@ end
 
 
 """
-    apply(c, ψ)
+    apply(c::Circuit{N}, ψ::AbstractVector) where {N}
 
-Apply Circuit to quantum state vector
+returns list of expectation values from measurement operators in `c.meas` after applying circuit gates in `c.cgc` on state vector of `N` qubits `ψ`
 """
 function apply(c::Circuit{N}, ψ::AbstractVector) where {N}
     ψs = apply(c.cgc, ψ)

@@ -15,6 +15,7 @@ backward(g::TGate, Δ::AbstractMatrix) = g
 backward(g::SdagGate, Δ::AbstractMatrix) = g
 backward(g::TdagGate, Δ::AbstractMatrix) = g
 
+backward(g::MatrixGate, Δ::AbstractMatrix) = g
 
 function backward(g::RxGate, Δ::AbstractMatrix)
     c = cos(g.θ[1]/2)
