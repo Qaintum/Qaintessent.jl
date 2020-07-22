@@ -7,20 +7,19 @@ using Qaintessent
 
     N = 5
     A = [1 0; 0 -1]
-    MG = kron(A, kron(A, A))
 
     cgc = CircuitGateChain{N}([
-    single_qubit_circuit_gate(3, HadamardGate(), N),
-    controlled_circuit_gate((1, 4), 2, RxGate(√0.2), N),
-    controlled_circuit_gate((2,4), (1,5), SwapGate(), N),
-    single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
-    single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-    single_qubit_circuit_gate(1, RyGate(1.4π), N),
-    two_qubit_circuit_gate(1,2, SwapGate(), N),
-    controlled_circuit_gate(4, 5, TdagGate(), N),
-    single_qubit_circuit_gate(3, SGate(), N),
-    single_qubit_circuit_gate(1, MatrixGate(A), N),
-    CircuitGate{3,N,AbstractGate{3}}((2, 4, 5), MatrixGate(MG))
+        single_qubit_circuit_gate(3, HadamardGate(), N),
+        controlled_circuit_gate((1, 4), 2, RxGate(√0.2), N),
+        controlled_circuit_gate((2,4), (1,5), SwapGate(), N),
+        single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
+        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
+        single_qubit_circuit_gate(1, RyGate(1.4π), N),
+        two_qubit_circuit_gate(1,2, SwapGate(), N),
+        controlled_circuit_gate(4, 5, TdagGate(), N),
+        single_qubit_circuit_gate(3, SGate(), N),
+        single_qubit_circuit_gate(1, MatrixGate(A), N),
+        CircuitGate{3,N,AbstractGate{3}}((2, 4, 5), MatrixGate(kron(A, A, A)))
     ])
 
     cgc_refstring =
@@ -38,7 +37,6 @@ using Qaintessent
     io = IOBuffer()
     show(io, cgc)
     @test String(take!(io)) == cgc_refstring
-
 end
 
 
@@ -73,7 +71,6 @@ end
     io = IOBuffer()
     show(io, cgc)
     @test String(take!(io)) == cgc_refstring
-
 end
 
 @testset ExtendedTestSet "test view moments" begin
@@ -164,10 +161,10 @@ end
         controlled_circuit_gate((2), (4), HadamardGate(), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N)])
     m_refstring =
-    "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
-    "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
-    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()))\n" *
-    "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]))\n"
+        "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
+        "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
+        "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()))\n" *
+        "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]))\n"
 
     io = IOBuffer()
     show(io, m)
