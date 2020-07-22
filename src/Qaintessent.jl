@@ -4,6 +4,8 @@ using LinearAlgebra
 using SparseArrays
 
 
+include("util.jl")
+
 include("gates.jl")
 export
     AbstractGate,
@@ -42,6 +44,12 @@ export
     MeasurementOps,
     Circuit,
     distribution
+
+include("density_matrix.jl")
+export
+    DensityMatrix,
+    pauli_group_matrix,
+    density_from_statevector
 
 include("commute.jl")
     export
