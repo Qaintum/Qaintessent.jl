@@ -34,7 +34,7 @@ using LinearAlgebra
 end
 
 @testset ExtendedTestSet "qasm adder import test" begin
-    filename = "import_adder_test.qasm"
+    filename = "import_adder.qasm"
     N = 10
     c = import_file(filename)
     ψ = fill(0.0+0.0im, 2^N)
@@ -42,7 +42,7 @@ end
 
     result = apply(c, ψ)
     answer = 0
-    
+
     for (i,flag) in enumerate(result)
         if flag == -1
             answer += 2^i
