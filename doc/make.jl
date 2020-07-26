@@ -8,7 +8,8 @@ makedocs(
             "gates.md",
             "circuit.md",
             "models.md",
-            "view.md"
+            "view.md",
+            "qasm.md"
         ]
     ]
 )
