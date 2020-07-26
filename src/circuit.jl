@@ -14,18 +14,18 @@ Unitary quantum circuit gate. `M` is the number of wires affected by the Circuit
 """
 struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "ordered wire indices which this gate acts on"
-    iwire::NTuple{M, <:Integer}
+    iwire::NTuple{M,<:Integer}
     "actual gate"
     gate::G
     "classical registers"
     ccntrl::AbstractVector{Int}
 
     @doc """
-        CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G) where {M,N,G}
+        CircuitGate{M,N,G}(iwire::NTuple{M,<:Integer}, gate::G) where {M,N,G}
 
-    creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+    Creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
     """
-    function CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G; ccntrl::AbstractVector{Int}=Int[]) where {M,N,G}
+    function CircuitGate{M,N,G}(iwire::NTuple{M,<:Integer}, gate::G; ccntrl::AbstractVector{Int}=Int[]) where {M,N,G}
         M ≥ 1 || error("Need at least one wire to act on.")
         M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
         length(unique(iwire)) == M || error("Wire indices must be unique.")
@@ -39,27 +39,27 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
 end
 
 """
-    CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N) where {M}
+    CircuitGate(iwire::NTuple{M,<:Integer}, gate::AbstractGate{M}, N) where {M}
 
-creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+Creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
 """
-function CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N; ccntrl::AbstractVector{Int}=Int[]) where {M}
+function CircuitGate(iwire::NTuple{M,<:Integer}, gate::AbstractGate{M}, N; ccntrl::AbstractVector{Int}=Int[]) where {M}
     CircuitGate{M,N,typeof(gate)}(iwire, gate, ccntrl=ccntrl)
 end
 
 """
-    Base.isapprox(cg1::CircuitGate{M, N, G}, cg2::CircuitGate{M, N, G}) where {M, N, G}
+    Base.isapprox(cg1::CircuitGate{M,N,G}, cg2::CircuitGate{M,N,G})
 
-compares two circuit gates of basic type `G`. if the gates are not parametric, returns true. if parameters are approximately equal, returns true. else, returns false.
+Compares two circuit gates of basic type `G`.
 """
-function Base.isapprox(cg1::CircuitGate{M, N, G}, cg2::CircuitGate{M, N, G}) where {M, N, G}
+function Base.isapprox(cg1::CircuitGate{M,N,G}, cg2::CircuitGate{M,N,G}) where {M,N,G}
+    # for parametric gates, return true only if parameters are approximately equal
     fields = fieldnames(G)
     if cg1.iwire != cg2.iwire
         return false
     end
     for name in fields
-        if getfield(cg1.gate, name) ≈ getfield(cg2.gate, name)
-        else
+        if !(getfield(cg1.gate, name) ≈ getfield(cg2.gate, name))
             return false
         end
     end
@@ -117,9 +117,9 @@ function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
 end
 
 """
-    Base.adjoint(cg::CircuitGate{M,N,G}) where {M,N,G}
+    Base.adjoint(cg::CircuitGate{M,N,G})
 
-returns a `CircuitGate{M,N,H}` object where `H` is the adjoint of `AbstractGate` `G`
+Construct a `CircuitGate{M,N,H}` object where `H` is the adjoint of `AbstractGate` `G`
 """
 function Base.adjoint(cg::CircuitGate{M,N,G}) where {M,N,G}
     adj_gate = Base.adjoint(cg.gate)
@@ -129,7 +129,7 @@ end
 """
     single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer)
 
-returns a `CircuitGate{1,N,G}` object of basic gate type `gate` affecting wire `iwire`.
+Construct a `CircuitGate{1,N,G}` object of basic gate type `gate` affecting wire `iwire`.
 """
 single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) =
     CircuitGate((iwire,), gate, N; ccntrl=ccntrl)
@@ -138,7 +138,7 @@ single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer; ccn
 """
     two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
 
-returns a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
+Construct a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
 """
 two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) =
     CircuitGate((iwire1, iwire2), gate, N; ccntrl=ccntrl)
@@ -148,43 +148,43 @@ two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, 
 """
     rcuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer)
 
-returns a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wire `itarget`.
+Construct a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wire `itarget`.
 """
 controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) =
     controlled_circuit_gate((icntrl,), (itarget,), U, N; ccntrl=ccntrl)
 
 # single control wire
 """
-    controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {M}
+    controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer) where {M}
 
-returns a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wires in tuple `itarget`.
+Construct a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wires in tuple `itarget`.
 """
-controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {M} =
+controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {M} =
     controlled_circuit_gate((icntrl,), itarget, U, N; ccntrl=ccntrl)
 
 # single target wire
 """
-    controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K}
+    controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K}
 
-returns a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wire `itarget`.
+Construct a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wire `itarget`.
 """
-controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[])  where {K} =
+controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {K} =
     controlled_circuit_gate(icntrl, (itarget,), U, N; ccntrl=ccntrl)
 
 """
-    controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
+    controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
 
-returns a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
+Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
 """
-function controlled_circuit_gate(icntrl::NTuple{K, <:Integer}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {K,M}
-    all(icntrl.!=0) || error("All control wires must not be 0")
+function controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {K,M}
+    all(icntrl .!= 0) || error("All control wires must not be 0")
     k = K
-    if any(icntrl.<0)
+    if any(icntrl .< 0)
         length(ccntrl) == 0 || error("Both keyword argument `ccntrl` and negative control wires used. Please only use one format to input classical control wires")
-        append!(ccntrl, abs.(Iterators.filter(x->x<0, icntrl)))
+        append!(ccntrl, abs.(Iterators.filter(x -> x < 0, icntrl)))
         length(ccntrl) == length(unique(ccntrl)) || error("Classical control wires must be unique")
 
-        icntrl = filter(x->x>0, icntrl)
+        icntrl = filter(x -> x > 0, icntrl)
 
         if length(icntrl) == 0
             return CircuitGate((itarget...,), U, N; ccntrl=ccntrl)
@@ -219,7 +219,7 @@ mutable struct Moment{N} <: AbstractMoment{N}
     @doc """
         Moment{N}(g::AbstractCircuitGate{N}) where {N}
 
-    creates a `Moment{N}` object consisting of a single `CircuitGate{N}` object.
+    Create a `Moment{N}` object consisting of a single `CircuitGate{N}` object.
     """
     function Moment{N}(g::AbstractCircuitGate{N}) where {N}
         new([g])
@@ -228,7 +228,7 @@ mutable struct Moment{N} <: AbstractMoment{N}
     @doc """
         Moment{N}(g::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 
-    creates a `Moment{N}` object consisting of multiple `CircuitGate{N}` objects.
+    Create a `Moment{N}` object consisting of multiple `CircuitGate{N}` objects.
     """
     function Moment{N}(g::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
         wires = Integer[]
@@ -243,7 +243,7 @@ end
 """
     Base.adjoint(m::Moment{N}) where {N}
 
-returns a `Moment{N}` object that is the adjoint of `m`.
+Construct a `Moment{N}` object that is the adjoint of `m`.
 """
 function Base.adjoint(m::Moment{N}) where {N}
     return Moment{N}(Base.adjoint.(reverse(m.gates)))
@@ -294,7 +294,7 @@ end
 Compute the reduced density matrix ``tr_B[|ψ⟩⟨χ|]``, where the trace runs over
 the subsystem complementary to the qubits specified by `iwire`.
 """
-function rdm(N::Integer, iwire::NTuple{M, <:Integer}, ψ::AbstractVector, χ::AbstractVector) where {M}
+function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::AbstractVector) where {M}
     M ≥ 1 || error("Need at least one wire to act on.")
     M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
     length(unique(iwire)) == M || error("Wire indices must be unique.")
@@ -404,7 +404,7 @@ end
 """
     Base.adjoint(cgc::CircuitGateChain{N}) where {N}
 
-returns a `CircuitGateChain{N}` object that is the adjoint of `cgc`.
+Construct a `CircuitGateChain{N}` object that is the adjoint of `cgc`.
 """
 function Base.adjoint(cgc::CircuitGateChain{N}) where {N}
     return CircuitGateChain{N}(Base.adjoint.(reverse(cgc.moments)))

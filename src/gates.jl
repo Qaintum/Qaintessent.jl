@@ -9,20 +9,21 @@ Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 abstract type AbstractGate{N} end
 
 """
-Pauli X Matrix
+Pauli X gate
 
 ``X = \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}``
 """
 struct XGate <: AbstractGate{1} end
+
 """
-Pauli Y Matrix
+Pauli Y gate
 
 ``Y = \\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}``
 """
 struct YGate <: AbstractGate{1} end
 
 """
-Pauli Z Matrix
+Pauli Z gate
 
 ``Z = \\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}``
 """
@@ -48,7 +49,7 @@ Z = ZGate()
 
 
 """
-Hadamard Matrix
+Hadamard gate
 
 ``H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}``
 """
@@ -61,28 +62,31 @@ LinearAlgebra.ishermitian(::HadamardGate) = true
 Base.adjoint(H::HadamardGate) = H
 
 
-# S & T gates
 """
-S Matrix
+S gate
 
 ``S = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
 """
 struct SGate <: AbstractGate{1} end
+
+
 """
-T Matrix
+T gate
 
 ``T = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
 """
 struct TGate <: AbstractGate{1} end
 
+
 """
-S† Matrix
+S† gate
 
 ``S^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & -i \\end{pmatrix}``
 """
 struct SdagGate <: AbstractGate{1} end
+
 """
-T† Matrix
+T† gate
 
 ``T^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{-\\frac{iπ}{4}} \\end{pmatrix}``
 """
@@ -107,9 +111,8 @@ Base.adjoint(::SdagGate) = SGate()
 Base.adjoint(::TdagGate) = TGate()
 
 
-# rotation gates
 """
-Rotation X Matrix
+Rotation-X gate
 
 ``R_{x}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -i\\sin(\\frac{\\theta}{2}) \\\\ -i\\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
 """
@@ -136,7 +139,7 @@ function LinearAlgebra.ishermitian(g::RxGate)
 end
 
 """
-Rotation Y Matrix
+Rotation-Y gate
 
 ``R_{y}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -\\sin(\\frac{\\theta}{2}) \\\\ \\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
 """
@@ -163,7 +166,7 @@ function LinearAlgebra.ishermitian(g::RyGate)
 end
 
 """
-Rotation Z Matrix
+Rotation-Z gate
 
 ``R_{z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}{2}} & 0 \\\\ 0 & e^{\\frac{i\\theta}{2}} \\end{pmatrix}``
 """
@@ -190,10 +193,9 @@ Base.adjoint(g::RxGate) = RxGate(-g.θ[])
 Base.adjoint(g::RyGate) = RyGate(-g.θ[])
 Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
-# general rotation operator gate
+
 """
-General Rotation Matrix
-Rotation by angle `θ` around unit vector `n⃗`.
+General rotation operator gate: rotation by angle `θ` around unit vector `n`.
 
 ``R_{\\vec{n}}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
@@ -232,7 +234,7 @@ Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 
 """
-Phase Shift Gate
+Phase shift gate
 
 ``P(\\phi) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\phi} \\end{pmatrix}``
 """
@@ -257,10 +259,8 @@ end
 Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
 
 
-
-# swap gate
 """
-Swap Gate
+Swap gate
 
 ``SWAP = \\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 0 & 1 \\end{pmatrix}``
 """
@@ -273,7 +273,10 @@ matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 LinearAlgebra.ishermitian(::SwapGate) = true
 Base.adjoint(s::SwapGate) = s
 
-# general controlled gate
+
+"""
+General controlled gate: first `N - M` wires are the control and the remaining `M` wires the target
+"""
 struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
     function ControlledGate{M,N}(U::AbstractGate{M}) where {M,N}
@@ -284,46 +287,52 @@ end
 
 function matrix(g::ControlledGate{M,N}) where {M,N}
     Umat = matrix(g.U)
-    CU = sparse(one(eltype(Umat))*I, 2^N, 2^N)
+    CU = sparse(one(eltype(Umat)) * I, 2^N, 2^N)
     # Note: following the ordering convention of `kron` here, i.e.,
     # second (target) qubit corresponds to fastest varying index
-    CU[end-size(Umat,1)+1:end, end-size(Umat,2)+1:end] = Umat
+    CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
     return CU
 end
 
-function LinearAlgebra.ishermitian(g::ControlledGate{M,N}) where {M,N}
-    return LinearAlgebra.ishermitian(g.U)
-end
-Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjoint(g.U))
+LinearAlgebra.ishermitian(g::ControlledGate{M,N}) where {M,N} =
+    LinearAlgebra.ishermitian(g.U)
+
+Base.adjoint(g::ControlledGate{M,N}) where {M,N} =
+    ControlledGate{M,N}(Base.adjoint(g.U))
 
 controlled_not() = ControlledGate{1,2}(X)
 
-function Base.isapprox(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
-    return typeof(g1) == typeof(g2)
-end
 
-Base.isapprox(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M, N} = false
+isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 
-# MatrixGate: general gate constructed from an unitary matrix
-function isunitary(m::AbstractMatrix)
-    m * Base.adjoint(m) ≈ I
-end
 
+"""
+MatrixGate: general gate constructed from an unitary matrix
+"""
 struct MatrixGate{N} <: AbstractGate{N}
     matrix::AbstractMatrix
     function MatrixGate(m)
         d = 2
-        @assert size(m,1) == size(m,2)
+        @assert size(m, 1) == size(m, 2)
         isunitary(m) || error("Quantum operators must be unitary")
-        N = Int(log(d, size(m,1)))
+        N = Int(log(d, size(m, 1)))
         return new{N}(m)
     end
 end
 
-function matrix(MG::MatrixGate{N}) where N
-    MG.matrix
+matrix(g::MatrixGate{N}) where {N} = g.matrix
+
+Base.adjoint(g::MatrixGate{N}) where {N} = MatrixGate(Base.adjoint(g.matrix))
+
+
+function Base.isapprox(g1::G, g2::G) where {G<:AbstractGate{N}} where {N}
+    for name in fieldnames(G)
+        if !(getfield(g1, name) ≈ getfield(g2, name))
+            return false
+        end
+    end
+    return true
 end
 
-function Base.adjoint(MG::MatrixGate{N}) where N
-    return MatrixGate(Base.adjoint(MG.matrix))
-end
+# handle different gate types or dimensions
+Base.isapprox(::AbstractGate, ::AbstractGate) = false
