@@ -1,12 +1,5 @@
 using LinearAlgebra
 
-"""
-    pauli_vector(x, y, z)
-
-Assemble the "Pauli vector" matrix.
-"""
-pauli_vector(x, y, z) = [z x-im*y; x+im*y -z]
-
 
 """
     AbstractGate{N}
@@ -305,9 +298,32 @@ Base.adjoint(g::ControlledGate{M,N}) where {M,N} = ControlledGate{M,N}(Base.adjo
 
 controlled_not() = ControlledGate{1,2}(X)
 
-
 function Base.isapprox(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
     return typeof(g1) == typeof(g2)
 end
 
 Base.isapprox(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M, N} = false
+
+# MatrixGate: general gate constructed from an unitary matrix
+function isunitary(m::AbstractMatrix)
+    m * Base.adjoint(m) ≈ I
+end
+
+struct MatrixGate{N} <: AbstractGate{N}
+    matrix::AbstractMatrix
+    function MatrixGate(m)
+        d = 2
+        @assert size(m,1) == size(m,2)
+        isunitary(m) || error("Quantum operators must be unitary")
+        N = Int(log(d, size(m,1)))
+        return new{N}(m)
+    end
+end
+
+function matrix(MG::MatrixGate{N}) where N
+    MG.matrix
+end
+
+function Base.adjoint(MG::MatrixGate{N}) where N
+    return MatrixGate(Base.adjoint(MG.matrix))
+end

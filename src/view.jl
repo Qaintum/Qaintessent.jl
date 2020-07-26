@@ -65,6 +65,10 @@ function view(g::ControlledGate, i::Vector{Int64})
     return gate, i
 end
 
+function view(g::AbstractGate, i::Vector{Int64})
+    fill("——□———", length(i)), i
+end
+
 function interleave(a::Vector{T}, b::Vector{T}) where {T}
     length(a)-1 == length(b) || error("Vector b must be one element shorter than Vector a")
     c = Vector{T}(undef, length(a) + length(b))

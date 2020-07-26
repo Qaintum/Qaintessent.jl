@@ -4,6 +4,8 @@ using LinearAlgebra
 using SparseArrays
 
 
+include("util.jl")
+
 include("gates.jl")
 export
     AbstractGate,
@@ -25,7 +27,8 @@ export
     PhaseShiftGate,
     SwapGate,
     ControlledGate,
-    controlled_not
+    controlled_not,
+    MatrixGate
 
 include("circuit.jl")
 export
@@ -41,6 +44,12 @@ export
     MeasurementOps,
     Circuit,
     distribution
+
+include("density_matrix.jl")
+export
+    DensityMatrix,
+    pauli_group_matrix,
+    density_from_statevector
 
 include("commute.jl")
     export
