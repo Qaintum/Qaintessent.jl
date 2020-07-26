@@ -44,11 +44,12 @@ c_ref = Circuit{N}(cgc_ref, meas)
 export_file(c_ref, filename)
 
 c = import_file(filename)
+rm(filename)
 
-
+c
 # output
 
-    
+
     1 ————————————————————•———
                           |
     2 ————————x————[T ]——[X ]—
