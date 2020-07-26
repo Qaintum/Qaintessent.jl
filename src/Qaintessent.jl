@@ -74,4 +74,9 @@ include("graphs.jl")
 export
     Dag,
     optimize!
+
+include("qasm.jl")
+export
+    import_file,
+    export_file
 end

@@ -64,7 +64,7 @@ end
     @test isunitary(cg)
 
     cg_test = controlled_circuit_gate(1, 3, HadamardGate(), 3)
-    @test cg_test == cg
+    @test cg_test ≈ cg
 
     cg = single_qubit_circuit_gate(1, RxGate(0.2), 1)
     cg_test = single_qubit_circuit_gate(1, RxGate(0.2), 1)
@@ -73,6 +73,22 @@ end
 
     cg.gate.θ[1] = 0.5
     @test !(cg ≈ cg_test)
+end
+
+@testset ExtendedTestSet "circuit gate exceptions" begin
+H = HadamardGate()
+S = SwapGate()
+
+N = 1
+@test_throws ErrorException("Number of gate wires cannot be larger than total number of wires.") CircuitGate{2,N,SwapGate}((1, 2), S)
+
+N = 2
+@test_throws ErrorException("Need at least one wire to act on.") CircuitGate{0,N,SwapGate}((), S)
+@test_throws ErrorException("Wire indices must be unique.") CircuitGate{2,N,SwapGate}((1, 1), S)
+@test_throws ErrorException("Wire index cannot be smaller than 1.") CircuitGate{2,N,SwapGate}((1, -1), S)
+@test_throws ErrorException("Wire index cannot be larger than total number of wires.") CircuitGate{2,N,SwapGate}((1, 4), S)
+@test_throws ErrorException("Gate type must be a subtype of AbstractGate{1}.") CircuitGate{1,N,SwapGate}((1,), S)
+
 end
 
 @testset ExtendedTestSet "circuit gate chain" begin
@@ -207,4 +223,52 @@ end
     ψs = apply(cgc, ψ)
     @test [dot(ψs, m*ψs) for m in [mop1, mop2, mop3]] ≈ apply(c, ψ)
 
+end
+
+
+@testset ExtendedTestSet "test classical registers" begin
+N = 3
+
+@test_throws ErrorException("Number of classical registers in CircuitGateChain{N} must be greater than 3") CircuitGateChain{N}([
+    controlled_circuit_gate(-1, 2, X, N),
+    single_qubit_circuit_gate(2, Y, N),
+    controlled_circuit_gate((1, 3), 2, SGate(), N),
+    controlled_circuit_gate((1, 3, -2), 2, HadamardGate(), N),
+    two_qubit_circuit_gate(2, 3, SwapGate(), N),
+    single_qubit_circuit_gate(3, RxGate(1.5π), N),
+    controlled_circuit_gate(-3, 3, RyGate(1.5π), N),
+], creg=[0, 1])
+
+
+@test_throws ErrorException("All control wires must not be 0") CircuitGateChain{N}([
+    controlled_circuit_gate(-1, 2, X, N),
+    single_qubit_circuit_gate(2, Y, N),
+    controlled_circuit_gate((1, 3), 2, SGate(), N),
+    controlled_circuit_gate((1, 3, 0), 2, HadamardGate(), N),
+    two_qubit_circuit_gate(2, 3, SwapGate(), N),
+    single_qubit_circuit_gate(3, RxGate(1.5π), N),
+    controlled_circuit_gate(-3, 3, RyGate(1.5π), N),
+], creg=[0, 1, 0])
+
+cgc_ref = CircuitGateChain{N}([
+    single_qubit_circuit_gate(2, Y, N),
+    controlled_circuit_gate((1, 3), 2, SGate(), N),
+    two_qubit_circuit_gate(2, 3, SwapGate(), N),
+    single_qubit_circuit_gate(3, RxGate(1.5π), N),
+    single_qubit_circuit_gate(3, RyGate(1.5π), N),
+])
+
+cgc = CircuitGateChain{N}([
+    controlled_circuit_gate((-1,3), 2, X, N),
+    single_qubit_circuit_gate(2, Y, N),
+    controlled_circuit_gate((1, 3), 2, SGate(), N),
+    controlled_circuit_gate((1, 3, -2), 2, HadamardGate(), N),
+    two_qubit_circuit_gate(2, 3, SwapGate(), N),
+    single_qubit_circuit_gate(3, RxGate(1.5π), N),
+    controlled_circuit_gate(-3, 3, RyGate(1.5π), N),
+], creg=[0, 0, 1])
+
+ψ = randn(ComplexF64, 2^N)
+
+@test apply(cgc_ref, ψ) ≈ apply(cgc, ψ)
 end

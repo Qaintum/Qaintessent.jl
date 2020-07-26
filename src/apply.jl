@@ -237,8 +237,12 @@ end
 Apply CircuitGateChain to quantum state vector.
 """
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
-    for m in cgc.moments
-        ψ = apply(m, ψ)
+    for moment in cgc.moments
+        for gate in moment
+            if all(cgc.creg[gate.ccntrl] .== 1)
+                ψ = apply(gate, ψ)
+            end
+        end
     end
     return ψ
 end
