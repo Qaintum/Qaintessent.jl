@@ -229,26 +229,26 @@ end
 @testset ExtendedTestSet "test classical registers" begin
 N = 3
 
-@test_throws ErrorException("Number of classical registers in CircuitGateChain{N} must be greater than 3") CircuitGateChain{N}([
-    controlled_circuit_gate(-1, 2, X, N),
+@test_throws ErrorException("Attempt to access register 3 in CircuitGateChain with 2 registers") CircuitGateChain{N}([
+    controlled_circuit_gate(2, X, N; ccntrl=[(1,1)]),
     single_qubit_circuit_gate(2, Y, N),
     controlled_circuit_gate((1, 3), 2, SGate(), N),
-    controlled_circuit_gate((1, 3, -2), 2, HadamardGate(), N),
+    controlled_circuit_gate((1, 3), 2, HadamardGate(), N; ccntrl=[(2,1)]),
     two_qubit_circuit_gate(2, 3, SwapGate(), N),
     single_qubit_circuit_gate(3, RxGate(1.5π), N),
-    controlled_circuit_gate(-3, 3, RyGate(1.5π), N),
-], creg=[0, 1])
+    controlled_circuit_gate(3, RyGate(1.5π), N; ccntrl=[(3,1)]),
+], creg=Int64[1, 1])
 
 
-@test_throws ErrorException("All control wires must not be 0") CircuitGateChain{N}([
-    controlled_circuit_gate(-1, 2, X, N),
+@test_throws ErrorException("Control wires cannot be negative") CircuitGateChain{N}([
+    controlled_circuit_gate(2, X, N; ccntrl=[(1,1)]),
     single_qubit_circuit_gate(2, Y, N),
     controlled_circuit_gate((1, 3), 2, SGate(), N),
     controlled_circuit_gate((1, 3, 0), 2, HadamardGate(), N),
     two_qubit_circuit_gate(2, 3, SwapGate(), N),
     single_qubit_circuit_gate(3, RxGate(1.5π), N),
-    controlled_circuit_gate(-3, 3, RyGate(1.5π), N),
-], creg=[0, 1, 0])
+    controlled_circuit_gate(3, RyGate(1.5π), N; ccntrl=[(3,1)]),
+], creg=Int64[1, 1])
 
 cgc_ref = CircuitGateChain{N}([
     single_qubit_circuit_gate(2, Y, N),
@@ -259,14 +259,16 @@ cgc_ref = CircuitGateChain{N}([
 ])
 
 cgc = CircuitGateChain{N}([
-    controlled_circuit_gate((-1,3), 2, X, N),
+    controlled_circuit_gate((3), 2, X, N; ccntrl=[(1,1)]),
     single_qubit_circuit_gate(2, Y, N),
     controlled_circuit_gate((1, 3), 2, SGate(), N),
-    controlled_circuit_gate((1, 3, -2), 2, HadamardGate(), N),
+    controlled_circuit_gate((1, 3), 2, HadamardGate(), N; ccntrl=[(2,1)]),
     two_qubit_circuit_gate(2, 3, SwapGate(), N),
     single_qubit_circuit_gate(3, RxGate(1.5π), N),
-    controlled_circuit_gate(-3, 3, RyGate(1.5π), N),
-], creg=[0, 0, 1])
+    controlled_circuit_gate(3, RyGate(1.5π), N; ccntrl=[(3,1)]),
+], creg=[1, 1, 1])
+
+cgc.creg[3] = [1]
 
 ψ = randn(ComplexF64, 2^N)
 
