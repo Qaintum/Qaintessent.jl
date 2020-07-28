@@ -9,5 +9,5 @@ CurrentModule = Qaintessent
 ```
 
 ```@docs
-Qaintessent.gradients(c, ψ, Δ)
+Qaintessent.gradients
 ```
