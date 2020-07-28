@@ -17,7 +17,8 @@ julia> cartesian_tuples(2, 3)
  (1, 0, 1)  (1, 1, 1)
 ```
 """
-cartesian_tuples(d::Integer, N::Integer) = Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
+cartesian_tuples(d::Integer, N::Integer) =
+    Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
 
 
 """
@@ -25,7 +26,7 @@ cartesian_tuples(d::Integer, N::Integer) = Tuple.(CartesianIndices(Tuple(fill(0:
 
 Matrix commutator [A, B].
 """
-comm(A::AbstractMatrix, B::AbstractMatrix) = A*B - B*A
+comm(A::AbstractMatrix, B::AbstractMatrix) = A * B - B * A
 
 
 """
@@ -33,4 +34,4 @@ comm(A::AbstractMatrix, B::AbstractMatrix) = A*B - B*A
 
 Assemble the "Pauli vector" matrix.
 """
-pauli_vector(x, y, z) = [z x-im*y; x+im*y -z]
+pauli_vector(x, y, z) = [z x - im*y; x + im*y -z]
