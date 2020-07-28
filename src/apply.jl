@@ -230,7 +230,6 @@ function apply(m::Moment{N}, ψ::AbstractVector) where {N}
     return ψ
 end
 
-
 """
     apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
 
@@ -239,9 +238,11 @@ Apply CircuitGateChain to quantum state vector.
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
     for moment in cgc.moments
         for gate in moment
-            if all(cgc.creg[gate.ccntrl] .== 1)
-                ψ = apply(gate, ψ)
+            for (reg, bit) in gate.ccntrl
+                cgc.creg[reg][bit] == 1 || @goto skipapply
             end
+            ψ = apply(gate, ψ)
+            @label skipapply
         end
     end
     return ψ
