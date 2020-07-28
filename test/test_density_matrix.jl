@@ -6,9 +6,15 @@ using Qaintessent
 
 @testset ExtendedTestSet "density matrix" begin
 
-    pauli = [Matrix{Float64}(I, 2, 2), Qaintessent.matrix(X), Qaintessent.matrix(Y), Qaintessent.matrix(Z)]
+    pauli = [
+        Matrix{Float64}(I, 2, 2),
+        Qaintessent.matrix(X),
+        Qaintessent.matrix(Y),
+        Qaintessent.matrix(Z),
+    ]
 
-    @test Qaintessent.matrix(pauli_group_matrix("XIZY")) ≈ kron(pauli[2], pauli[1], pauli[4], pauli[3])
+    @test Qaintessent.matrix(pauli_group_matrix("XIZY")) ≈
+          kron(pauli[2], pauli[1], pauli[4], pauli[3])
 
     N = 4
     ψ = randn(ComplexF64, 2^N)
