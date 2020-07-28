@@ -55,8 +55,8 @@ end
 
         ψ = fill(0.0+0.0*im, 2^M)
 
-        a = rand(0:2^N)
-        b = rand(0:2^N)
+        a = rand(0:2^(N-1))
+        b = rand(0:2^(N-1))
         index = b << N + a
         ψ[index+1] = 1.0
 

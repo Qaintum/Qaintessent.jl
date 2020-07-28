@@ -37,8 +37,8 @@ end
         M = N * 3 + 1
         adder = vbe_adder_circuit(N)
         ψ = fill(0.0 + 0.0im, 2^M)
-        a = abs(rand(Int, 1)[]) % (2^N)
-        b = abs(rand(Int, 1)[]) % (2^N)
+        a = rand(0:2^(N-1))
+        b = rand(0:2^(N-1))
 
         index = b << N + a
         ψ[index+1] = 1.0
@@ -62,8 +62,8 @@ end
 
         cgc = qcla_out_adder_circuit(N)
 
-        a = abs(rand(Int, 1)[]) % (2^N)
-        b = abs(rand(Int, 1)[]) % (2^N)
+        a = rand(0:2^(N-1))
+        b = rand(0:2^(N-1))
 
         index = b << N + a
         ψ = fill(0.0 + 0.0 * im, 2^M)
@@ -88,8 +88,8 @@ end
         M = 3N + anc
 
         cgc = qcla_inplace_adder_circuit(N)
-        a = abs(rand(Int, 1)[]) % (2^N)
-        b = abs(rand(Int, 1)[]) % (2^N)
+        a = rand(0:2^(N-1))
+        b = rand(0:2^(N-1))
 
         index = b << N + a
         ψ = fill(0.0 + 0.0 * im, 2^M)
