@@ -30,6 +30,12 @@ export
     controlled_not,
     MatrixGate
 
+include("register.jl")
+export
+    Register,
+    CRegister
+    QRegister
+
 include("circuit.jl")
 export
     AbstractCircuitGate,
@@ -75,8 +81,4 @@ export
     Dag,
     optimize!
 
-include("qasm.jl")
-export
-    import_file,
-    export_file
 end
