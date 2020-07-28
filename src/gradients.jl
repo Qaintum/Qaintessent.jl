@@ -93,6 +93,15 @@ function backward(cgc::CircuitGateChain{N}, ψ::AbstractVector, Δ::AbstractVect
 end
 
 
+"""
+    gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}) where {N}
+
+Perform a backward pass to compute gradients of a (fictitious) cost function with
+respect to the circuit parameters of `c` and input wavefunction `ψ`. `Δ` contains
+the cost function gradients with respect to the circuit outputs (measurement operator averages).
+The gradients with respect to the circuit parameters are returned in a duplicate circuit.
+Returns a tuple (dc::Circuit{N}, dψ::AbstractVector).
+"""
 function gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}) where {N}
     # length of circuit output vector must match gradient vector
     @assert length(Δ) == length(c.meas.mops)
