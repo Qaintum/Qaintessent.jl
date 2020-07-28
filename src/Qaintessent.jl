@@ -32,9 +32,8 @@ export
 
 include("register.jl")
 export
-    Register,
-    CRegister
-    QRegister
+    qreg,
+    creg
 
 include("circuit.jl")
 export
@@ -80,5 +79,4 @@ include("graphs.jl")
 export
     Dag,
     optimize!
-
 end
