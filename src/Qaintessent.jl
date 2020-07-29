@@ -33,7 +33,10 @@ export
 include("register.jl")
 export
     qreg,
-    creg
+    creg,
+    reg_check,
+    set_creg!,
+    add_creg!
 
 include("circuit.jl")
 export

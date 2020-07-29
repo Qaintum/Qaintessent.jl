@@ -200,7 +200,6 @@ end
 
 """Tailored apply for a general ControlledGate"""
 function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ψ::AbstractVector) where {M,N,T}
-
     # M is the len of iwire, T is the number of target wires
 
     A = copy(ψ) # TODO: copy only what's needed
@@ -236,12 +235,18 @@ end
 Apply CircuitGateChain to quantum state vector.
 """
 function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
+    creg = collect(Iterators.flatten(reverse.(cgc.creg)))
     for moment in cgc.moments
         for gate in moment
-            creg = collect(Iterators.flatten(reverse.(cgc.creg)))
+            if gate.ccntrl isa Expr
+                eval(gate.ccntrl) || @goto skipapply
+                @goto apply
+            end
+
             for bit in gate.ccntrl
                 creg[bit] == true || @goto skipapply
             end
+            @label apply
             ψ = apply(gate, ψ)
             @label skipapply
         end
