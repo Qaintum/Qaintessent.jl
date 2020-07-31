@@ -288,7 +288,7 @@ end
     @test apply(cgc_ref, ψ) ≈ apply(cgc, ψ)
 end
 
-@testset ExtendedTestSet "test cgc functor" begin
+@testset ExtendedTestSet "cgc functor" begin
     c1 = creg(2)
     c2 = creg(4)
     q1 = qreg(3)
