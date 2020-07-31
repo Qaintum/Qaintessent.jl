@@ -24,9 +24,9 @@ RBNF.@parser QASMLang begin
     # define grammars
     mainprogram := ["OPENQASM", ver=real, ';', prog=program]
     program     = statement{*}
-    statement   = (decl | gate | opaque | qop | ifstmt | barrier)
+    statement   = (decl | gate | opaque | ifstmt | barrier | qop)
     # stmts
-    ifstmt      := ["if", '(', l=id, "==", r=nninteger, ')', body=qop]
+    ifstmt      := ["if", '(', l=id, "==", r=nninteger, ')', gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
     opaque      := ["opaque", id=id, ['(', [arglist1=idlist].?, ')'].? , arglist2=idlist, ';']
     barrier     := ["barrier", value=mixedlist]
     decl        := [regtype=("qreg" | "creg"), id=id, '[', int=nninteger, ']', ';']
@@ -35,19 +35,18 @@ RBNF.@parser QASMLang begin
     gate        := [decl=gatedecl, [goplist=goplist].?, '}']
     gatedecl    := ["gate", id=id, ['(', [args=idlist].?, ')'].?, (outs=idlist), '{']
 
-    goplist     = (uop |barrier_ids){*}
+    goplist     = (barrier_ids | uop){*}
     barrier_ids := ["barrier", ids=idlist, ';'] # not impl
     # qop
-    qop         = (uop | measure | reset)
+    qop         = (measure | reset | uop)
     reset       := ["reset", arg=argument, ';'] # not impl
     measure     := ["measure", arg1=argument, "->", arg2=argument, ';'] # not impl
 
-    uop         = (iduop | u | cx)
-    iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
+    uop         = (u | cx | x | iduop)
     u          := ['U', '(', in1=exp, ',', in2=exp, ',', in3 = exp, ')', out=argument, ';']
     cx         := ["CX", out1=argument, ',', out2=argument, ';']
-    x          := ["x",  out=argument, ';']
-
+    x          := ['x',  out=argument, ';']
+    iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
 
     idlist     := [hd=id, [',', tl=idlist].?]
 
@@ -142,15 +141,34 @@ qreg q[3];
 qreg a[2];
 creg c[3];
 creg syn[2];
-x q[0];
+x q[2];
+x q;
+CX q, a[0];
 barrier q;
-syndrome q[0],q[1],q[2],a[0],a[1];
-measure a -> syn;
 if(syn==1) x q[0];
 if(syn==2) x q[2];
 if(syn==3) x q[1];
-measure q -> c;
 """
+
+function x(args, outs; ccntrl=nothing)
+    if isnothing(ccntrl)
+        return :(cgc([single_qubit_circuit_gate(($outs[1]), X, N)]))
+    else
+        return :(cgc([controlled_circuit_gate($ccntrl, ($outs[1]), X, N)]))
+    end
+end
+
+function cx(args, outs; ccntrl=nothing)
+    if isnothing(ccntrl)
+        return :(cgc([single_qubit_circuit_gate(($outs[1]), X, N)]))
+    else
+        return :(cgc([controlled_circuit_gate($ccntrl, ($outs[1]), X, N)]))
+    end
+
+end
+
+function u(args, out; ccntrl=nothing)
+end
 
 function rec(ctx_tokens)
     function app(op, args...)
@@ -158,6 +176,7 @@ function rec(ctx_tokens)
         op = Symbol(op)
         :($op($(args...)))
     end
+
     @match ctx_tokens begin
         Struct_pi(_) => Base.pi
         Token{:id}(str=str) => Symbol(str)
@@ -168,7 +187,7 @@ function rec(ctx_tokens)
         Struct_idlist(hd=Token(str=hd), tl=nothing) => [Symbol(hd)]
         Struct_idlist(hd=Token(str=hd), tl=tl) => [Symbol(hd), rec(tl)...]
 
-        Struct_explist(hd=hd, tl=nothing) => [rec(hd)]
+        Struct_explist(hd=hd, tl=nothing) => [trans_reg(hd)]
         Struct_explist(hd=hd, tl=tl) => [rec(hd), rec(tl)...]
 
         Struct_mixedlist(hd=hd, tl=nothing) => [rec(hd)]
@@ -179,7 +198,6 @@ function rec(ctx_tokens)
             let ind = parse(Int, int) + 1 # due to julia 1-based index
                 :($(Symbol(id))[$ind])
             end
-            _ => println("Nothing")
     end
 end
 
@@ -189,29 +207,29 @@ function trans_reg(ctx_tokens)
         op = Symbol(op)
         :($op($(args...)))
     end
-    stmts = ctx_tokens.prog
-    println(stmts)
-    exp = Expr[]
-    function match_reg(x)
-        @match stmts begin
-            Struct_decl(
-                regtype = Token(str=regtype),
-                id = Token(str=id),
-                int = Token(str = n)
-            ) =>
-                let id = Symbol(id),
-                    n = parse(Int, n)
-                    println("Yes")
-                    if regtype == "qreg"
-                        push!(exp, :($id = qreg($n); push!(qregs, $id)))
-                    else
-                        push!(exp, :($id = creg($n); push!(cregs, $id)))
-                    end
+    @match ctx_tokens begin
+        Struct_decl(
+            regtype = Token(str=regtype),
+            id = Token(str=id),
+            int = Token(str = n)
+        ) =>
+            let id = Symbol(id),
+                n = parse(Int, n)
+                if regtype == "qreg"
+                    return :($id = qreg($n); push!(qregs, $id))
+                else
+                    return :($id = creg($n); push!(cregs, $id))
                 end
-            _ => println("Nothing")
-        end
+            end
+
+        Struct_mainprogram(
+            prog = stmts
+        ) =>
+            let stmts = map(trans_reg, stmts)
+                stmts
+            end
+        _ => nothing
     end
-    exp
 end
 
 function trans_gates(ctx_tokens)
@@ -220,8 +238,20 @@ function trans_gates(ctx_tokens)
         op = Symbol(op)
         :($op($(args...)))
     end
-
     @match ctx_tokens begin
+        Struct_iduop(gate_name = Token(str=gate_name), args=nothing, outs=outs) =>
+            let refs = rec(outs),
+                gate_name = Symbol(gate_name)
+                :($gate_name($args, $outs))
+            end
+
+        Struct_iduop(gate_name = Token(str=gate_name), args=exprlist, outs=outs) =>
+            let refs = rec(outs),
+                exprs = Expr(:tuple, rec(exprlist)...),
+                gate_name = Symbol(gate_name)
+                :($gate_name($exprs, $(refs...)))
+            end
+
         Struct_cx(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
@@ -237,38 +267,28 @@ function trans_gates(ctx_tokens)
             end
 
         Struct_x(out=out) =>
-            let ref = :($(rec(out))[1])
+            let ref = :($(rec(out)))
                 :(cgc([single_qubit_circuit_gate(($ref), X, N)]))
             end
 
-        Struct_gate(
-            decl = Struct_gatedecl(
-                id=Token(str=fid),
-                args= nothing && Do(args=[]) ||
-                      idlist  && Do(args = rec(idlist)),
-                outs=outs
-            ),
-            goplist = nothing && Do(goplist=[]) ||
-                      goplist && Do(goplist = map(rec, goplist))
-         ) =>
-            let out_ids :: Vector{Symbol} = rec(outs),
-                fid = Symbol(fid)
-                quote
-                    function $fid(($(args...), ), $(out_ids...))
-                        chain($(goplist...))
-                    end
-                end
+        Struct_ifstmt(l=Token(str=l), r=r, gate_name=id, args=explist, outs=mixedlist =>
+            let l = Symbol(l),
+                r = rec(r),
+                body = rec(body)
+                :(cgc([controlled_circuit_gate(($ref), , N)]))
             end
 
         Struct_mainprogram(
             prog = stmts
         ) =>
-            let stmts = map(rec, stmts)
+            let stmts = map(trans_gates, stmts)
                 stmts
             end
+
         _ => println("Nothing")
     end
 end
+
 
 function trans(ctx_tokens)
 
@@ -280,8 +300,13 @@ function trans(ctx_tokens)
     eval.(a)
     println(cregs)
     println(qregs)
-    cgc = CircuitGateChain(qregs, cregs)
+    global cgc = CircuitGateChain(qregs, cregs)
+    global N = size(cgc)
 
+    a = trans_gates(ctx_tokens)
+    println(a)
+    eval.(a)
+    println(cgc)
     # println(trans_gates(ctx_tokens))
     cgc
 end
@@ -291,5 +316,6 @@ string_ast = PrettyPrint.pformat
 
 a = lex(src1)
 a = parse_qasm(a)
+println(a)
 a = trans(a)
 # @eval $a
