@@ -293,26 +293,87 @@ end
 end
 
 @testset ExtendedTestSet "test cgc functor" begin
-    N = 7
     c1 = creg(2)
     c2 = creg(4)
+    q1 = qreg(3)
+    q2 = qreg(3)
+    q3 = qreg(4)
 
-    cgc = CircuitGateChain{N}()
+    cgc = CircuitGateChain([q1,q2,q3])
+    N = size(cgc)
 
-    add_creg!(cgc, c1)
-    add_creg!(cgc, c2)
-
+    cgc1 = deepcopy(cgc)
     gates = [
         single_qubit_circuit_gate(2, Y, N),
-        single_qubit_circuit_gate(2, X, N),
     ]
-    cgc(gates)
 
+    cgc1(gates)
+    cgc1_ref = CircuitGateChain{10}(
+    [
+        single_qubit_circuit_gate(2, Y, N),
+    ])
+    @test all(cgc1 .≈ cgc1_ref)
+
+    cgc2 = deepcopy(cgc)
     gates = [
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(1, Y, N)
+    ]
+
+    cgc2(gates)
+    cgc2_ref = CircuitGateChain{10}(
+    [
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(1, Y, N)
+    ])
+    @test all(cgc2.≈ cgc2_ref)
+
+    cgc3 = deepcopy(cgc)
+    gates = [
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(q1, Y, N),
+        two_qubit_circuit_gate(q1, q2, SwapGate(), N),
+        two_qubit_circuit_gate(q1, q3[1], SwapGate(), N),
+    ]
+    cgc3(gates)
+
+    cgc3_ref = CircuitGateChain{10}(
+    [
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(1, Y, N),
         single_qubit_circuit_gate(2, Y, N),
         single_qubit_circuit_gate(3, Y, N),
+        two_qubit_circuit_gate(1, 4, SwapGate(), N),
+        two_qubit_circuit_gate(2, 5, SwapGate(), N),
+        two_qubit_circuit_gate(3, 6, SwapGate(), N),
+        two_qubit_circuit_gate(1, 7, SwapGate(), N),
+        two_qubit_circuit_gate(2, 7, SwapGate(), N),
+        two_qubit_circuit_gate(3, 7, SwapGate(), N),
+    ])
+    @test all(cgc3 .≈ cgc3_ref)
+
+    cgc4 = deepcopy(cgc)
+    gates = [
+        controlled_circuit_gate(q1, q2, X, N),
+        controlled_circuit_gate(q1, q2[1], Z, N),
+        controlled_circuit_gate(q1[3], q2, Y, N),
     ]
-    cgc(gates)
+    # println(gates)
+    cgc4(gates)
+
+    cgc4_ref = CircuitGateChain{10}(
+    [
+        controlled_circuit_gate(1, 4, X, N),
+        controlled_circuit_gate(2, 5, X, N),
+        controlled_circuit_gate(3, 6, X, N),
+        controlled_circuit_gate(1, 4, Z, N),
+        controlled_circuit_gate(2, 4, Z, N),
+        controlled_circuit_gate(3, 4, Z, N),
+        controlled_circuit_gate(3, 4, Y, N),
+        controlled_circuit_gate(3, 5, Y, N),
+        controlled_circuit_gate(3, 6, Y, N),
+    ])
+    @test all(cgc4 .≈ cgc4_ref)
 
 end
 
