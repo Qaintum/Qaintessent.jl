@@ -554,26 +554,42 @@ function Base.reverse(cgc::CircuitGateChain{N}) where {N}
     return cgc
 end
 
+
 function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     max_creg = sum(length.(cgc.creg))
-    for reg in cg.ccntrl
-        reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
-    end
-
-    append!(cgc.moments, Moment([g]))
-end
-
-function (cgc::CircuitGateChain{N})(g::Array{CircuitGate{M,N,G} where G where M,1}) where {N}
-    max_creg = sum(length.(cgc.creg))
-    for cg in g
-        if cg.ccntrl isa AbstractVector{Int}
-            for reg in cg.ccntrl
-                reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
-            end
+    if g.ccntrl isa Vector{Int}
+        for reg in g.ccntrl
+            reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
         end
     end
-    append!(cgc.moments, Moment{N}.(g))
+
+    push!(cgc.moments, Moment{N}(g))
 end
+
+function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}, max_creg::Int) where {M,N,G<:AbstractGate}
+    if g.ccntrl isa Vector{Int}
+        for reg in g.ccntrl
+            reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
+        end
+    end
+
+    push!(cgc.moments, Moment{N}(g))
+end
+
+function (cgc::CircuitGateChain{N})(g::Array{<:CircuitGate{M,N,G} where M where G,1}) where {N}
+    max_creg = sum(length.(cgc.creg))
+    for cg in g
+        cgc(cg, max_creg)
+    end
+end
+
+function (cgc::CircuitGateChain{N})(g::Array{CircuitGate{Int,N,G} where G,1}) where {N}
+    max_creg = sum(length.(cgc.creg))
+    for cg in g
+        cgc(cg, max_creg)
+    end
+end
+
 
 """
     MeasurementOps{N}

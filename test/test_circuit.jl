@@ -292,6 +292,30 @@ end
     @test apply(cgc_ref, ψ) ≈ apply(cgc, ψ)
 end
 
+@testset ExtendedTestSet "test cgc functor" begin
+    N = 7
+    c1 = creg(2)
+    c2 = creg(4)
+
+    cgc = CircuitGateChain{N}()
+
+    add_creg!(cgc, c1)
+    add_creg!(cgc, c2)
+
+    gates = [
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(2, X, N),
+    ]
+    cgc(gates)
+
+    gates = [
+        single_qubit_circuit_gate(2, Y, N),
+        single_qubit_circuit_gate(3, Y, N),
+    ]
+    cgc(gates)
+
+end
+
 @testset ExtendedTestSet "test add_creg" begin
     c1 = creg(2)
     c2 = creg(4)
