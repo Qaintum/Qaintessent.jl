@@ -583,13 +583,6 @@ function (cgc::CircuitGateChain{N})(g::Array{<:CircuitGate{M,N,G} where M where 
     end
 end
 
-function (cgc::CircuitGateChain{N})(g::Array{CircuitGate{Int,N,G} where G,1}) where {N}
-    max_creg = sum(length.(cgc.creg))
-    for cg in g
-        cgc(cg, max_creg)
-    end
-end
-
 
 """
     MeasurementOps{N}
