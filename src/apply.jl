@@ -238,11 +238,11 @@ function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
     creg = collect(Iterators.flatten(reverse.(cgc.creg)))
     for moment in cgc.moments
         for gate in moment
-            for bit in gate.ccntrl
-                if bit isa Expr
-                    eval(bit) || @goto skipapply
+            for cntrl in gate.ccntrl
+                if cntrl isa Expr
+                    eval(cntrl) || @goto skipapply
                 else
-                    creg[bit] == true || @goto skipapply
+                    creg[cntrl] == true || @goto skipapply
                 end
             end
             @label apply
