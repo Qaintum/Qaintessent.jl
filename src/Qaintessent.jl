@@ -82,4 +82,12 @@ include("graphs.jl")
 export
     Dag,
     optimize!
+
+include("openqasm/grammar.jl")
+include("openqasm/gate_transformers.jl")
+
+include("openqasm/transform.jl")
+export
+    rbnfparse
+
 end

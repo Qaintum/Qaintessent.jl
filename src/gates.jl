@@ -93,10 +93,10 @@ T† gate
 struct TdagGate <: AbstractGate{1} end
 
 matrix(::SGate) = [1. 0.; 0. im]
-matrix(::TGate) = [1. 0.; 0. exp(im*π/4)]
+matrix(::TGate) = [1. 0.; 0. Base.exp(im*π/4)]
 
 matrix(::SdagGate) = [1. 0.; 0. -im]
-matrix(::TdagGate) = [1. 0.; 0. exp(-im*π/4)]
+matrix(::TdagGate) = [1. 0.; 0. Base.exp(-im*π/4)]
 
 LinearAlgebra.ishermitian(::SGate) = false
 LinearAlgebra.ishermitian(::TGate) = false
@@ -179,7 +179,7 @@ struct RzGate <: AbstractGate{1}
 end
 
 function matrix(g::RzGate)
-    [exp(-im*g.θ[]/2) 0; 0 exp(im*g.θ[]/2)]
+    [Base.exp(-im*g.θ[]/2) 0; 0 Base.exp(im*g.θ[]/2)]
 end
 
 function LinearAlgebra.ishermitian(g::RzGate)
@@ -247,7 +247,7 @@ struct PhaseShiftGate <: AbstractGate{1}
     end
 end
 
-matrix(g::PhaseShiftGate) = [1 0; 0 exp(im*g.ϕ[])]
+matrix(g::PhaseShiftGate) = [1 0; 0 Base.exp(im*g.ϕ[])]
 
 function LinearAlgebra.ishermitian(g::PhaseShiftGate)
     if g.ϕ[] == 0

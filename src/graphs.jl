@@ -226,7 +226,7 @@ end
 
 returns true if given `ControlledGate{N}` objects `g1` and `g2` have the same base `AbstractGate` type
 """
-function match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
+function Base.match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
     if typeof(g1.U) != typeof(g2.U)
         return false
     end
@@ -238,7 +238,7 @@ end
 
 returns true if given `AbstractGate{N}` objects `g1` and `g2` have the same type
 """
-function match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
+function Base.match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
     if typeof(g1) != typeof(g2)
         return false
     end
@@ -250,7 +250,7 @@ end
 
 returns false as `AbstractGate` objects target a different number of wires
 """
-match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N} = false
+Base.match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N} = false
 
 
 """

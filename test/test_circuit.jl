@@ -212,7 +212,7 @@ end
     gates = [
         single_qubit_circuit_gate(2, Y, N),
         controlled_circuit_gate(reg_check(c2,7), 2, SGate(), N),
-        controlled_circuit_gate((c2[4], 3), 2, YGate(), N),
+        controlled_circuit_gate((reg_check(c2,3), 3), 2, YGate(), N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
         single_qubit_circuit_gate(5, RxGate(1.5π), N),
         single_qubit_circuit_gate(3, RyGate(1.5π), N),
