@@ -1,12 +1,20 @@
 abstract type Register end
 
 struct QRegister <: Register
+    # register size
     n::Int
     ind::Vector{Int}
 end
 
+"""
+    CRegister{N}
+
+Classical register of N bits.
+"""
 struct CRegister <: Register
+    # register size
     n::BitArray{1}
+    # bit array representing register
     ind::Vector{Int}
 end
 
