@@ -235,7 +235,7 @@ controlled_circuit_gate(icntrl::NTuple{K, Union{Integer, Expr}}, itarget::Intege
     controlled_circuit_gate(icntrl, (itarget,), U, N)
 
 """
-    controlled_circuit_gate(icntrl::NTuple{K, Union{Integer, Expr}}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
+    controlled_circuit_gate(icntrl::NTuple{K, <:Union{Integer, Expr}}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
 
 Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
 """

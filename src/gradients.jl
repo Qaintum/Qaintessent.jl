@@ -32,7 +32,7 @@ end
 
 function backward(g::RzGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    RzGate(2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2]))
+    RzGate(2*real(0.5im*Base.exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*Base.exp(-im*g.θ[1]/2)*Δ[2, 2]))
 end
 
 
@@ -51,7 +51,7 @@ end
 
 function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    PhaseShiftGate(2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2]))
+    PhaseShiftGate(2*real(-im*Base.exp(-im*g.ϕ[1])*Δ[2, 2]))
 end
 
 
