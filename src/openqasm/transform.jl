@@ -48,7 +48,7 @@ function rec(ctx_tokens)
     @match ctx_tokens begin
         Struct_pi(_) => Base.pi
         Token{:id}(str=str) => Symbol(str)
-        Token{:real}(str=str) => parse(Float64, str)
+        Token{:nnreal}(str=str) => parse(Float64, str)
         Token{:nninteger}(str=str) => parse(Int64, str)
         Struct_neg(value=value) => :(-$(rec(value)))
         Struct_bin(l=l, op=Token(str=op), r=r) => app(op, l, r)

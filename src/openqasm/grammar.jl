@@ -18,7 +18,7 @@ RBNF.@parser QASMLang begin
 
     @grammar
     # define grammars
-    mainprogram := ["OPENQASM", ver=real, ';', prog=program]
+    mainprogram := ["OPENQASM", ver=nnreal, ';', prog=program]
     program     = statement{*}
     statement   = (decl | gate | opaque | ifstmt | barrier | qop)
     # stmts
@@ -39,7 +39,7 @@ RBNF.@parser QASMLang begin
     measure     := ["measure", arg1=argument, "->", arg2=argument, ';'] # not impl
 
     uop         = (u | cx | h | x | y | z | s | sdg | t | tdg | rx | ry | rz | crz | iduop)
-    u          := ['U', '(', in1=exp, ',', in2=exp, ',', in3=exp, ')', out=argument, ';']
+    u          := ['U', '(', in1=nnexp, ',', in2=nnexp, ',', in3=nnexp, ')', out=argument, ';']
     cx         := ["CX", out1=argument, ',', out2=argument, ';']
     ch         := ["ch", out1=argument, ',', out2=argument, ';']
     h          := ['h',  out=argument, ';']
@@ -50,10 +50,10 @@ RBNF.@parser QASMLang begin
     sdg        := ["sdg",  out=argument, ';']
     t          := ['t',  out=argument, ';']
     tdg        := ["tdg",  out=argument, ';']
-    rx         := ["rx",  '(', in=exp, ')', out=argument, ';']
-    ry         := ["ry",  '(', in=exp, ')', out=argument, ';']
-    rz         := ["rz",  '(', in=exp, ')', out=argument, ';']
-    crz        := ["crz",  '(', in=exp, ')', out1=argument, out2=argument, ';']
+    rx         := ["rx",  '(', in=nnexp, ')', out=argument, ';']
+    ry         := ["ry",  '(', in=nnexp, ')', out=argument, ';']
+    rz         := ["rz",  '(', in=nnexp, ')', out=argument, ';']
+    crz        := ["crz",  '(', in=nnexp, ')', out1=argument, out2=argument, ';']
 
     iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
 
@@ -63,13 +63,13 @@ RBNF.@parser QASMLang begin
 
     argument   := [id=id, ['[', (arg=nninteger), ']'].?]
 
-    explist    := [hd=exp, [',', tl=explist].?]
+    explist    := [hd=nnexp, [',', tl=explist].?]
     pi         := "pi"
-    atom       =  (real | nninteger | fnexp | pi | id) | (['(', exp, ')'] % second) | neg
-    fnexp      := [fn=fn, '(', arg=exp, ')']
-    neg        := ['-', value=exp]
+    atom       =  (nnreal | nninteger | fnexp | pi | id) | (['(', nnexp, ')'] % second) | neg
+    fnexp      := [fn=fn, '(', arg=nnexp, ')']
+    neg        := ['-', value=nnexp]
 
-    exp        = [l=mul,  [op=('+' |'-'), r=exp].?] => _.op === nothing ? _.l : Struct_bin(_.l, _.op, _.r)
+    nnexp        = [l=mul,  [op=('+' |'-'), r=nnexp].?] => _.op === nothing ? _.l : Struct_bin(_.l, _.op, _.r)
     mul        = [l=atom, [op=('*' | '/'), r=mul].?] => _.op === nothing ? _.l : Struct_bin(_.l, _.op, _.r)
     fn         = ("sin" | "cos" | "tan" | "exp" | "ln" | "sqrt")
 
@@ -77,7 +77,7 @@ RBNF.@parser QASMLang begin
     @token
     includes  := r"\Ginclude .*;"
     id        := r"\G[a-z]{1}[A-Za-z0-9_]*"
-    real      := r"\G([0-9]+\.[0-9]*|[0-9]*\.[0.9]+)([eE][-+]?[0-9]+)?"
+    nnreal      := r"\G([0-9]+\.[0-9]*|[0-9]*\.[0.9]+)([eE][-+]?[0-9]+)?"
     nninteger := r"\G([1-9]+[0-9]*|0)"
     space     := r"\G\s+"
     comments  := r"\G//.*"
