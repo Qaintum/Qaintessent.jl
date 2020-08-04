@@ -128,7 +128,7 @@ function apply(cg::CircuitGate{1,N,TGate}, ψ::AbstractVector) where {N}
     ψ = reshape(ψ, 2^(N-i), 2, 2^(i-1))
     A = similar(ψ)
     A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= exp(im*π/4).*ψ[:,2,:]
+    A[:,2,:] .= Base.exp(im*π/4).*ψ[:,2,:]
     return reshape(A, :)
 end
 
@@ -139,7 +139,7 @@ function apply(cg::CircuitGate{1,N,TdagGate}, ψ::AbstractVector) where {N}
     ψ = reshape(ψ, 2^(N-i), 2, 2^(i-1))
     A = similar(ψ)
     A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= exp(-im*π/4).*ψ[:,2,:]
+    A[:,2,:] .= Base.exp(-im*π/4).*ψ[:,2,:]
     return reshape(A, :)
 end
 
@@ -150,8 +150,8 @@ function apply(cg::CircuitGate{1,N,RzGate}, ψ::AbstractVector) where {N}
     θ = cg.gate.θ[]
     ψ = reshape(ψ, 2^(N-i), 2, 2^(i-1))
     A = similar(ψ)
-    A[:,1,:] .= exp(-im*θ/2).*ψ[:,1,:]
-    A[:,2,:] .= exp( im*θ/2).*ψ[:,2,:]
+    A[:,1,:] .= Base.exp(-im*θ/2).*ψ[:,1,:]
+    A[:,2,:] .= Base.exp( im*θ/2).*ψ[:,2,:]
     return reshape(A, :)
 end
 
@@ -162,7 +162,7 @@ function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ψ::AbstractVector) where {N
     ψ = reshape(ψ, 2^(N-i), 2, 2^(i-1))
     A = similar(ψ)
     A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= exp(im*cg.gate.ϕ[]).*ψ[:,2,:]
+    A[:,2,:] .= Base.exp(im*cg.gate.ϕ[]).*ψ[:,2,:]
     return reshape(A, :)
 end
 
@@ -238,16 +238,23 @@ function apply(cgc::CircuitGateChain{N}, ψ::AbstractVector) where {N}
     creg = collect(Iterators.flatten(reverse.(cgc.creg)))
     for moment in cgc.moments
         for gate in moment
+            skip = false
             for cntrl in gate.ccntrl
                 if cntrl isa Expr
-                    eval(cntrl) || @goto skipapply
+                    if !eval(cntrl)
+                        skip = true
+                        break
+                    end
                 else
-                    creg[cntrl] == true || @goto skipapply
+                    if creg[cntrl] != true
+                        skip = true
+                        break
+                    end
                 end
             end
-            @label apply
-            ψ = apply(gate, ψ)
-            @label skipapply
+            if !skip
+                ψ = apply(gate, ψ)
+            end
         end
     end
     return ψ
