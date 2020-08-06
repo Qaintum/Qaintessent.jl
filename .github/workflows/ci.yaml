@@ -10,6 +10,5 @@ jobs:
       - uses: actions/checkout@v1.0.0      
       - uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          version: ['1.4.0']
       - uses: julia-actions/julia-runtest@master
