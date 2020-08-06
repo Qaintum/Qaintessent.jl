@@ -1,27 +1,45 @@
 abstract type Register end
 
+"""
+    QRegister{N}
+
+Quantum Register of `N` qubits.
+
+"""
 struct QRegister <: Register
-    # register size
+    #TODO: Create function to read QRegister using ind
+    "value stored by register"
     n::Int
+    "vector of quantum wire numbers in this quantum register"
     ind::Vector{Int}
 end
 
 """
     CRegister{N}
 
-Classical register of N bits.
+Classical register of `N` bits.
 """
 struct CRegister <: Register
-    # register size
+    "bit array of bits in this classical register"
     n::BitArray{1}
-    # bit array representing register
+    "vector of quantum wire numbers in this quantum register"
     ind::Vector{Int}
 end
 
+"""
+    qreg(n::Int)
+
+constructs quantum register of size `n`
+"""
 function qreg(n::Int)
     QRegister(n, zeros(n))
 end
 
+"""
+    creg(n::Int)
+
+constructs classical register of size `n`
+"""
 function creg(n::Int)
     CRegister(BitArray(undef, (n)), zeros(n))
 end
