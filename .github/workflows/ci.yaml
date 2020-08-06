@@ -8,7 +8,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1.0.0
-      - uses: julia-actions/setup-julia@latest
-        with:
-          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/setup-julia@v1
+      with:
+           version: 1.5.0
       - uses: julia-actions/julia-runtest@master
