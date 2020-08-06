@@ -86,8 +86,8 @@ export
 include("openqasm/grammar.jl")
 include("openqasm/gate_transformers.jl")
 
-include("openqasm/transform.jl")
+include("openqasm/transform_qasm.jl")
 export
-    rbnfparse
+    parse_qasm
 
 end

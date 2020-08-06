@@ -268,7 +268,7 @@ function trans_gates(ctx_tokens)
 end
 
 
-function trans(ctx_tokens)
+function transform_qasm(ctx_tokens)
 
     global cregs = Qaintessent.CRegister[]
     global qregs = Qaintessent.QRegister[]
@@ -285,8 +285,8 @@ function trans(ctx_tokens)
     qasm_cgc
 end
 
-function rbnfparse(txt::String)
+function parse_qasm(txt::String)
     qasmlex = lex(txt)
     qasmparse = parse_qasm(qasmlex)
-    qasm_cgc = trans(qasmparse)
+    qasm_cgc = transform_qasm(qasmparse)
 end

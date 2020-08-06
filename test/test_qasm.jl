@@ -55,7 +55,7 @@ using Qaintessent
     ]
     cgc_ref(gates_ref)
 
-    cgc = rbnfparse(src1)
+    cgc = parse_qasm(src1)
 
     ψ = randn(ComplexF64, 2^N)
 
