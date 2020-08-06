@@ -88,6 +88,10 @@ include("openqasm/gate_transformers.jl")
 
 include("openqasm/transform_qasm.jl")
 export
-    parse_qasm
+    qasm2cgc
+    
+include("openqasm/transform_cgc.jl")
+export
+    cgc2qasm
 
 end

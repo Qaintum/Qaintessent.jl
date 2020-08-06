@@ -58,7 +58,7 @@ function trans_cg(cg::CircuitGate{M,N,G}) where {M,N,G}
             ) => let id = trans_g(gate)
                     if !all(isinteger.(ccntrl))
                         nnint = parse(Int64, match(integer_pattern, string(ccntrl[1])).match[1]) - 1
-                        return "if(qregister1==" * string(nnint) * ") " * string(id) * join( "qreg" .* string.(iwire) ,",") * ";"
+                        return "//if(creg1==" * string(nnint) * ") " * string(id) * join( "qreg" .* string.(iwire) ,",") * "; // If clauses are not yet supported."
                     end
                     return string(id) * " " * join( "qregister[" .* string.(iwire) .* "]" ,",") * ";"
                 end
@@ -76,7 +76,7 @@ function trans_moment(m::Moment{N}) where {N}
     end
 end
 
-function trans_circuit(cgc::CircuitGateChain{N}) where {N}
+function cgc2qasm(cgc::CircuitGateChain{N}) where {N}
     global classical_register_count = 1
     @match cgc begin
         CircuitGateChain(moments=moments,
@@ -92,34 +92,3 @@ function trans_circuit(cgc::CircuitGateChain{N}) where {N}
                             end
     end
 end
-
-
-syn1 = creg(4)
-d1 = qreg(3)
-a1 = qreg(2)
-c1 = qreg(3)
-cgc_ref = CircuitGateChain([d1, a1, c1], [syn1])
-
-N = size(cgc_ref)
-
-gates_ref = [
-    controlled_circuit_gate(1, 4, X, N),
-    controlled_circuit_gate(2, 4, X, N),
-    controlled_circuit_gate(2, 5, X, N),
-    controlled_circuit_gate(3, 5, X, N),
-    single_qubit_circuit_gate(4, RyGate(0.1π), N),
-    controlled_circuit_gate(2, 1, X, N),
-    controlled_circuit_gate(3, 1, X, N),
-    controlled_circuit_gate(3, 5, X, N),
-    controlled_circuit_gate(4, 5, X, N),
-    single_qubit_circuit_gate(1, RyGate(0.1π), N),
-    single_qubit_circuit_gate(2, RxGate(0.1π), N),
-    controlled_circuit_gate(3, 2, X, N),
-    single_qubit_circuit_gate(2, TGate(), N),
-    single_qubit_circuit_gate(4, SGate(), N),
-    single_qubit_circuit_gate(1, HadamardGate(), N),
-]
-cgc_ref(gates_ref)
-
-a = trans_circuit(cgc_ref)
-println(a)

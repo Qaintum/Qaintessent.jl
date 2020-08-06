@@ -285,7 +285,7 @@ function transform_qasm(ctx_tokens)
     qasm_cgc
 end
 
-function parse_qasm(txt::String)
+function qasm2cgc(txt::String)
     qasmlex = lex(txt)
     qasmparse = parse_qasm(qasmlex)
     qasm_cgc = transform_qasm(qasmparse)
