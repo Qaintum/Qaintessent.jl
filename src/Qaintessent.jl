@@ -79,4 +79,14 @@ include("qasm.jl")
 export
     import_file,
     export_file
+
+include("fock.jl")
+export
+    FockState,
+    vacuum_fock,
+    â,
+    âDag,
+    n̂,
+    D̂,
+    Û
 end
