@@ -77,7 +77,7 @@ RBNF.@parser QASMLang begin
     @token
     includes  := r"\Ginclude .*;"
     id        := r"\G[a-z]{1}[A-Za-z0-9_]*"
-    nnreal      := r"\G([0-9]+\.[0-9]*|[0-9]*\.[0.9]+)([eE][-+]?[0-9]+)?"
+    nnreal    := r"\G([0-9]+\.[0-9]*|[0-9]*\.[0.9]+)([eE][-+]?[0-9]+)?"
     nninteger := r"\G([1-9]+[0-9]*|0)"
     space     := r"\G\s+"
     comments  := r"\G//.*"
