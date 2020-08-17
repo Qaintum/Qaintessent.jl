@@ -7,6 +7,24 @@ Abstract unitary quantum circuit gate. `N` is the overall number of quantum "wir
 abstract type AbstractCircuitGate{N} end
 
 
+function int2bit(x::Int64; pad=nothing)
+    if isnothing(pad)
+        pad = floor(Int64, log2(3)+1)
+    end
+    BitArray(digits(x, base=2, pad=pad) |> reverse)
+end
+
+function bit2int(b::BitArray)
+    b = deepcopy(b)
+    num = 0
+    count = 0
+    while !isempty(b)
+        num += pop!(b)*2^count
+        count += 1
+    end
+    num
+end
+
 """
     CircuitGate{M,N,G} <: AbstractCircuitGate{N}
 
@@ -18,21 +36,24 @@ struct CircuitGate{M,N,G} <: AbstractCircuitGate{N}
     "actual gate"
     gate::G
     "classical registers"
-    ccntrl::AbstractVector{Int}
+    ccntrl::AbstractVector{<:Union{Int, Expr}}
 
     @doc """
         CircuitGate{M,N,G}(iwire::NTuple{M,<:Integer}, gate::G) where {M,N,G}
 
     Creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
     """
-    function CircuitGate{M,N,G}(iwire::NTuple{M,<:Integer}, gate::G; ccntrl::AbstractVector{Int}=Int[]) where {M,N,G}
+    function CircuitGate{M,N,G}(iwire::NTuple{M, <:Integer}, gate::G; ccntrl::AbstractVector{<:Union{Int, Expr}}=Int[]) where {M,N,G}
         M ≥ 1 || error("Need at least one wire to act on.")
         M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
         length(unique(iwire)) == M || error("Wire indices must be unique.")
         minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
         maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
         G <: AbstractGate{M} || error("Gate type must be a subtype of AbstractGate{$M}.")
-        sum(ccntrl .> 0) == length(ccntrl) || error("Classical registers cannot be negative and indexing starts from 1")
+
+        if ccntrl isa AbstractVector{Integer} && !isempty(ccntrl)
+            sum(ccntrl .> 0) == length(ccntrl) || error("Classical registers cannot be negative and indexing starts from 1")
+        end
 
         new{M,N,G}(iwire, gate, ccntrl)
     end
@@ -43,8 +64,9 @@ end
 
 Creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
 """
-function CircuitGate(iwire::NTuple{M,<:Integer}, gate::AbstractGate{M}, N; ccntrl::AbstractVector{Int}=Int[]) where {M}
-    CircuitGate{M,N,typeof(gate)}(iwire, gate, ccntrl=ccntrl)
+function CircuitGate(iwire::NTuple{M, <:Integer}, gate::AbstractGate{M}, N; ccntrl::Array{<:Union{Int64,Expr},1}=Int[]) where {M}
+    G = typeof(gate)
+    CircuitGate{M,N,G}(iwire, gate; ccntrl=ccntrl)
 end
 
 """
@@ -131,73 +153,156 @@ end
 
 Construct a `CircuitGate{1,N,G}` object of basic gate type `gate` affecting wire `iwire`.
 """
-single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) =
-    CircuitGate((iwire,), gate, N; ccntrl=ccntrl)
+single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer) =
+    CircuitGate((iwire,), gate, N)
 
+"""
+    single_qubit_circuit_gate(qreg::QRegister, gate::AbstractGate{1}, N::Integer)
+
+Construct a `CircuitGate{1,N,G}` objects of basic gate type `gate` affecting QRegister `qreg`
+"""
+function single_qubit_circuit_gate(qreg::QRegister, gate::AbstractGate{1}, N::Integer)
+    !any(qreg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    [single_qubit_circuit_gate(i, gate, N) for i in qreg.ind]
+end
 
 """
     two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
 
 Construct a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
 """
-two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) =
-    CircuitGate((iwire1, iwire2), gate, N; ccntrl=ccntrl)
+two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer) =
+    CircuitGate((iwire1, iwire2), gate, N)
 
+"""
+    two_qubit_circuit_gate(qreg::QRegister, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
+
+Construct a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting QRegister `qreg` and wire `iwire2`.
+"""
+function two_qubit_circuit_gate(qreg::QRegister, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
+    !any(qreg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    [two_qubit_circuit_gate(i, iwire2, gate, N) for i in qreg.ind]
+end
+
+"""
+    two_qubit_circuit_gate(iwire1::Integer, qreg::QRegister, gate::AbstractGate{2}, N::Integer)
+
+Construct a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting QRegister `qreg` and wire `iwire1`.
+"""
+function two_qubit_circuit_gate(iwire1::Integer, qreg::QRegister, gate::AbstractGate{2}, N::Integer)
+    !any(qreg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    [two_qubit_circuit_gate(iwire1, i, gate, N) for i in qreg.ind]
+end
+
+"""
+    two_qubit_circuit_gate(qreg1::QRegister, qreg1::QRegister, gate::AbstractGate{2}, N::Integer)
+
+Construct a `CircuitGate{2,N,G}` object of basic gate type `gate` affecting QRegister `qreg1` and ``qreg2`.
+"""
+function two_qubit_circuit_gate(qreg1::QRegister, qreg2::QRegister, gate::AbstractGate{2}, N::Integer)
+    !any(qreg1.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    !any(qreg2.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    length(qreg1.ind) == length(qreg2.ind) || error("Only able to apply CircuitGate to two QRegister objects if registers are of same length")
+    [two_qubit_circuit_gate(i, j, gate, N) for (i,j) in zip(qreg1.ind, qreg2.ind)]
+end
 
 # single control and target wire
 """
-    rcuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer)
+    controlled_circuit_gate(icntrl::Union{Integer, Expr}, itarget::Integer, U::AbstractGate{1}, N::Integer)
 
-Construct a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wire `itarget`.
+Construct a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire or Expr `icntrl` and affecting wire `itarget`.
 """
-controlled_circuit_gate(icntrl::Integer, itarget::Integer, U::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) =
-    controlled_circuit_gate((icntrl,), (itarget,), U, N; ccntrl=ccntrl)
+controlled_circuit_gate(icntrl::Union{Integer, Expr}, itarget::Integer, U::AbstractGate{1}, N::Integer) =
+    controlled_circuit_gate((icntrl,), (itarget,), U, N)
+
 
 # single control wire
 """
     controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer) where {M}
 
-Construct a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire `icntrl` and affecting wires in tuple `itarget`.
+Construct a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire or Expr `icntrl` and affecting wires in tuple `itarget`.
 """
-controlled_circuit_gate(icntrl::Integer, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {M} =
-    controlled_circuit_gate((icntrl,), itarget, U, N; ccntrl=ccntrl)
+controlled_circuit_gate(icntrl::Union{Integer, Expr}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {M} =
+    controlled_circuit_gate((icntrl,), itarget, U, N)
 
 # single target wire
 """
-    controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K}
+    controlled_circuit_gate(icntrl::NTuple{K, Union{Int, Expr}}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K}
 
-Construct a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wire `itarget`.
+Construct a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires or Expr in tuple `icntrl` and affecting wire `itarget`.
 """
-controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::Integer, U::AbstractGate{1}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {K} =
-    controlled_circuit_gate(icntrl, (itarget,), U, N; ccntrl=ccntrl)
+controlled_circuit_gate(icntrl::NTuple{K, Union{Integer, Expr}}, itarget::Integer, U::AbstractGate{1}, N::Integer)  where {K} =
+    controlled_circuit_gate(icntrl, (itarget,), U, N)
 
 """
-    controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
+    controlled_circuit_gate(icntrl::NTuple{K, <:Union{Integer, Expr}}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
 
 Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
 """
-function controlled_circuit_gate(icntrl::NTuple{K,<:Integer}, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Int}=Int[]) where {K,M}
-    all(icntrl .!= 0) || error("All control wires must not be 0")
-    k = K
-    if any(icntrl .< 0)
-        length(ccntrl) == 0 || error("Both keyword argument `ccntrl` and negative control wires used. Please only use one format to input classical control wires")
-        append!(ccntrl, abs.(Iterators.filter(x -> x < 0, icntrl)))
-        length(ccntrl) == length(unique(ccntrl)) || error("Classical control wires must be unique")
-
-        icntrl = filter(x -> x > 0, icntrl)
-
-        if length(icntrl) == 0
-            return CircuitGate((itarget...,), U, N; ccntrl=ccntrl)
-        else
-            k = length(icntrl)
+function controlled_circuit_gate(icntrl::NTuple{K, Union{Integer, Expr}}, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
+    ccntrl = Union{Int, Expr}[]
+    for wire in icntrl
+        if wire isa Expr
+            push!(ccntrl, wire)
+        elseif wire < 0
+            push!(ccntrl, abs(wire))
         end
     end
+    icntrl = (Iterators.filter(x->x isa Int && x>0, icntrl)...,)
+    length(ccntrl) == length(unique(ccntrl)) || error("Classical control wires must be unique")
+
+    if length(icntrl) == 0
+        return CircuitGate((itarget...,), U, N; ccntrl=ccntrl)
+    end
+
     # consistency checks
+    k = length(icntrl)
     k + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
     length(intersect(icntrl, itarget)) == 0 || error("Control and target wires must be disjoint.")
 
     CircuitGate((icntrl..., itarget...), ControlledGate{M,k+M}(U), N; ccntrl=ccntrl)
 end
+
+# control with QRegisters
+"""
+    controlled_circuit_gate(reg::Register, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{Integer}=Int[]) where {K,M}
+
+Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in register `reg` and affecting wires in tuple `itarget`.
+"""
+function controlled_circuit_gate(reg::Register, itarget::NTuple{M, <:Integer}, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{<:Integer}=Int[]) where {K,M}
+    !any(reg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    [controlled_circuit_gate(i, itarget, U, N) for i in reg.ind]
+end
+
+controlled_circuit_gate(reg::Register, itarget::Integer, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{<:Integer}=Int[]) where {K,M} =
+    controlled_circuit_gate(reg, (itarget,), U, N)
+
+
+"""
+    controlled_circuit_gate(qreg::QRegister, itarget::NTuple{M,<:Integer}, U::AbstractGate{M}, N::Integer) where {K,M}
+
+Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in quantum register `qreg` and affecting wires in tuple `itarget`.
+"""
+function controlled_circuit_gate(icntrl::NTuple{K, Union{Integer, Expr}}, qreg::QRegister, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{<:Integer}=Int[]) where {K,M}
+    !any(qreg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    [controlled_circuit_gate(icntrl, i, U, N) for i in qreg.ind]
+end
+
+controlled_circuit_gate(icntrl::Union{<:Integer, Expr}, qreg::QRegister, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{<:Integer}=Int[]) where {K,M} =
+    controlled_circuit_gate((icntrl,), qreg, U, N)
+
+"""
+    controlled_circuit_gate(qreg1::QRegister, qreg2::QRegister, U::AbstractGate{M}, N::Integer) where {K,M}
+
+Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in quantum register `qreg` and affecting wires in tuple `itarget`.
+"""
+function controlled_circuit_gate(reg::Register, qreg::QRegister, U::AbstractGate{M}, N::Integer; ccntrl::AbstractVector{<:Integer}=Int[]) where {K,M}
+    !any(qreg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    !any(reg.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
+    length(qreg.ind) == length(reg.ind) || error("Registers used must be of same length")
+    [controlled_circuit_gate(i, j, U, N) for (i,j) in zip(reg.ind, qreg.ind)]
+end
+
 
 """
     AbstractMoment{N}
@@ -333,7 +438,6 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
     return ρ
 end
 
-
 """
     CircuitGateChain{N}
 
@@ -341,51 +445,108 @@ Chain of quantum circuit gates in a circuit of `N` qubits.
 """
 mutable struct CircuitGateChain{N}
     moments::AbstractVector{<:AbstractMoment{N}}
-
     "classical registers"
-    creg::AbstractVector{Int}
+    creg::AbstractVector{BitArray{1}}
 
     @doc """
-        CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
+        CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}; creg::AbstractVector{BitArray}=BitArray[]) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `CircuitGate{N}` objects.
     """
-    function CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}; creg::AbstractVector{Int}=Int[]) where {N}
+    function CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
         moments = map(Moment{N}, gates)
-        max_creg = 0
-        for moment in moments
-            for cg in moment
-                for reg in cg.ccntrl
-                    if reg > max_creg
-                        max_creg = reg
-                    end
-                end
-            end
-        end
-        max_creg <= length(creg) || error("Number of classical registers in CircuitGateChain{N} must be greater than " * string(max_creg))
-        new(moments, creg)
+        new(moments, BitArray{1}[])
     end
 
     @doc """
-        CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}) where {N}
+        CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}; creg::AbstractVector{BitArray}=BitArray[]) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits, constructing from vector of `Moment{N}` objects.
     """
-    function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}; creg::AbstractVector{Int}=Int[]) where {N}
-        max_creg = 0
-        for moment in moments
-            for cg in moment
-                for reg in cg.ccntrl
-                    if reg > max_creg
-                        max_creg = reg
-                    end
-                end
-            end
-        end
-        max_creg <= length(creg) || error("Number of classical registers in CircuitGateChain{N} must be greater than " * string(max_creg))
-        new(moments, creg)
+    function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}; creg::Union{AbstractVector{BitArray},AbstractVector{Integer}}=BitArray[]) where {N}
+        new(moments, BitArray{1}[])
     end
+
+    @doc """
+        CircuitGateChain(qregs::AbstractVector{QRegister}, cregs::AbstractVector{CRegister})
+
+    Chain of quantum circuit gates in a circuit of `N` qubits, constructing from vectors quantum registers and classical registers.
+    """
+    function CircuitGateChain(qregs::AbstractVector{QRegister}, cregs::AbstractVector{CRegister})
+        N = 1
+        ccount = 1
+        creg = BitArray{1}[]
+        for reg in qregs
+            reg.ind .= [N:N+reg.n-1...]
+            N += reg.n
+        end
+        for reg in cregs
+            reg.ind .= [-ccount:-1:-ccount-length(reg.n)+1...]
+            push!(creg, reg.n)
+            ccount += length(reg.n)
+        end
+        cgc = new{N-1}(Moment{N-1}[], creg)
+    end
+
+    @doc """
+        CircuitGateChain(qregs::AbstractVector{QRegister})
+
+    Chain of quantum circuit gates in a circuit of `N` qubits, constructing from vectors quantum registers.
+    """
+    function CircuitGateChain(qregs::AbstractVector{QRegister})
+        N = 1
+        creg = BitArray{1}[]
+        for reg in qregs
+            reg.ind .= [N:N+reg.n-1...]
+            N += reg.n
+        end
+        cgc = new{N-1}(Moment{N-1}[], creg)
+    end
+
+    @doc """
+        CircuitGateChain{N}(cregs::AbstractVector{CRegister})
+
+    Chain of quantum circuit gates in a circuit of `N` qubits, constructing with vector of classical registers.
+    """
+    function CircuitGateChain{N}(cregs::AbstractVector{CRegister}) where {N}
+        ccount = 1
+        creg = BitArray{1}[]
+        for reg in cregs
+            reg.ind .= [-ccount:-1:-ccount-length(reg.n)+1...]
+            push!(creg, reg.n)
+            ccount += length(reg.n)
+        end
+        cgc = new{N}(Moment{N}[], creg)
+    end
+
+    @doc """
+        CircuitGateChain{N}()
+
+    Chain of quantum circuit gates in a circuit of `N` qubits.
+    """
+    function CircuitGateChain{N}() where {N}
+        new{N}(Moment{N}[], BitArray{1}[])
+    end
+
 end
+
+"""
+    add_creg!(cgc::CircuitGateChain{N}, reg::CRegister) where {N}
+
+Add classical register to CircuitGateChain `cgc`
+"""
+function add_creg!(cgc::CircuitGateChain{N}, reg::CRegister) where {N}
+    all(reg.ind .== 0) || error("CRegister is already used in another CircuitGateChain object")
+    if !isempty(cgc.creg)
+        ccount = length(collect(Iterators.flatten(reverse.(cgc.creg)))) + 1
+    else
+        ccount = 1
+    end
+    reg.ind .= [-ccount:-1:-ccount-length(reg.n)+1...]
+
+    push!(cgc.creg, reg.n)
+end
+
 
 # unitary matrix representation of a sequence of circuit gates
 """
@@ -438,6 +599,8 @@ function Base.length(cgc::CircuitGateChain{N}) where {N}
     return length(cgc.moments)
 end
 
+Base.size(cgc::CircuitGateChain{N}) where {N} = N
+
 function Base.:*(cgc1::CircuitGateChain{N}, cgc2::CircuitGateChain{N}) where {N}
     append!(cgc1.moments, cgc2.moments)
     creg_length = length(cgc1.creg) - length(cgc2.creg)
@@ -458,10 +621,49 @@ function Base.reverse(cgc::CircuitGateChain{N}) where {N}
     return cgc
 end
 
+
 function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
-    append!(cgc.moments, Moment([g]))
+    max_creg = sum(length.(cgc.creg))
+    if g.ccntrl isa Vector{Integer}
+        for reg in g.ccntrl
+            reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
+        end
+    end
+
+    push!(cgc.moments, Moment{N}(g))
 end
 
+function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}, max_creg::Int) where {M,N,G<:AbstractGate}
+    if g.ccntrl isa Vector{Integer}
+        for reg in g.ccntrl
+            reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
+        end
+    end
+
+    push!(cgc.moments, Moment{N}(g))
+end
+
+function (cgc::CircuitGateChain{N})(g::Array{<:CircuitGate{M,N,G} where M where G,1}) where {N}
+    max_creg = sum(length.(cgc.creg))
+    for cg in g
+        cgc(cg, max_creg)
+    end
+end
+
+function (cgc::CircuitGateChain{N})(g::Array{<:Any,1}) where {N}
+    max_creg = sum(length.(cgc.creg))
+    cgc(g, max_creg)
+end
+
+function (cgc::CircuitGateChain{N})(g::Array{<:Any,1}, max_creg::Int) where {N}
+    for cg in g
+        if cg isa AbstractVector
+            cgc.(cg, max_creg)
+            continue
+        end
+        cgc(cg, max_creg)
+    end
+end
 
 """
     MeasurementOps{N}

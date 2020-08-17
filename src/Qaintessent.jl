@@ -30,6 +30,14 @@ export
     controlled_not,
     MatrixGate
 
+include("register.jl")
+export
+    qreg,
+    creg,
+    reg_check,
+    set_creg!,
+    add_creg!
+
 include("circuit.jl")
 export
     AbstractCircuitGate,
@@ -75,8 +83,15 @@ export
     Dag,
     optimize!
 
-include("qasm.jl")
+include("openqasm/grammar.jl")
+include("openqasm/gate_transformers.jl")
+
+include("openqasm/transform_qasm.jl")
 export
-    import_file,
-    export_file
+    qasm2cgc
+    
+include("openqasm/transform_cgc.jl")
+export
+    cgc2qasm
+
 end
