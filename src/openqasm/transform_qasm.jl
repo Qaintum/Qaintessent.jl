@@ -223,15 +223,22 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
         Struct_gate(
             decl = Struct_gatedecl(
                 id=Token(str=fid),
-                args= nothing && Do(args=[]) ||
-                      idlist  && Do(args = rec(idlist)),
+                args=args,
                 outs=outs
             ),
-            goplist = nothing && Do(goplist=[]) ||
-                      goplist && Do(goplist = trans_gates.(goplist, Ref(qasm_cgc), Ref(N)))
+            goplist=goplist
          ) =>
             let out_ids :: Vector{Symbol} = rec(outs),
-                fid = Symbol("custom_gate_"*fid)
+                fid = Symbol("custom_gate_"*fid),
+                args = rec(args),
+                goplist = trans_gates.(goplist, Ref(qasm_cgc), Ref(N))
+
+                if isnothing(goplist)
+                    goplist=[]
+                end
+                if isnothing(args)
+                    args=[]
+                end
                 quote
                     function $fid(($(args...), ), $(out_ids...); qasm_cgc=$qasm_cgc, N=$N)
                         $(goplist...)
