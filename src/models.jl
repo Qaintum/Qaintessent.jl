@@ -82,16 +82,15 @@ function vbe_adder_circuit(N::Integer)
         controlled_circuit_gate(a, c, X, M),
         controlled_circuit_gate(b, c, X, M),
     ])
-
-    cgc = carry(N+1, M, M-N, N)
+    cgc = carry(2N+1, 1, N+1, 2N+2)
     for i in 2:N
-        cgc = cgc*carry(N+2-i, M+1-i, M+1-N-i, N+1-i)
+        cgc = cgc*carry(2N+i, i, N+i, 2N+i+1)
     end
 
-    cgc = cgc*CircuitGateChain{M}([controlled_circuit_gate(M-N+1, M-2N+1, X, M)]) *
-            sum(2, M-N+1, M-2N+1)
+    cgc = cgc*CircuitGateChain{M}([controlled_circuit_gate(N, 2N, X, M)]) *
+            sum(3N, N, 2N)
     for i in N-1:-1:1
-        cgc = cgc*rcarry(N+2-i, M+1-i, M+1-N-i, N+1-i) * sum(N+2-i, M+1-i, M+1-N-i)
+        cgc = cgc*rcarry(2N+i, i, N+i, 2N+i+1) * sum(2N+i, i, N+i)
     end
     return cgc
 end
@@ -114,6 +113,10 @@ function p_round(P::Function, M::Integer, N::Integer)
     return pchain
 end
 
+"""
+    p_round(P, M, N)
+        execute a P round for qcla algorithms
+"""
 function p_round(P::Function, M::Integer, N::Integer, Ñ::Integer)
     # Add gates for P rounds
     pchain = CircuitGate{<:Any,M,<:Any}[]
@@ -186,41 +189,30 @@ end
 
 """
     qcla_out_adder_circuit(N)
-
 Construct an out-of-place adder for 2 integers represented by `N` qubits. returns a `CircuitGateChain{3N+1}` object.
 Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
 Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
-
 If the two added integers are represented as:
-
 ``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
-
 The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
-
 The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N}c_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
-
 ``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
 """
 function qcla_out_adder_circuit(N)
 
-    n = 1
-    anc = 0
-    while 2^n < N
-        anc += N ÷ 2^n -1
-        n += 1
-    end
+    anc = N - count_ones(N) - floor(Int, log(N))
     M = 3N + anc + 1
 
     function a(m::Integer)
-        M - m
+        m + 1
     end
 
     function b(m::Integer)
-        M - N - m
+        N + m + 1
     end
 
     function s(m::Integer)
-        M - 2N - m
+        2N + m + 1
     end
 
     function G(m::Integer)
@@ -236,10 +228,11 @@ function qcla_out_adder_circuit(N)
             m += floor(Int, N/2^(l-1)-1)
             l -= 1
         end
-        m
+        3N + 1 + m
     end
 
     setup = CircuitGate{<:Any,M,<:Any}[]
+
     push!(setup, controlled_circuit_gate((a(0), b(0)), s(1), X, M))
     for i in 1:N-1
         push!(setup, controlled_circuit_gate((a(i), b(i)), s(i+1), X, M))
@@ -303,19 +296,19 @@ function qcla_inplace_adder_circuit(N)
     end
     M = 3N + anc
 
-    function a(m::Integer)
+    function a(m::Integer)+
         m < N || error("a only takes m < N")
-        M - m
+        m + 1
     end
 
     function b(m::Integer)
         m < N || error("b only takes m < N")
-        M - N - m
+        N + m + 1
     end
 
     function G(m::Integer)
         m > 0 || error("G only takes positive integers")
-        anc + m
+        2N + m
     end
 
     function s(m::Integer)
@@ -335,7 +328,7 @@ function qcla_inplace_adder_circuit(N)
             m += floor(Int, N/2^(l-1)-1)
             l -= 1
         end
-        m
+        3N + m
     end
 
     # setup
