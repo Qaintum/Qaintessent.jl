@@ -36,18 +36,18 @@ end
 
     # flip control and target
     cg = CircuitGate((2, 1), controlled_not(), 2)
-    @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
+    @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 1 0 0; 0 0 0 1; 0 0 1 0]
     @test isunitary(cg)
 
-    # first qubit as control and third qubit as target
-    cg = controlled_circuit_gate(1, 3, HadamardGate(), 3)
+    # third qubit as control and first qubit as target
+    cg = controlled_circuit_gate(3, 1, HadamardGate(), 3)
     @test Qaintessent.matrix(cg) ≈ [
         Matrix(I, 4, 4) fill(0, 4, 2) fill(0, 4, 2);
         fill(0, 2, 4) Qaintessent.matrix(HadamardGate()) fill(0, 2, 2);
         fill(0, 2, 6) Qaintessent.matrix(HadamardGate())]
     @test isunitary(cg)
 
-    cg_test = controlled_circuit_gate(1, 3, HadamardGate(), 3)
+    cg_test = controlled_circuit_gate(3, 1, HadamardGate(), 3)
     @test cg_test ≈ cg
 
     cg = single_qubit_circuit_gate(1, RxGate(0.2), 1)
@@ -154,10 +154,9 @@ end
     id = Matrix{ComplexF64}(I, 2, 2)
     A = randn(ComplexF64, 2, 2)
     B = randn(ComplexF64, 2, 2)
-
-    @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(id, B, id, A) .* ρ)
+    
+    @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(A, id, B, id) .* ρ)
 end
-
 
 @testset ExtendedTestSet "CRegister" begin
     N = 5

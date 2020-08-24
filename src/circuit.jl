@@ -113,7 +113,7 @@ function matrix(cg::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
 
     # Note: following the ordering convention of `kron` here, i.e.,
     # last qubit corresponds to fastest varying index
-    strides = [d^(N-j) for j in 1:N]
+    strides = [d^(j-1) for j in 1:N]
     wstrides = strides[iwire]
     cstrides = strides[iwcompl]
 
@@ -419,7 +419,7 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
 
     # Note: following the ordering convention of `kron` here, i.e.,
     # last qubit corresponds to fastest varying index
-    strides = [d^(N-j) for j in 1:N]
+    strides = [d^(j-1) for j in 1:N]
     wstrides = strides[iwire]
     cstrides = strides[iwcompl]
 
