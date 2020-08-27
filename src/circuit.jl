@@ -1,12 +1,4 @@
 
-"""
-    AbstractCircuitGate{N}
-
-Abstract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
-"""
-abstract type AbstractCircuitGate{N} end
-
-
 function int2bit(x::Int64; pad=nothing)
     if isnothing(pad)
         pad = floor(Int64, log2(3)+1)
@@ -24,6 +16,14 @@ function bit2int(b::BitArray)
     end
     num
 end
+
+
+"""
+    AbstractCircuitGate{N}
+
+Abstract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
+"""
+abstract type AbstractCircuitGate{N} end
 
 """
     CircuitGate{M,N,G} <: AbstractCircuitGate{N}
@@ -352,6 +352,19 @@ Construct a `Moment{N}` object that is the adjoint of `m`.
 """
 function Base.adjoint(m::Moment{N}) where {N}
     return Moment{N}(Base.adjoint.(reverse(m.gates)))
+end
+
+"""
+    matrix(m::Moment{N}) where {N}
+
+returns matrix representation of a `Moment{M}` object that can applied to a state vector of `N` qubits.
+"""
+function matrix(m::Moment{N}) where {N}
+    mat = Qaintessent.matrix(m[1])
+    for i in 2:length(m)
+        mat = Qaintessent.matrix(m[i]) * mat
+    end
+    mat
 end
 
 # make Moment iterable and indexable
