@@ -606,7 +606,7 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) w
             conj_cU = 2*real(prod(mult_1X1_I[icu[k]+1, jcu[k]+1] for k in 1:C) * mult_UI_I[it, jt]) + prod(conj1X1[icu[k]+1, jcu[k]+1] for k in 1:C) * conjUI[it, jt]
             if conj_cU != 0
                 # cannot use .= here since broadcasting fails for scalar numbers
-                vs[sliced_index((itu..., icu...), cg.iwire, N)...] += conj_cU .* ρv[sliced_index((jtu..., jcu...), cg.iwire, N)...]
+                vs[sliced_index((itu..., icu...), reverse(cg.iwire), N)...] += conj_cU .* ρv[sliced_index((jtu..., jcu...), reverse(cg.iwire), N)...]
             end
         end
     end
