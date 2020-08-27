@@ -43,7 +43,8 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         @test Qaintessent.matrix(RotationGate([0, 0, θ])) ≈ Qaintessent.matrix(RzGate(θ))
     end
 
-    @testset ExtendedTestSet "general rotation gate exceptions" begin
+
+    @testset "general rotation gate exceptions" begin
         @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate(θ, [1, 0, 0, 0]))
         @test_throws ErrorException("Norm of rotation axis vector must be 1.") Qaintessent.matrix(RotationGate(θ, [1, 2, 0]))
 
@@ -51,6 +52,7 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
     end
 
     @testset "general unitary gate" begin
+
         # test MatrixGate
         N = 3
         d = 2
@@ -73,10 +75,12 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
 
     # not unitary
     @testset "general unitary gate exceptions" begin
+
         N = 3
         d = 2
         @test_throws ErrorException("Quantum operators must be unitary") MatrixGate(randn(ComplexF64, d^N, d^N))
     end
+
 
     @testset "general controlled gate" begin
         # test MatrixGate

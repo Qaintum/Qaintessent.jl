@@ -7,11 +7,12 @@ function qft_circuit(N)
     main = vcat([
             [j == i ?
              single_qubit_circuit_gate(i, HadamardGate(), N) :
-             controlled_circuit_gate(j, i, PhaseShiftGate(2π/2^(j-i+1)), N) for j in i:N]
-        for i in 1:N]...)
+             controlled_circuit_gate(j, i, PhaseShiftGate(2π/2^(j-i+1)), N) for j in N:-1:i]
+        for i in N:-1:1]...)
     swap = [two_qubit_circuit_gate(i, N-i+1, SwapGate(), N) for i in 1:(N÷2)]
     CircuitGateChain{N}(N > 1 ? [main; swap] : main)
 end
+
 
 """
     toffoli_circuit(cntrl, trg, N)
@@ -296,7 +297,7 @@ function qcla_inplace_adder_circuit(N)
     end
     M = 3N + anc
 
-    function a(m::Integer)+
+    function a(m::Integer)
         m < N || error("a only takes m < N")
         m + 1
     end
@@ -308,7 +309,8 @@ function qcla_inplace_adder_circuit(N)
 
     function G(m::Integer)
         m > 0 || error("G only takes positive integers")
-        2N + m
+        M - anc - m + 1
+        # 2N + m
     end
 
     function s(m::Integer)
