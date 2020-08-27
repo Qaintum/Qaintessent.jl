@@ -250,7 +250,7 @@ end
 matrix(g::PhaseShiftGate) = [1 0; 0 Base.exp(im*g.ϕ[])]
 
 function LinearAlgebra.ishermitian(g::PhaseShiftGate)
-    if g.ϕ[] == 0
+    if abs(g.ϕ[]) < eps()
         return true
     end
     return false
@@ -302,7 +302,6 @@ Base.adjoint(g::ControlledGate{M,N}) where {M,N} =
 
 controlled_not() = ControlledGate{1,2}(X)
 
-
 isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 
 
@@ -324,6 +323,8 @@ matrix(g::MatrixGate{N}) where {N} = g.matrix
 
 Base.adjoint(g::MatrixGate{N}) where {N} = MatrixGate(Base.adjoint(g.matrix))
 
+LinearAlgebra.ishermitian(g::MatrixGate{M}) where {M} =
+    LinearAlgebra.ishermitian(Qaintessent.matrix(g))
 
 function Base.isapprox(g1::G, g2::G) where {G<:AbstractGate{N}} where {N}
     for name in fieldnames(G)
