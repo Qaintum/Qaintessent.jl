@@ -83,7 +83,8 @@ export
 include("fock.jl")
 export
     FockState,
-    vacuum_fock,
+    vacuum_fock_state,
+    coherent_state,
     â,
     âDag,
     n̂,

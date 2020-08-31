@@ -3,7 +3,7 @@ using LinearAlgebra
 """
     FockState{M,N}
 
-Quantum state represented as `M` mode Fock basis truncated to `N` Fock states.
+Quantum state represented as an `M` mode Fock basis truncated to `N` Fock states.
 """
 struct FockState{M,N}
     "coefficients for various photon numbers in fock basis"
@@ -15,6 +15,11 @@ struct FockState{M,N}
         new{M,N}(state, pure)
     end
 
+    @doc """
+        FockState(s::Int, m::Int, trunc::Int)
+
+    Uniform quantum state represented as an `m` mode Fock basis truncated to `trunc` Fock states.
+    """
     function FockState(s::Int, m::Int, trunc::Int)
         m > 0 || error("Number of modes in Fock state must be positive")
         trunc > 0 || error("Truncated photon number must be positive")
@@ -26,6 +31,11 @@ struct FockState{M,N}
         new{m,trunc}(state, true)
     end
 
+    @doc """
+        FockState(s::AbstractVector{Int}, m::Int, trunc::Int)
+
+    General quantum state represented as an `m` mode Fock basis truncated to `trunc` Fock states.
+    """
     function FockState(s::AbstractVector{Int}, m::Int, trunc::Int)
         m > 0 || error("Number of modes in Fock state must be positive")
         trunc > 0 || error("Truncated photon number must be positive")
@@ -61,7 +71,7 @@ function apply(g::AbstractGate{N}, fs::FockState{M,N}; modes::Union{Nothing,Abst
         return fs
     end
     all(modes .> 0) || error("Selected modes `modes` must be greater than 0")
-    fs.state[modes, :] .= apply((Qaintessent.matrix(g), fs.state[modes, :]))
+    fs.state[modes, :] .= apply(Qaintessent.matrix(g), fs.state[modes, :])
     fs
 end
 
@@ -75,23 +85,32 @@ function Base.isapprox(fs1::FockState{N, M}, fs2::FockState{N, M}) where {N,M}
 end
 
 
-function vacuum_state(m::Int, trunc::Int)
-    FockState(0, m, trunc)
+function vacuum_fock_state(m::Int, trunc::Int)
+    FockState(1, m, trunc)
+end
+
+function create_coherent_state(α::ComplexF64, trunc::Int)
+    state = zeros(ComplexF64, trunc)
+    state[1] = 1
+    for i in 1:trunc-1
+        state[i+1] = state[i]*α/√i
+    end
+    state /= norm(state)
 end
 
 function coherent_state(α::ComplexF64, m::Int, trunc::Int)
-    fs = FockState(0, m, trunc)
-    apply(D̂{trunc}(α), fs)
-    return fs
+    state = create_coherent_state(α, trunc)
+    FockState{m,trunc}([deepcopy(state) for i in 1:m], true)
 end
 
 function coherent_state(αs::AbstractVector{ComplexF64}, m::Int, trunc::Int)
     length(αs) == m || error(string(m) * "-mode coherent state created but " * string(length(αs)) * " displacements `αs` provided")
     fs = FockState(0, m, trunc)
-    for i in 1:m
-        apply(D̂{trunc}(αs[i]), fs; modes=[i])
+    state = []
+    for i in αs
+        push!(state, create_coherent_state(i, trunc))
     end
-    return fs
+    FockState{m,trunc}(state, true)
 end
 
 function matrix(fs::FockState{N, M}) where {N,M}
@@ -140,7 +159,7 @@ struct n̂{N} <:AbstractGate{N} end
 Base.adjoint(::n̂{N}) where {N} = n̂{N}()
 
 function matrix(numberop::n̂{N}) where {N}
-    diagm(1:N)
+    diagm(0:N-1)
 end
 
 """
@@ -155,7 +174,7 @@ end
 Base.adjoint(u::Û{N}) where {N} = Û{N}(-u.θ)
 
 function matrix(phaseop::Û{N}) where {N}
-    diagm(exp.(-phaseop.θ*im .* 1:N))
+    exp(-phaseop.θ*im * Qaintessent.matrix(n̂{N}()))
 end
 
 """
@@ -170,22 +189,5 @@ end
 Base.adjoint(u::D̂{N}) where {N}  = D̂{N}(-u.α)
 
 function matrix(displacementop::D̂{N}) where {N}
-    er = Inf
-
-    creation = displacementop.α*Qaintessent.matrix(âDag{N}())
-    annihilation = conj(displacementop.α)*Qaintessent.matrix(â{N}())
-
-    cg = creation - annihilation
-    sum = Matrix{Float64}(I, N, N)
-
-    k = 1
-
-    while er > 1e-6
-        cgs = 1/factorial(big(k)) * cg^k
-        old_sum = sum
-        sum += cgs
-        k = k+1
-        er = norm(sum-old_sum)^2
-    end
-    return sum
+    exp(displacementop.α*Qaintessent.matrix(âDag{N+1}()) - conj(displacementop.α)*Qaintessent.matrix(â{N+1}()))[1:N, 1:N]
 end
