@@ -571,12 +571,12 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) w
     U = matrix(cg.gate.U)
 
     # represent conjugation by (U - I) with respect to Pauli basis
-    conjUI = [real(tr(kron([pauli[p+1] for p in it]...) * (U - I) * kron([halfpauli[p+1] for p in jt]...) * (U' - I)))
+    conjUI = [real(tr(kron([pauli[p+1] for p in reverse(it)]...) * (U - I) * kron([halfpauli[p+1] for p in reverse(jt)]...) * (U' - I)))
                 for it in ttuples,
                     jt in ttuples]
 
     # represent (U - I) with respect to Pauli basis
-    UI = [tr(kron([halfpauli[p+1] for p in it]...) * (U - I)) for it in ttuples]
+    UI = [tr(kron([halfpauli[p+1] for p in reverse(it)]...) * (U - I)) for it in ttuples]
 
     # pairwise Pauli matrix multiplication phase factor table
     pauli_mult_phase = [
@@ -606,7 +606,7 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) w
             conj_cU = 2*real(prod(mult_1X1_I[icu[k]+1, jcu[k]+1] for k in 1:C) * mult_UI_I[it, jt]) + prod(conj1X1[icu[k]+1, jcu[k]+1] for k in 1:C) * conjUI[it, jt]
             if conj_cU != 0
                 # cannot use .= here since broadcasting fails for scalar numbers
-                vs[sliced_index((itu..., icu...), reverse(cg.iwire), N)...] += conj_cU .* ρv[sliced_index((jtu..., jcu...), reverse(cg.iwire), N)...]
+                vs[sliced_index((icu..., itu...), cg.iwire, N)...] += conj_cU .* ρv[sliced_index((jcu..., jtu...), cg.iwire, N)...]
             end
         end
     end
