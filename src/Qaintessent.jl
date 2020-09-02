@@ -89,5 +89,7 @@ export
     âDag,
     n̂,
     D̂,
-    Û
+    Û,
+    Ŝ,
+    wigner
 end
