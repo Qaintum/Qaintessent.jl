@@ -51,6 +51,26 @@ function Base.getindex(r::Register, i::Integer) where {N}
     return r.ind[i]
 end
 
+
+function int2bit(x::Int64; pad=nothing)
+    if isnothing(pad)
+        pad = floor(Int64, log2(3)+1)
+    end
+    BitArray(digits(x, base=2, pad=pad) |> reverse)
+end
+
+function bit2int(b::BitArray)
+    b = deepcopy(b)
+    num = 0
+    count = 0
+    while !isempty(b)
+        num += pop!(b)*2^count
+        count += 1
+    end
+    num
+end
+
+
 """
     reg_check(c::Qaintessent.CRegister, val::Int)
 

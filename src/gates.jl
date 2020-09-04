@@ -275,7 +275,7 @@ Base.adjoint(s::SwapGate) = s
 
 
 """
-General controlled gate: first `N - M` wires are the control and the remaining `M` wires the target
+General controlled gate: the `M` wires corresponding to the fastest running indices are the target and the remaining `N - M` wires the control
 """
 struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
@@ -288,8 +288,7 @@ end
 function matrix(g::ControlledGate{M,N}) where {M,N}
     Umat = matrix(g.U)
     CU = sparse(one(eltype(Umat)) * I, 2^N, 2^N)
-    # Note: following the ordering convention of `kron` here, i.e.,
-    # second (target) qubit corresponds to fastest varying index
+    # Note: target qubit(s) corresponds to fastest varying index
     CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
     return CU
 end

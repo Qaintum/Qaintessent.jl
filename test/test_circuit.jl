@@ -3,6 +3,7 @@ using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
 
+
 function isunitary(cg::CircuitGate)
     Qaintessent.matrix(cg) * Qaintessent.matrix(Base.adjoint(cg)) ≈ I
 end
@@ -46,29 +47,18 @@ end
     # flip control and target
     @testset "flip control and target circuit gate" begin
         cg = CircuitGate((2, 1), controlled_not(), 2)
-        @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 1 0 0; 0 0 0 1; 0 0 1 0]
+        @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
         @test isunitary(cg)
     end
 
     # third qubit as control and first qubit as target
     @testset "shift control and target circuit gate" begin
-        cg = controlled_circuit_gate(3, 1, HadamardGate(), 3)
+        cg = controlled_circuit_gate(1, 3, HadamardGate(), 3)
         @test Qaintessent.matrix(cg) ≈ [
             Matrix(I, 4, 4) fill(0, 4, 2) fill(0, 4, 2);
             fill(0, 2, 4) Qaintessent.matrix(HadamardGate()) fill(0, 2, 2);
             fill(0, 2, 6) Qaintessent.matrix(HadamardGate())]
         @test isunitary(cg)
-
-        cg_test = controlled_circuit_gate(3, 1, HadamardGate(), 3)
-        @test cg_test ≈ cg
-
-        cg = single_qubit_circuit_gate(1, RxGate(0.2), 1)
-        cg_test = single_qubit_circuit_gate(1, RxGate(0.2), 1)
-
-        @test cg_test ≈ cg
-
-        cg.gate.θ[1] = 0.5
-        @test !(cg ≈ cg_test)
     end
 
     @testset "circuit gate exceptions" begin
@@ -124,9 +114,9 @@ end
         cntrl_iwire = rand(1:N)
         targ_iwire = rand(vcat(1:cntrl_iwire-1..., cntrl_iwire+1:N...))
         g = YGate()
-        @test controlled_circuit_gate(cntrl_iwire, targ_iwire, g, N) ≈ CircuitGate((cntrl_iwire, targ_iwire), ControlledGate{1,2}(g), N)
-        @test controlled_circuit_gate((cntrl_iwire), targ_iwire, g, N) ≈ CircuitGate((cntrl_iwire, targ_iwire), ControlledGate{1,2}(g), N)
-        @test controlled_circuit_gate(cntrl_iwire, (targ_iwire), g, N) ≈ CircuitGate((cntrl_iwire, targ_iwire), ControlledGate{1,2}(g), N)
+        @test controlled_circuit_gate( targ_iwire,   cntrl_iwire,   g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2}(g), N)
+        @test controlled_circuit_gate( targ_iwire,  (cntrl_iwire,), g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2}(g), N)
+        @test controlled_circuit_gate((targ_iwire,), cntrl_iwire,   g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2}(g), N)
     end
 end
 
@@ -221,8 +211,8 @@ end
 
     ψs = apply(cgc, ψ)
     @test [dot(ψs, m*ψs) for m in meas.mops] ≈ apply(c, ψ)
-
 end
+
 
 @testset ExtendedTestSet "reduced density matrix" begin
     N = 4
@@ -235,15 +225,15 @@ end
     A = randn(ComplexF64, 2, 2)
     B = randn(ComplexF64, 2, 2)
     @testset ExtendedTestSet "reduced density matrix correctness" begin
-        @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(A, id, B, id) .* ρ)
+        @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(B, id, A, id) .* ρ)
     end
 
     @testset ExtendedTestSet "reduced density matrix exceptions" begin
         @test_throws ErrorException("Need at least one wire to act on.") rdm(N, (), ψ, χ)
-        @test_throws ErrorException("Number of gate wires cannot be larger than total number of wires.") rdm(N, (1,2,3,4,5), ψ, χ)
-        @test_throws ErrorException("Wire indices must be unique.") rdm(N, (2,2), ψ, χ)
-        @test_throws ErrorException("Wire index cannot be smaller than 1.") rdm(N, (-1,2), ψ, χ)
-        @test_throws ErrorException("Wire index cannot be larger than total number of wires.") rdm(N, (5,1), ψ, χ)
+        @test_throws ErrorException("Number of gate wires cannot be larger than total number of wires.") rdm(N, (1, 2, 3, 4, 5), ψ, χ)
+        @test_throws ErrorException("Wire indices must be unique.") rdm(N, (2, 2), ψ, χ)
+        @test_throws ErrorException("Wire index cannot be smaller than 1.") rdm(N, (-1, 2), ψ, χ)
+        @test_throws ErrorException("Wire index cannot be larger than total number of wires.") rdm(N, (5, 1), ψ, χ)
     end
 end
 
@@ -261,12 +251,12 @@ end
 
     gates = [
         single_qubit_circuit_gate(2, Y, N),
-        controlled_circuit_gate(reg_check(c2, 3), (2,), SGate(), N),
-        controlled_circuit_gate((c2[2], 3), 2, YGate(), N),
+        controlled_circuit_gate((2,), reg_check(c2, 3), SGate(), N),
+        controlled_circuit_gate(2, (c2[2], 3), YGate(), N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
         single_qubit_circuit_gate(5, RxGate(1.5π), N),
         single_qubit_circuit_gate(3, RyGate(1.5π), N),
-        controlled_circuit_gate(c2[1], 2, ZGate(), N),
+        controlled_circuit_gate(2, c2[1], ZGate(), N),
     ]
     cgc(gates)
 
@@ -300,12 +290,12 @@ end
 
     gates = [
         single_qubit_circuit_gate(2, Y, N),
-        controlled_circuit_gate(reg_check(c2,7), 2, SGate(), N),
-        controlled_circuit_gate((reg_check(c2,3), 3), 2, YGate(), N),
+        controlled_circuit_gate(2, reg_check(c2, 7), SGate(), N),
+        controlled_circuit_gate(2, (reg_check(c2, 3), 3), YGate(), N),
         two_qubit_circuit_gate(2, 3, SwapGate(), N),
         single_qubit_circuit_gate(5, RxGate(1.5π), N),
         single_qubit_circuit_gate(3, RyGate(1.5π), N),
-        controlled_circuit_gate((c2[1]), 2, ZGate(), N),
+        controlled_circuit_gate(2, (c2[1],), ZGate(), N),
     ]
     cgc(gates)
 
@@ -339,9 +329,9 @@ end
     gates = [
         single_qubit_circuit_gate(q1, Y, N),
         single_qubit_circuit_gate(q3[1], Z, N),
-        controlled_circuit_gate(q1, (3,), SGate(), N),
-        controlled_circuit_gate(q2, 1, TGate(), N),
-        controlled_circuit_gate(5, q1, Y, N),
+        controlled_circuit_gate((3,), q1, SGate(), N),
+        controlled_circuit_gate(1, q2, TGate(), N),
+        controlled_circuit_gate(q1, 5, Y, N),
         two_qubit_circuit_gate(q2, q1, SwapGate(), N),
     ]
     cgc(gates)
@@ -350,12 +340,12 @@ end
         single_qubit_circuit_gate(1, Y, N),
         single_qubit_circuit_gate(2, Y, N),
         single_qubit_circuit_gate(5, Z, N),
-        controlled_circuit_gate(1, 3, SGate(), N),
-        controlled_circuit_gate(2, 3, SGate(), N),
-        controlled_circuit_gate(3, 1, TGate(), N),
-        controlled_circuit_gate(4, 1, TGate(), N),
-        controlled_circuit_gate(5, 1, Y, N),
-        controlled_circuit_gate(5, 2, Y, N),
+        controlled_circuit_gate(3, 1, SGate(), N),
+        controlled_circuit_gate(3, 2, SGate(), N),
+        controlled_circuit_gate(1, 3, TGate(), N),
+        controlled_circuit_gate(1, 4, TGate(), N),
+        controlled_circuit_gate(1, 5, Y, N),
+        controlled_circuit_gate(2, 5, Y, N),
         two_qubit_circuit_gate(3, 1, SwapGate(), N),
         two_qubit_circuit_gate(4, 2, SwapGate(), N),
     ])

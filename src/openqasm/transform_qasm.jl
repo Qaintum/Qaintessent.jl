@@ -2,7 +2,6 @@ using RBNF
 using MLStyle
 using PrettyPrint
 
-using Qaintessent
 
 @as_record Token
 @as_record Struct_mainprogram
@@ -137,13 +136,13 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
         Struct_cx(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
-                :($qasm_cgc([controlled_circuit_gate(($ref1), ($ref2), X, $N[])]))
+                :($qasm_cgc([controlled_circuit_gate(($ref2), ($ref1), X, $N[])]))
             end
 
         Struct_ch(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
-                :($qasm_cgc([controlled_circuit_gate(($ref1), ($ref2), HadamardGate(), $N[])]))
+                :($qasm_cgc([controlled_circuit_gate(($ref2), ($ref1), HadamardGate(), $N[])]))
             end
 
         Struct_u(in1=in1, in2=in2, in3=in3, out=out) =>
@@ -217,7 +216,7 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 cntrl = :($(rec(out1))),
                 arg = :($(rec(in)))
 
-                :($qasm_cgc([controlled_circuit_gate(($cntrl), ($out), RzGate($arg), $N[])]))
+                :($qasm_cgc([controlled_circuit_gate(($out), ($cntrl), RzGate($arg), $N[])]))
             end
 
         Struct_gate(

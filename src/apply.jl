@@ -1,63 +1,32 @@
-function bitswap(n::Int, p1::Int, p2::Int, N::Int)
-    if p1 == p2
-        return n
+
+"""Construct sliced index via target map (utility function)"""
+function sliced_index(idx, targetwires, N)
+    islice = Vector{Any}(fill(Colon(), N))
+    M = length(targetwires)
+    for k in 1:M
+        islice[targetwires[k]] = idx[k] + 1
     end
-
-    p1̄ = N-p1
-    p2̄ = N-p2
-    bit1 = (n >> p1̄) & 1
-    bit2 = (n >> p2̄) & 1
-    x = (bit1 ⊻ bit2)
-    x = (x << p1̄) | (x << p2̄)
-    return n ⊻ x
+    return islice
 end
 
-ror(x::Int, k::Int) = (x >>> (0x3f & k)) | (x << (0x3f & -k))
-rol(x::Int, k::Int) = (x << (0x3f & k)) | (x >>> (0x3f & -k))
-
-function swap(w::AbstractArray, p1::Int, p2::Int)
-    tmp = w[p1]
-    w[p1] = w[p2]
-    w[p2] = tmp
-    return w
-end
 
 """
     apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
-returns state vector of `N` qubits after applying a `CircuitGate{M, N, G}` object to a quantum state vector of `N` qubits `ψ`.
+
+Apply a `CircuitGate{M, N, G}` to a quantum state vector `ψ` of `N` qubits.
 """
 function apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
-    W = length(cg.iwire)
-    wires = [N-i+1 for i in cg.iwire]
+    gtuples = reshape(cartesian_tuples(2, M), :)
+    U = matrix(cg.gate)
+    ψ = reshape(ψ, fill(2, N)...)
 
-    gmat = matrix(cg.gate)
-    # Use indices starting from 0 for easier calculation
-    indices = 0:2^(N)-1
-
-    for i in 1:W
-        target = N-W+i
-        start = wires[i]
-        indices = bitswap.(indices, start, target, N)
-
-        if target in wires
-            target_index = Base.findfirst(x -> x==target, wires)
-            swap(wires, i, target_index)
-        end
+    ψs = similar(ψ)
+    for (i, it) in enumerate(gtuples)
+        # cannot use .= here since broadcasting fails for scalar numbers
+        ψs[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψ[sliced_index(jt, cg.iwire, N)...] for (j, jt) in enumerate(gtuples))
     end
-    indices = sortperm(indices)
-
-    ψ = ψ[indices]
-
-    ψr = reshape(ψ, size(gmat, 1), :)
-
-    ψr = gmat * ψr
-
-    ψr = reshape(ψr, :)
-
-    indices = sortperm(indices)
-    return ψr[indices]
+    return reshape(ψs, :)
 end
-
 
 
 """Tailored apply for XGate"""
@@ -65,7 +34,7 @@ function apply(cg::CircuitGate{1,N,XGate}, ψ::AbstractVector{<:Complex}) where 
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
 
-    return reshape(ψ[:,[2,1],:],:)
+    return reshape(ψ[:, [2, 1], :], :)
 end
 
 
@@ -75,9 +44,9 @@ function apply(cg::CircuitGate{1,N,YGate}, ψ::AbstractVector{ComplexF64}) where
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
 
-    A[:,1,:] .= -im.*ψ[:,2,:]
-    A[:,2,:] .=  im.*ψ[:,1,:]
-    return reshape(A,:)
+    A[:, 1, :] .= -im.*ψ[:, 2, :]
+    A[:, 2, :] .=  im.*ψ[:, 1, :]
+    return reshape(A, :)
 end
 
 
@@ -86,9 +55,9 @@ function apply(cg::CircuitGate{1,N,ZGate}, ψ::AbstractVector{<:Complex}) where 
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= .- ψ[:,2,:]
-    return reshape(A,:)
+    A[:, 1, :] .=   ψ[:, 1, :]
+    A[:, 2, :] .= .-ψ[:, 2, :]
+    return reshape(A, :)
 end
 
 
@@ -97,9 +66,9 @@ function apply(cg::CircuitGate{1,N,HadamardGate}, ψ::AbstractVector{<:Complex})
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= (ψ[:,1,:] .+ ψ[:,2,:])./sqrt(2)
-    A[:,2,:] .= (ψ[:,1,:] .- ψ[:,2,:])./sqrt(2)
-    return reshape(A,:)
+    A[:, 1, :] .= (ψ[:, 1, :] .+ ψ[:, 2, :]) ./ sqrt(2)
+    A[:, 2, :] .= (ψ[:, 1, :] .- ψ[:, 2, :]) ./ sqrt(2)
+    return reshape(A, :)
 end
 
 
@@ -108,8 +77,8 @@ function apply(cg::CircuitGate{1,N,SGate}, ψ::AbstractVector{<:Complex}) where 
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= im.*ψ[:,2,:]
+    A[:, 1, :] .= ψ[:, 1, :]
+    A[:, 2, :] .= im .* ψ[:, 2, :]
     return reshape(A, :)
 end
 
@@ -119,8 +88,8 @@ function apply(cg::CircuitGate{1,N,SdagGate}, ψ::AbstractVector{<:Complex}) whe
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= -im.*ψ[:,2,:]
+    A[:, 1, :] .= ψ[:, 1, :]
+    A[:, 2, :] .= -im .* ψ[:, 2, :]
     return reshape(A, :)
 end
 
@@ -130,8 +99,8 @@ function apply(cg::CircuitGate{1,N,TGate}, ψ::AbstractVector{<:Complex}) where 
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= Base.exp(im*π/4).*ψ[:,2,:]
+    A[:, 1, :] .= ψ[:, 1, :]
+    A[:, 2, :] .= Base.exp(im*π/4) .* ψ[:, 2, :]
     return reshape(A, :)
 end
 
@@ -141,8 +110,8 @@ function apply(cg::CircuitGate{1,N,TdagGate}, ψ::AbstractVector{<:Complex}) whe
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= Base.exp(-im*π/4).*ψ[:,2,:]
+    A[:, 1, :] .= ψ[:, 1, :]
+    A[:, 2, :] .= Base.exp(-im*π/4) .* ψ[:, 2, :]
     return reshape(A, :)
 end
 
@@ -153,8 +122,8 @@ function apply(cg::CircuitGate{1,N,RzGate}, ψ::AbstractVector{<:Complex}) where
     θ = cg.gate.θ[]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= Base.exp(-im*θ/2).*ψ[:,1,:]
-    A[:,2,:] .= Base.exp( im*θ/2).*ψ[:,2,:]
+    A[:, 1, :] .= Base.exp(-im*θ/2).*ψ[:, 1, :]
+    A[:, 2, :] .= Base.exp( im*θ/2).*ψ[:, 2, :]
     return reshape(A, :)
 end
 
@@ -164,8 +133,8 @@ function apply(cg::CircuitGate{1,N,PhaseShiftGate}, ψ::AbstractVector{<:Complex
     i = cg.iwire[1]
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
-    A[:,1,:] .= ψ[:,1,:]
-    A[:,2,:] .= Base.exp(im*cg.gate.ϕ[]).*ψ[:,2,:]
+    A[:, 1, :] .= ψ[:, 1, :]
+    A[:, 2, :] .= Base.exp(im*cg.gate.ϕ[]) .* ψ[:, 2, :]
     return reshape(A, :)
 end
 
@@ -176,8 +145,8 @@ function apply(cg::CircuitGate{1,N,AbstractGate{1}}, ψ::AbstractVector{<:Comple
     ψ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     A = similar(ψ)
     U = matrix(cg.gate)
-    A[:,1,:] .= U[1,1] .* ψ[:,1,:] .+ U[1,2] .* ψ[:,2,:]
-    A[:,2,:] .= U[2,1] .* ψ[:,1,:] .+ U[2,2] .* ψ[:,2,:]
+    A[:, 1, :] .= U[1, 1] .* ψ[:, 1, :] .+ U[1, 2] .* ψ[:, 2, :]
+    A[:, 2, :] .= U[2, 1] .* ψ[:, 1, :] .+ U[2, 2] .* ψ[:, 2, :]
     return reshape(A, :)
 end
 #
@@ -192,10 +161,10 @@ function apply(cg::CircuitGate{2,N,SwapGate}, ψ::AbstractVector{<:Complex}) whe
     ψr = reshape(ψ, 2 .^qubit_slices...)
     A = similar(ψr)
 
-    A[:,1,:,1,:] .= ψr[:,1,:,1,:]
-    A[:,2,:,2,:] .= ψr[:,2,:,2,:]
-    A[:,1,:,2,:] .= ψr[:,2,:,1,:]
-    A[:,2,:,1,:] .= ψr[:,1,:,2,:]
+    A[:, 1, :, 1, :] .= ψr[:, 1, :, 1, :]
+    A[:, 2, :, 2, :] .= ψr[:, 2, :, 2, :]
+    A[:, 1, :, 2, :] .= ψr[:, 2, :, 1, :]
+    A[:, 2, :, 1, :] .= ψr[:, 1, :, 2, :]
 
     return reshape(A, :)
 end
@@ -208,13 +177,12 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ψ::AbstractVector{<:Co
     A = copy(ψ) # TODO: copy only what's needed
     A = reshape(A, fill(2, N)...)
 
-    # Apply gate to qubits with control qubit = 2
-    icontrol = cg.iwire[1:M-T]
-    itarget =  cg.iwire[M-T+1:M]
+    itarget  = cg.iwire[1:T]
+    icontrol = cg.iwire[T+1:M]
 
     new_iwire = Tuple(i - sum(icontrol .< i) for i in itarget)
 
-    slice_target = Tuple(i in icontrol ? 2 : Colon() for i in 1:N) # Why it has to go backwards?
+    slice_target = Tuple(i in icontrol ? 2 : Colon() for i in 1:N)
     new_cg = CircuitGate(new_iwire, cg.gate.U, N-M+T)
 
     A[slice_target...] = reshape(apply(new_cg, reshape(A[slice_target...], :)),
@@ -529,17 +497,6 @@ end
 Base.kron(a::AbstractMatrix{T}) where {T} = a
 
 
-"""Construct sliced index via target map (utility function)"""
-function sliced_index(idx, targetwires, N)
-    islice = Vector{Any}(fill(Colon(), N))
-    M = length(targetwires)
-    for k in 1:M
-        islice[targetwires[k]] = idx[k] + 1
-    end
-    return islice
-end
-
-
 """Tailored apply to density matrix for a general ControlledGate"""
 function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) where {M,N,T}
 
@@ -551,8 +508,8 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) w
     # number of control wires
     C = M - T
 
-    ctuples = reshape(cartesian_tuples(4, C), :)
     ttuples = reshape(cartesian_tuples(4, T), :)
+    ctuples = reshape(cartesian_tuples(4, C), :)
 
     # conjugation by |1><1| represented with respect to Pauli basis
     conj1X1 = [
@@ -606,7 +563,7 @@ function apply(cg::CircuitGate{M,N,ControlledGate{T,M}}, ρ::DensityMatrix{N}) w
             conj_cU = 2*real(prod(mult_1X1_I[icu[k]+1, jcu[k]+1] for k in 1:C) * mult_UI_I[it, jt]) + prod(conj1X1[icu[k]+1, jcu[k]+1] for k in 1:C) * conjUI[it, jt]
             if conj_cU != 0
                 # cannot use .= here since broadcasting fails for scalar numbers
-                vs[sliced_index((icu..., itu...), cg.iwire, N)...] += conj_cU .* ρv[sliced_index((jcu..., jtu...), cg.iwire, N)...]
+                vs[sliced_index((itu..., icu...), cg.iwire, N)...] += conj_cU .* ρv[sliced_index((jtu..., jcu...), cg.iwire, N)...]
             end
         end
     end
@@ -626,7 +583,7 @@ function apply(cg::CircuitGate{M,N,<:AbstractGate{M}}, ρ::DensityMatrix{N}) whe
 
     U = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
-    conjU = [real(tr(kron([pauli[p+1] for p in it]...) * U * kron([halfpauli[p+1] for p in jt]...) * U'))
+    conjU = [real(tr(kron([pauli[p+1] for p in reverse(it)]...) * U * kron([halfpauli[p+1] for p in reverse(jt)]...) * U'))
                 for it in gtuples,
                     jt in gtuples]
 

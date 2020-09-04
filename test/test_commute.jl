@@ -22,17 +22,17 @@ using Qaintessent
     N = 5
     ccg1 = begin
         iwperm = Tuple(randperm(N))
-        # number of control and target wires
-        nc = rand(1:3)
+        # number of target and control wires
         nt = 1
-        controlled_circuit_gate(iwperm[1:nc], iwperm[nc+1:nc+nt], HadamardGate(), N)
+        nc = rand(1:3)
+        controlled_circuit_gate(iwperm[1:nt], iwperm[nt+1:nt+nc], HadamardGate(), N)
     end
     ccg2 = begin
         iwperm = Tuple(randperm(N))
-        # number of control and target wires
-        nc = rand(1:3)
+        # number of target and control wires
         nt = 2
-        controlled_circuit_gate(iwperm[1:nc], iwperm[nc+1:nc+nt], MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), N)
+        nc = rand(1:3)
+        controlled_circuit_gate(iwperm[1:nt], iwperm[nt+1:nt+nc], MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), N)
     end
     cgates = [
         single_qubit_circuit_gate(rand(1:N), X, N),

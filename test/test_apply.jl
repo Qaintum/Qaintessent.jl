@@ -81,6 +81,7 @@ using Qaintessent
     end
 end
 
+
 @testset ExtendedTestSet "apply gates to density matrix" begin
     N = 5
     ψ = randn(ComplexF64, 2^N)
@@ -118,9 +119,9 @@ end
         # controlled gate
         iwperm = Tuple(randperm(N))
         # number of control and target wires
-        nc = rand(1:3)
         nt = rand(1:2)
-        cg = controlled_circuit_gate(iwperm[1:nc], iwperm[nc+1:nc+nt], nt == 1 ? RotationGate(rand(3) .- 0.5) : MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), N)
+        nc = rand(1:3)
+        cg = controlled_circuit_gate(iwperm[1:nt], iwperm[nt+1:nt+nc], nt == 1 ? RotationGate(rand(3) .- 0.5) : MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), N)
         ψs = apply(cg, ψ)
         ρsref = density_from_statevector(ψs)
         ρs = apply(cg, ρ)
