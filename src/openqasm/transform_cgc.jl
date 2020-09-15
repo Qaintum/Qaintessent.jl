@@ -59,7 +59,7 @@ function trans_cg(cg::CircuitGate{M,N,G}) where {M,N,G}
                         nnint = parse(Int64, match(integer_pattern, string(ccntrl[1])).match[1]) - 1
                         return "//if(creg1==" * string(nnint) * ") " * string(id) * join( "qreg" .* string.(iwire) ,",") * "; // If clauses are not yet supported."
                     end
-                    return string(id) * " " * join( "qregister[" .* string.(iwire) .* "]" ,",") * ";"
+                    return string(id) * " " * join( "qregister[" .* string.(reverse(iwire)) .* "]" ,",") * ";"
                 end
     end
 end
