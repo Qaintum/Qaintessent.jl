@@ -386,7 +386,7 @@ function hcxh_opt(d::RefDagGate)
     cg = controlled_circuit_gate(wires[1], cntrl[1], Z, length(d[].next.cg.iwire))
 
     d[].next.cg = cg
-    c = d[].next.connected[1]
+    c = d[].next.connected[end]
     c[].cg = cg
 
     remove!(Ref(d[].next.next))
@@ -400,7 +400,7 @@ function hczh_opt(d::RefDagGate)
     cg = controlled_circuit_gate(wires[1], cntrl[1], X, length(d[].next.cg.iwire))
 
     d[].next.cg = cg
-    c = d[].next.connected[1]
+    c = d[].next.connected[end]
     c[].cg = cg
 
     remove!(Ref(d[].next.next))
@@ -528,7 +528,7 @@ end
 
 appends `DagGate` object to `AbstractVector`
 """
-function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag,dg::DagGate) where {N}
+function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag, dg::DagGate) where {N}
     for j in dg.cg.iwire
         while !(dag.iwire[j].cg === dg.cg)
             dag = append_gate!(cgs,dag,dag.iwire[j])
