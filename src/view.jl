@@ -61,7 +61,7 @@ Base.size(g::AbstractGate{N}) where {N} = N
 
 function view(g::ControlledGate, i::Vector{Int64})
     gate = fill("——•———", length(i))
-    gate[end-Base.size(g.U)+1:end] = view(g.U)[1]
+    gate[1:Base.size(g.U)] = view(g.U)[1]
     return gate, i
 end
 
