@@ -124,7 +124,7 @@ function momentdiagram(io::IO, m::Moment{N}) where {N}
     g = g .* ng .* "|   "
     circuit = interleave(w, g)
     println(io, "")
-    for c in circuit
+    for c in reverse(circuit)
         println(io, c)
     end
     println(io, "")
@@ -167,7 +167,7 @@ function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
     g = g .* ng
     circuit = interleave(w, g)
     println(io, "")
-    for c in circuit
+    for c in reverse(circuit)
         println(io, c)
     end
 end
