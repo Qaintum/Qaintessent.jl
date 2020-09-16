@@ -59,8 +59,7 @@ backward(g::SwapGate, Δ::AbstractMatrix) = g
 
 
 function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
-    # Note: following the ordering convention of `kron` here, i.e.,
-    # target qubits correspond to fastest varying index
+    # Note: target qubits correspond to fastest varying indices
     ControlledGate{M,N}(backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end]))
 end
 

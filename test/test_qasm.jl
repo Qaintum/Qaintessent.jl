@@ -1,5 +1,8 @@
-using Qaintessent
+using Test
+using TestSetExtensions
 using RBNF
+using Qaintessent
+
 
 @testset ExtendedTestSet "test lexer" begin
     # Adding random comments and spacings in src1 to test robustness of lexer
@@ -163,18 +166,18 @@ end
     N = size(cgc_ref)
 
     gates_ref = [
-        controlled_circuit_gate(1, 4, X, N),
-        controlled_circuit_gate(2, 4, X, N),
-        controlled_circuit_gate(2, 5, X, N),
-        controlled_circuit_gate(3, 5, X, N),
+        controlled_circuit_gate(4, 1, X, N),
+        controlled_circuit_gate(4, 2, X, N),
+        controlled_circuit_gate(5, 2, X, N),
+        controlled_circuit_gate(5, 3, X, N),
         single_qubit_circuit_gate(4, RyGate(0.1π), N),
-        controlled_circuit_gate(2, 1, X, N),
-        controlled_circuit_gate(3, 1, X, N),
-        controlled_circuit_gate(3, 5, X, N),
-        controlled_circuit_gate(4, 5, X, N),
+        controlled_circuit_gate(1, 2, X, N),
+        controlled_circuit_gate(1, 3, X, N),
+        controlled_circuit_gate(5, 3, X, N),
+        controlled_circuit_gate(5, 4, X, N),
         single_qubit_circuit_gate(1, RyGate(0.1π), N),
         single_qubit_circuit_gate(2, RxGate(0.1π), N),
-        controlled_circuit_gate(3, 2, X, N),
+        controlled_circuit_gate(2, 3, X, N),
         single_qubit_circuit_gate(2, TGate(), N),
         single_qubit_circuit_gate(4, SGate(), N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
@@ -222,18 +225,18 @@ end
     N = size(cgc_ref)
 
     gates_ref = [
-        controlled_circuit_gate(1, 4, X, N),
-        controlled_circuit_gate(2, 4, X, N),
-        controlled_circuit_gate(2, 5, X, N),
-        controlled_circuit_gate(3, 5, X, N),
+        controlled_circuit_gate(4, 1, X, N),
+        controlled_circuit_gate(4, 2, X, N),
+        controlled_circuit_gate(5, 2, X, N),
+        controlled_circuit_gate(5, 3, X, N),
         single_qubit_circuit_gate(4, RyGate(0.1π), N),
-        controlled_circuit_gate(2, 1, X, N),
-        controlled_circuit_gate(3, 1, X, N),
-        controlled_circuit_gate(3, 5, X, N),
-        controlled_circuit_gate(4, 5, X, N),
+        controlled_circuit_gate(1, 2, X, N),
+        controlled_circuit_gate(1, 3, X, N),
+        controlled_circuit_gate(5, 3, X, N),
+        controlled_circuit_gate(5, 4, X, N),
         single_qubit_circuit_gate(1, RyGate(0.1π), N),
         single_qubit_circuit_gate(2, RxGate(0.1π), N),
-        controlled_circuit_gate(3, 2, X, N),
+        controlled_circuit_gate(2, 3, X, N),
         single_qubit_circuit_gate(2, TGate(), N),
         single_qubit_circuit_gate(4, SGate(), N),
         single_qubit_circuit_gate(1, HadamardGate(), N),

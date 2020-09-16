@@ -61,7 +61,7 @@ Base.size(g::AbstractGate{N}) where {N} = N
 
 function view(g::ControlledGate, i::Vector{Int64})
     gate = fill("——•———", length(i))
-    gate[end-Base.size(g.U)+1:end] = view(g.U)[1]
+    gate[1:Base.size(g.U)] = view(g.U)[1]
     return gate, i
 end
 
@@ -124,7 +124,7 @@ function momentdiagram(io::IO, m::Moment{N}) where {N}
     g = g .* ng .* "|   "
     circuit = interleave(w, g)
     println(io, "")
-    for c in circuit
+    for c in reverse(circuit)
         println(io, c)
     end
     println(io, "")
@@ -167,7 +167,7 @@ function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
     g = g .* ng
     circuit = interleave(w, g)
     println(io, "")
-    for c in circuit
+    for c in reverse(circuit)
         println(io, c)
     end
 end

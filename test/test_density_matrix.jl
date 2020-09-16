@@ -14,7 +14,7 @@ using Qaintessent
     ]
 
     @test Qaintessent.matrix(pauli_group_matrix("XIZY")) ≈
-          kron(pauli[2], pauli[1], pauli[4], pauli[3])
+          kron(pauli[3], pauli[4], pauli[1], pauli[2])
 
     N = 4
     ψ = randn(ComplexF64, 2^N)
