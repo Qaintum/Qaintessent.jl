@@ -33,9 +33,9 @@ using Qaintessent
 
     cgc_refstring =
         "\n" *
-        "    1 —[X ]—————————————\n" *
+        "    2 ——•————[Z ]——[Y ]—\n" *
         "        |               \n" *
-        "    2 ——•————[Z ]——[Y ]—\n"
+        "    1 —[X ]—————————————\n"
 
     io = IOBuffer()
     show(io, cgc)
