@@ -9,6 +9,13 @@ function sliced_index(idx, targetwires, N)
     return islice
 end
 
+"""
+    apply(m::AbstractMatrix, ψ::AbstractVector)
+
+"""
+function apply(m::AbstractMatrix, ψ::AbstractVector)
+    return m*Vector(ψ)
+end
 
 """
     apply(cg::CircuitGate{M,N,G}, ψ::AbstractVector) where {M,N,G}
@@ -241,8 +248,9 @@ end
 returns list of expectation values from measurement operators in `c.meas` after applying circuit gates in `c.cgc` on state vector of `N` qubits `ψ`
 """
 function apply(c::Circuit{N}, ψ::AbstractVector{<:Complex}) where {N}
-    ψs = apply(c.cgc, ψ)
-    return [real(dot(ψs, m*ψs)) for m in c.meas.mops]
+    ψl = apply(c.cgc, ψ)
+    ψr = apply.(c.meas.mops, (ψl,))
+    return real.(dot.((ψl,), ψr))
 end
 
 (c::Circuit)(ψ) = apply(c, ψ)

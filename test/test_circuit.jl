@@ -193,7 +193,50 @@ end
     @test ψ_ref ≈ apply(cgc_test, ψ)
 end
 
-@testset ExtendedTestSet "circuit" begin
+@testset ExtendedTestSet "measurement operator construction" begin
+    N = 5
+    meas1 = MeasurementOps{N}([3*Matrix{Float64}(I, 2^N, 2^N), 2*Matrix{Float64}(I, 2^N, 2^N)])
+
+    meas2 = MeasurementOps{N}([single_qubit_circuit_gate(2, X, N),
+                               single_qubit_circuit_gate(1, Y, N)])
+end
+
+@testset ExtendedTestSet "measurement operator abstract matrix exceptions" begin
+    N = 2
+    small_matrix = Matrix{Float64}(I, 2^(N-1), 2^(N-1))
+    large_matrix = Matrix{Float64}(I, 2^(N+1), 2^(N+1))
+    uneven_matrix = Matrix{Float64}(I, 2^(N), 2^(N+1))
+    non_hermitian_matrix = Qaintessent.matrix(single_qubit_circuit_gate(1, RxGate(0.2), N))
+
+    @test_throws ErrorException("Measurement operator must be a 2^N × 2^N matrix.") MeasurementOps{N}([small_matrix])
+    @test_throws ErrorException("Measurement operator must be a 2^N × 2^N matrix.") MeasurementOps{N}(small_matrix)
+    @test_throws ErrorException("Measurement operator must be a 2^N × 2^N matrix.") MeasurementOps{N}([large_matrix])
+    @test_throws ErrorException("Measurement operator must be a 2^N × 2^N matrix.") MeasurementOps{N}(large_matrix)
+    @test_throws ErrorException("Measurement operator must be a 2^N × 2^N matrix.") MeasurementOps{N}([uneven_matrix])
+    @test_throws ErrorException("Measurement operator must be a 2^N × 2^N matrix.") MeasurementOps{N}(uneven_matrix)
+    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOps{N}([non_hermitian_matrix])
+    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOps{N}(non_hermitian_matrix)
+
+    noncomm_matrix_1 = Qaintessent.matrix(single_qubit_circuit_gate(1, HadamardGate(), N))
+    noncomm_matrix_2 = Qaintessent.matrix(single_qubit_circuit_gate(1, X, N))
+    @test_throws ErrorException("Measurement operators must pairwise commute.") MeasurementOps{N}([noncomm_matrix_1, noncomm_matrix_2])
+end
+
+@testset ExtendedTestSet "measurement operator abstract matrix exceptions" begin
+    N = 2
+
+    non_hermitian_matrix = single_qubit_circuit_gate(1, RxGate(0.2), N)
+
+    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOps{N}([non_hermitian_matrix])
+    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOps{N}(non_hermitian_matrix)
+
+    noncomm_gate_1 = single_qubit_circuit_gate(1, HadamardGate(), N)
+    noncomm_gate_2 = single_qubit_circuit_gate(1, X, N)
+    
+    @test_throws ErrorException("Measurement operators must pairwise commute.") MeasurementOps{N}([noncomm_gate_1, noncomm_gate_2])
+end
+
+@testset ExtendedTestSet "circuit construction" begin
     N = 1
     cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(1, X, N),
@@ -211,6 +254,25 @@ end
 
     ψs = apply(cgc, ψ)
     @test [dot(ψs, m*ψs) for m in meas.mops] ≈ apply(c, ψ)
+end
+
+@testset ExtendedTestSet "circuit construction with circuit gate measurements" begin
+    N = 3
+    cgc = CircuitGateChain{N}([
+        single_qubit_circuit_gate(1, X, N),
+        single_qubit_circuit_gate(2, HadamardGate(), N),
+        single_qubit_circuit_gate(3, Z, N),
+        single_qubit_circuit_gate(1, Y, N),
+    ])
+    meas = MeasurementOps{N}([single_qubit_circuit_gate(1, X, N),
+                              single_qubit_circuit_gate(2, X, N),
+                              single_qubit_circuit_gate(3, X, N)])
+    c = Circuit(cgc, meas)
+    ψ = randn(ComplexF64, 2^N)
+    @test distribution(c, ψ) ≈ apply(c.cgc, ψ)
+
+    ψs = apply(cgc, ψ)
+    @test [dot(ψs, apply(m, ψs)) for m in meas.mops] ≈ apply(c, ψ)
 end
 
 
