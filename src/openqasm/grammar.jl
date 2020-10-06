@@ -1,6 +1,8 @@
 using RBNF
 using MLStyle
 using PrettyPrint
+
+# Using code from https://github.com/thautwarm/RBNF.jl
 struct QASMLang end
 
 second((a, b)) = b
