@@ -93,10 +93,10 @@ T† gate
 struct TdagGate <: AbstractGate{1} end
 
 matrix(::SGate) = [1. 0.; 0. im]
-matrix(::TGate) = [1. 0.; 0. exp(im*π/4)]
+matrix(::TGate) = [1. 0.; 0. Base.exp(im*π/4)]
 
 matrix(::SdagGate) = [1. 0.; 0. -im]
-matrix(::TdagGate) = [1. 0.; 0. exp(-im*π/4)]
+matrix(::TdagGate) = [1. 0.; 0. Base.exp(-im*π/4)]
 
 LinearAlgebra.ishermitian(::SGate) = false
 LinearAlgebra.ishermitian(::TGate) = false
@@ -179,7 +179,7 @@ struct RzGate <: AbstractGate{1}
 end
 
 function matrix(g::RzGate)
-    [exp(-im*g.θ[]/2) 0; 0 exp(im*g.θ[]/2)]
+    [Base.exp(-im*g.θ[]/2) 0; 0 Base.exp(im*g.θ[]/2)]
 end
 
 function LinearAlgebra.ishermitian(g::RzGate)
@@ -247,10 +247,10 @@ struct PhaseShiftGate <: AbstractGate{1}
     end
 end
 
-matrix(g::PhaseShiftGate) = [1 0; 0 exp(im*g.ϕ[])]
+matrix(g::PhaseShiftGate) = [1 0; 0 Base.exp(im*g.ϕ[])]
 
 function LinearAlgebra.ishermitian(g::PhaseShiftGate)
-    if g.ϕ[] == 0
+    if abs(g.ϕ[]) < eps()
         return true
     end
     return false
@@ -275,7 +275,7 @@ Base.adjoint(s::SwapGate) = s
 
 
 """
-General controlled gate: first `N - M` wires are the control and the remaining `M` wires the target
+General controlled gate: the `M` wires corresponding to the fastest running indices are the target and the remaining `N - M` wires the control
 """
 struct ControlledGate{M,N} <: AbstractGate{N}
     U::AbstractGate{M}
@@ -288,8 +288,7 @@ end
 function matrix(g::ControlledGate{M,N}) where {M,N}
     Umat = matrix(g.U)
     CU = sparse(one(eltype(Umat)) * I, 2^N, 2^N)
-    # Note: following the ordering convention of `kron` here, i.e.,
-    # second (target) qubit corresponds to fastest varying index
+    # Note: target qubit(s) corresponds to fastest varying index
     CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
     return CU
 end
@@ -301,7 +300,6 @@ Base.adjoint(g::ControlledGate{M,N}) where {M,N} =
     ControlledGate{M,N}(Base.adjoint(g.U))
 
 controlled_not() = ControlledGate{1,2}(X)
-
 
 isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 
@@ -324,6 +322,8 @@ matrix(g::MatrixGate{N}) where {N} = g.matrix
 
 Base.adjoint(g::MatrixGate{N}) where {N} = MatrixGate(Base.adjoint(g.matrix))
 
+LinearAlgebra.ishermitian(g::MatrixGate{M}) where {M} =
+    LinearAlgebra.ishermitian(Qaintessent.matrix(g))
 
 function Base.isapprox(g1::G, g2::G) where {G<:AbstractGate{N}} where {N}
     for name in fieldnames(G)

@@ -32,7 +32,7 @@ end
 
 function backward(g::RzGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    RzGate(2*real(0.5im*exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*exp(-im*g.θ[1]/2)*Δ[2, 2]))
+    RzGate(2*real(0.5im*Base.exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*Base.exp(-im*g.θ[1]/2)*Δ[2, 2]))
 end
 
 
@@ -51,7 +51,7 @@ end
 
 function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
     # using conjugated derivative matrix
-    PhaseShiftGate(2*real(-im*exp(-im*g.ϕ[1])*Δ[2, 2]))
+    PhaseShiftGate(2*real(-im*Base.exp(-im*g.ϕ[1])*Δ[2, 2]))
 end
 
 
@@ -59,8 +59,7 @@ backward(g::SwapGate, Δ::AbstractMatrix) = g
 
 
 function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
-    # Note: following the ordering convention of `kron` here, i.e.,
-    # target qubits correspond to fastest varying index
+    # Note: target qubits correspond to fastest varying indices
     ControlledGate{M,N}(backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end]))
 end
 

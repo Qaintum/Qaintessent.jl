@@ -63,7 +63,6 @@ Construct a Directed Acyclic Graph to represent a cgc
 iwire::Union{AbstractVector{DagGate},Nothing}
     vector of all wires in circuit
 """
-
 mutable struct Dag
     iwire::AbstractVector{Union{DagGate,Nothing}}
     function Dag(size::Integer)
@@ -97,8 +96,8 @@ mutable struct Dag
 
         new(dgs)
     end
-
 end
+
 
 """
     Base.size(d::Dag)
@@ -135,6 +134,7 @@ function remove!(d::RefDagGate)
     return d
 end
 
+
 """
     insert!(loc::RefDagGate, d::RefDagGate)
 
@@ -166,18 +166,18 @@ function firstinsert!(loc::RefDagGate, d::RefDagGate)
     return loc
 end
 
+
 """
-    get_controls(cg::CircuitGate{N,M,G}) where {N,M,G <:ControlledGate{O,P}} where {O,P}
+    get_controls(cg::CircuitGate{N,M,G}) where {N,M,G<:ControlledGate{O,P}} where {O,P}
 
 returns control wires and target wires of `ControlledGate` object
 """
-function get_controls(cg::CircuitGate{N,M,G}) where {N,M,G <:ControlledGate{O,P}} where {O,P}
+function get_controls(cg::CircuitGate{N,M,G}) where {N,M,G<:ControlledGate{O,P}} where {O,P}
     num_gate_wires = O
     num_total_wires = P
-    iwire = cg.iwire
-    cntrl = iwire[1:P-O]
-    gate = iwire[end-O+1:end]
-    (cntrl,gate)
+    targt = cg.iwire[1:O]
+    cntrl = cg.iwire[O+1:end]
+    (cntrl, targt)
 end
 
 """
@@ -186,7 +186,7 @@ end
 returns control wires and target wires of `CircuitGate` object
 """
 function get_controls(cg::CircuitGate)
-    ((),cg.iwire)
+    ((), cg.iwire)
 end
 
 """
@@ -207,12 +207,11 @@ end
     methods checks to see if d1 can commute backwards to d2.
     note that d1 should be in front of d2
 """
-
 function check_comm(d1::RefDagGate, d2::RefDagGate)
     temp = d1[].prev
     d1cg = d1[].cg
     while !(d2[].cg === temp.cg)
-        if !iscommuting(temp.cg,d1cg)
+        if !iscommuting(temp.cg, d1cg)
             return false
         end
         temp = temp.prev
@@ -226,7 +225,7 @@ end
 
 returns true if given `ControlledGate{N}` objects `g1` and `g2` have the same base `AbstractGate` type
 """
-function match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
+function Base.match(g1::ControlledGate{N}, g2::ControlledGate{N}) where {N}
     if typeof(g1.U) != typeof(g2.U)
         return false
     end
@@ -238,7 +237,7 @@ end
 
 returns true if given `AbstractGate{N}` objects `g1` and `g2` have the same type
 """
-function match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
+function Base.match(g1::AbstractGate{N}, g2::AbstractGate{N}) where {N}
     if typeof(g1) != typeof(g2)
         return false
     end
@@ -250,7 +249,7 @@ end
 
 returns false as `AbstractGate` objects target a different number of wires
 """
-match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N} = false
+Base.match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N} = false
 
 
 """
@@ -258,13 +257,13 @@ match(g1::AbstractGate{M}, g2::AbstractGate{N}) where {M,N} = false
 
 checks if `RefDagGate` object `dag_ref` matches `DagGate` object `pattern_ref`
 """
-function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
-    if !match(dag_ref[].cg.gate,pattern_ref.cg.gate)
+function match!(dag_ref::RefDagGate, pattern_ref::DagGate)
+    if !match(dag_ref[].cg.gate, pattern_ref.cg.gate)
         return false
     end
 
     total_wires = get_total_wires(dag_ref[].cg)
-    refs = Vector{RefDagGate}(undef,total_wires)
+    refs = Vector{RefDagGate}(undef, total_wires)
     matched = RefDagGate[]
     for wire in dag_ref[].cg.iwire
         refs[wire] = dag_ref
@@ -279,7 +278,7 @@ function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
 
 
     while true
-        if !match(dag[].cg.gate,pattern.cg.gate)
+        if !match(dag[].cg.gate, pattern.cg.gate)
             while true
                 if !isnothing(dag[].next)
                     dag = Ref(dag[].next)
@@ -287,21 +286,22 @@ function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
                     return false
                 end
 
-                if match(dag[].cg.gate,pattern.cg.gate)
-                    for (i,wire) in enumerate(dag[].cg.iwire)
-                        if isassigned(refs,wire)
-                            check_comm(dag[].connected[i],refs[wire]) || return false
+                if match(dag[].cg.gate, pattern.cg.gate)
+                    for (i, wire) in enumerate(dag[].cg.iwire)
+                        if isassigned(refs, wire)
+                            check_comm(dag[].connected[i], refs[wire]) ||
+                                return false
                         end
                     end
-                    for (i,wire) in enumerate(dag[].cg.iwire)
+                    for (i, wire) in enumerate(dag[].cg.iwire)
                         refs[i] = dag
                     end
-                    push!(matched,dag)
+                    push!(matched, dag)
                     break
                 end
             end
         else
-            push!(matched,dag)
+            push!(matched, dag)
         end
 
         if isnothing(pattern.next)
@@ -314,16 +314,16 @@ function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
         pattern = pattern.next
     end
 
-    @assert length(matched) == length(pattern_ref)-1
+    @assert length(matched) == length(pattern_ref) - 1
     for dag in matched
         dwire = collect(dag[].cg.iwire)
         refwire = collect(dag_ref[].cg.iwire)
-        intersected_wires = intersect(dwire,refwire)
+        intersected_wires = intersect(dwire, refwire)
         for wire in intersected_wires
-            d1 = dag[].connected[indexin([wire],dwire)[1]]
-            d2 = dag_ref[].connected[indexin([wire],refwire)[1]]
+            d1 = dag[].connected[indexin([wire], dwire)[1]]
+            d2 = dag_ref[].connected[indexin([wire], refwire)[1]]
             if !(d1[].prev.cg === d2[].cg)
-                insert!(d2,remove!(d1))
+                insert!(d2, remove!(d1))
             end
         end
         dag_ref = Ref(dag_ref[].next)
@@ -332,34 +332,30 @@ function match!(dag_ref::RefDagGate,pattern_ref::DagGate)
 end
 
 
-
-
-"""
-N = 1
-"""
+# N = 1
 
 hadamard_inverse_cgc = CircuitGateChain{1}([single_qubit_circuit_gate(1, HadamardGate(), 1),
-                                single_qubit_circuit_gate(1, HadamardGate(), 1)])
+                                            single_qubit_circuit_gate(1, HadamardGate(), 1)])
 hadamard_inverse = Dag(hadamard_inverse_cgc).iwire[1].next
 
 hxh_cgc = CircuitGateChain{1}([single_qubit_circuit_gate(1, HadamardGate(), 1),
-                                single_qubit_circuit_gate(1, X, 1),
-                                single_qubit_circuit_gate(1, HadamardGate(), 1)])
+                               single_qubit_circuit_gate(1, X, 1),
+                               single_qubit_circuit_gate(1, HadamardGate(), 1)])
 hxh = Dag(hxh_cgc).iwire[1].next
 hzh_cgc = CircuitGateChain{1}([single_qubit_circuit_gate(1, HadamardGate(), 1),
                                 single_qubit_circuit_gate(1, Z, 1),
                                 single_qubit_circuit_gate(1, HadamardGate(), 1)])
 hzh = Dag(hzh_cgc).iwire[1].next
-"""
-N = 2
-"""
+
+# N = 2
+
 hcxh_cgc = CircuitGateChain{2}([single_qubit_circuit_gate(1, HadamardGate(), 2),
-                                controlled_circuit_gate((2), 1, X, 2),
+                                controlled_circuit_gate(1, 2, X, 2),
                                 single_qubit_circuit_gate(1, HadamardGate(), 2)])
 hcxh = Dag(hcxh_cgc).iwire[1].next
 
 hczh_cgc = CircuitGateChain{2}([single_qubit_circuit_gate(1, HadamardGate(), 2),
-                                controlled_circuit_gate((2), 1, Z, 2),
+                                controlled_circuit_gate(1, 2, Z, 2),
                                 single_qubit_circuit_gate(1, HadamardGate(), 2)])
 hczh = Dag(hczh_cgc).iwire[1].next
 
@@ -368,7 +364,7 @@ function hadamard_inverse_opt(d::RefDagGate)
 end
 
 function hxh_opt(d::RefDagGate)
-    _,wires = get_controls(d[].cg)
+    _, wires = get_controls(d[].cg)
     cg = single_qubit_circuit_gate(wires[1],Z,length(wires))
     d[].cg = cg
     remove!(remove!(Ref(d[].next)))
@@ -376,21 +372,21 @@ function hxh_opt(d::RefDagGate)
 end
 
 function hzh_opt(d::RefDagGate)
-    _,wires = get_controls(d[].cg)
-    cg = single_qubit_circuit_gate(wires[1],X,length(wires))
+    _, wires = get_controls(d[].cg)
+    cg = single_qubit_circuit_gate(wires[1], X, length(wires))
     d[].cg = cg
     remove!(remove!(Ref(d[].next)))
     return d
 end
 
 function hcxh_opt(d::RefDagGate)
-    cntrl,wires = get_controls(d[].next.cg)
+    cntrl, wires = get_controls(d[].next.cg)
 
     con = RefDagGate[]
-    cg = controlled_circuit_gate(cntrl[1],wires[1],Z,length(d[].next.cg.iwire))
+    cg = controlled_circuit_gate(wires[1], cntrl[1], Z, length(d[].next.cg.iwire))
 
     d[].next.cg = cg
-    c = d[].next.connected[1]
+    c = d[].next.connected[end]
     c[].cg = cg
 
     remove!(Ref(d[].next.next))
@@ -398,13 +394,13 @@ function hcxh_opt(d::RefDagGate)
 end
 
 function hczh_opt(d::RefDagGate)
-    cntrl,wires = get_controls(d[].next.cg)
+    cntrl, wires = get_controls(d[].next.cg)
 
     con = RefDagGate[]
-    cg = controlled_circuit_gate(cntrl[1],wires[1],X,length(d[].next.cg.iwire))
+    cg = controlled_circuit_gate(wires[1], cntrl[1], X, length(d[].next.cg.iwire))
 
     d[].next.cg = cg
-    c = d[].next.connected[1]
+    c = d[].next.connected[end]
     c[].cg = cg
 
     remove!(Ref(d[].next.next))
@@ -425,11 +421,11 @@ optimizes `Dag` object by removing Hadamard gates. based on optimization algorit
 """
 function opt_hadamard(dag::Dag)
     for i in 1:length(dag.iwire)
-        d = Ref(Ref(dag.iwire,i)[].next)
+        d = Ref(Ref(dag.iwire, i)[].next)
         while !isnothing(d[]) && !isnothing(d[].cg)
             if typeof(d[].cg.gate) == HadamardGate
                 for pattern in keys(hadamard_patterns)
-                    if match!(d,pattern)
+                    if match!(d, pattern)
                         hadamard_patterns[pattern](d)
                         break
                     end
@@ -441,6 +437,7 @@ function opt_hadamard(dag::Dag)
     return dag
 end
 
+
 """
     opt_adjoint(dag::Dag)
 
@@ -448,21 +445,21 @@ basic optimization to remove adjoint gates. based on optimization algorithm from
 """
 function opt_adjoint(dag::Dag)
     for i in 1:length(dag.iwire)
-        d = Ref(Ref(dag.iwire,i)[].next)
+        d = Ref(Ref(dag.iwire, i)[].next)
         while !isnothing(d[]) && !isnothing(d[].cg)
             ref = Ref(d[].next)
             adj = typeof(adjoint(d[].cg))
             while !isnothing(ref[]) && !isnothing(ref[].cg)
                 iscomm = true
                 if typeof(ref[].cg) == adj && get_controls(ref[].cg) == get_controls(d[].cg)
-                    for (rtemp,dtemp) in zip(ref[].connected,d[].connected)
-                        if !check_comm(rtemp,dtemp)
+                    for (rtemp, dtemp) in zip(ref[].connected, d[].connected)
+                        if !check_comm(rtemp, dtemp)
                             iscomm = false
                             break
                         end
                     end
                     iscomm || break
-                    for (rtemp,dtemp) in zip(ref[].connected,d[].connected)
+                    for (rtemp, dtemp) in zip(ref[].connected, d[].connected)
                         remove!(rtemp)
                         remove!(dtemp)
                     end
@@ -531,23 +528,23 @@ end
 
 appends `DagGate` object to `AbstractVector`
 """
-    function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag,dg::DagGate) where {N}
-        for j in dg.cg.iwire
-            while !(dag.iwire[j].cg === dg.cg)
-                dag = append_gate!(cgs,dag,dag.iwire[j])
-            end
-            dag.iwire[j] = dag.iwire[j].next
+function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag, dg::DagGate) where {N}
+    for j in dg.cg.iwire
+        while !(dag.iwire[j].cg === dg.cg)
+            dag = append_gate!(cgs,dag,dag.iwire[j])
         end
-        push!(cgs,dg.cg)
-        return dag
+        dag.iwire[j] = dag.iwire[j].next
     end
+    push!(cgs,dg.cg)
+    return dag
+end
+
 
 """
     CircuitGateChain(dag_ref::Dag)
 
 converts `Dag` object to `CircuitGateChain` object
 """
-
 function CircuitGateChain(dag_ref::Dag)
     dag = deepcopy(dag_ref)
     N = length(dag.iwire)
@@ -559,7 +556,7 @@ function CircuitGateChain(dag_ref::Dag)
 
     for i in 1:N
         while !isnothing(dag.iwire[i])
-            dag = append_gate!(cgs,dag,dag.iwire[i])
+            dag = append_gate!(cgs, dag, dag.iwire[i])
         end
     end
     CircuitGateChain{N}(cgs)

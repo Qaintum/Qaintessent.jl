@@ -8,26 +8,26 @@ using Qaintessent
     N = 5
     cgc = CircuitGateChain{N}([
         single_qubit_circuit_gate(3, HadamardGate(), N),
-        controlled_circuit_gate((1, 4), 2, RxGate(√0.2), N),
-        controlled_circuit_gate((2,4), (1,5), SwapGate(), N),
+        controlled_circuit_gate(2, (1, 4), RxGate(√0.2), N),
+        controlled_circuit_gate((1,5), (2,4), SwapGate(), N),
         single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
         single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N),
         two_qubit_circuit_gate(1,2, SwapGate(), N),
-        controlled_circuit_gate(4, (3,5), SwapGate(), N),
+        controlled_circuit_gate((3,5), 4, SwapGate(), N),
     ])
 
     cgc_refstring =
         "\n" *
-        "    1 ————————•—————x————[Ry]———x———\n" *
-        "              |     |           |   \n" *
-        "    2 ———————[Rx]———•————[Pϕ]———x———\n" *
-        "              |     |               \n" *
-        "    3 —[H ]——————————————[Rθ]———x———\n" *
-        "              |     |           |   \n" *
-        "    4 ————————•—————•———————————•———\n" *
+        "    5 ——————————————x———————————x———\n" *
         "                    |           |   \n" *
-        "    5 ——————————————x———————————x———\n"
+        "    4 ————————•—————•———————————•———\n" *
+        "              |     |           |   \n" *
+        "    3 —[H ]——————————————[Rθ]———x———\n" *
+        "              |     |               \n" *
+        "    2 ———————[Rx]———•————[Pϕ]———x———\n" *
+        "              |     |           |   \n" *
+        "    1 ————————•—————x————[Ry]———x———\n"
 
     io = IOBuffer()
     show(io, cgc)
@@ -42,27 +42,27 @@ end
     cgc = CircuitGateChain{N}([
         Moment{N}(
         [single_qubit_circuit_gate(3, HadamardGate(), N),
-        controlled_circuit_gate((1, 4), 2, RxGate(√0.2), N)]
+        controlled_circuit_gate(2, (1, 4), RxGate(√0.2), N)]
         ),
-        Moment{N}(controlled_circuit_gate((2,4), (1,5), SwapGate(), N)),
+        Moment{N}(controlled_circuit_gate((1,5), (2,4), SwapGate(), N)),
         Moment{N}([single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
         single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N)]),
         Moment{N}([two_qubit_circuit_gate(1,2, SwapGate(), N),
-        controlled_circuit_gate(4, (3,5), SwapGate(), N)]),
+        controlled_circuit_gate((3,5), 4, SwapGate(), N)]),
     ])
 
     cgc_refstring =
         "\n" *
-        "    1 ————————•—————x————[Ry]———x———\n" *
-        "              |     |           |   \n" *
-        "    2 ———————[Rx]———•————[Pϕ]———x———\n" *
-        "              |     |               \n" *
-        "    3 —[H ]——————————————[Rθ]———x———\n" *
-        "              |     |           |   \n" *
-        "    4 ————————•—————•———————————•———\n" *
+        "    5 ——————————————x———————————x———\n" *
         "                    |           |   \n" *
-        "    5 ——————————————x———————————x———\n"
+        "    4 ————————•—————•———————————•———\n" *
+        "              |     |           |   \n" *
+        "    3 —[H ]——————————————[Rθ]———x———\n" *
+        "              |     |               \n" *
+        "    2 ———————[Rx]———•————[Pϕ]———x———\n" *
+        "              |     |           |   \n" *
+        "    1 ————————•—————x————[Ry]———x———\n"
 
     io = IOBuffer()
     show(io, cgc)
@@ -79,15 +79,15 @@ end
 
     m_refstring =
         "\n" *
-        "    1 ...|—[Ry]—|...\n" *
-        "         |      |   \n" *
-        "    2 ...|—[Pϕ]—|...\n" *
-        "         |      |   \n" *
-        "    3 ...|—[Rθ]—|...\n" *
+        "    5 ...|——————|...\n" *
         "         |      |   \n" *
         "    4 ...|——————|...\n" *
         "         |      |   \n" *
-        "    5 ...|——————|...\n" *
+        "    3 ...|—[Rθ]—|...\n" *
+        "         |      |   \n" *
+        "    2 ...|—[Pϕ]—|...\n" *
+        "         |      |   \n" *
+        "    1 ...|—[Ry]—|...\n" *
         "\n"
     io = IOBuffer()
     show(io, [m])
@@ -96,19 +96,19 @@ end
     m = Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
         single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        controlled_circuit_gate((2), (4), HadamardGate(), N)])
+        controlled_circuit_gate((4), (2), HadamardGate(), N)])
 
     m_refstring =
         "\n" *
-        "    1 ...|—[Ry]———————|...\n" *
+        "    5 ...|—[Pϕ]———————|...\n" *
         "         |            |   \n" *
-        "    2 ...|————————•———|...\n" *
+        "    4 ...|———————[H ]—|...\n" *
         "         |        |   |   \n" *
         "    3 ...|—[Rθ]———————|...\n" *
         "         |        |   |   \n" *
-        "    4 ...|———————[H ]—|...\n" *
+        "    2 ...|————————•———|...\n" *
         "         |            |   \n" *
-        "    5 ...|—[Pϕ]———————|...\n" *
+        "    1 ...|—[Ry]———————|...\n" *
         "\n"
 
     io = IOBuffer()
@@ -118,35 +118,35 @@ end
     m = [Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
         single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        controlled_circuit_gate((2), (4), HadamardGate(), N)]),
+        controlled_circuit_gate((4), (2), HadamardGate(), N)]),
         Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
         single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
         single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        controlled_circuit_gate((2), (4), HadamardGate(), N)]),
+        controlled_circuit_gate((4), (2), HadamardGate(), N)]),
         ]
 
     m_refstring =
         "Array{Moment{5},1}[\n" *
-        "    1 ...|—[Ry]———————|...\n" *
+        "    5 ...|—[Pϕ]———————|...\n" *
         "         |            |   \n" *
-        "    2 ...|————————•———|...\n" *
+        "    4 ...|———————[H ]—|...\n" *
         "         |        |   |   \n" *
         "    3 ...|—[Rθ]———————|...\n" *
         "         |        |   |   \n" *
-        "    4 ...|———————[H ]—|...\n" *
-        "         |            |   \n" *
-        "    5 ...|—[Pϕ]———————|...\n" *
-        "\n" *
-        "\n" *
-        "    1 ...|—[Ry]———————|...\n" *
-        "         |            |   \n" *
         "    2 ...|————————•———|...\n" *
+        "         |            |   \n" *
+        "    1 ...|—[Ry]———————|...\n" *
+        "\n" *
+        "\n" *
+        "    5 ...|—[Pϕ]———————|...\n" *
+        "         |            |   \n" *
+        "    4 ...|———————[H ]—|...\n" *
         "         |        |   |   \n" *
         "    3 ...|—[Rθ]———————|...\n" *
         "         |        |   |   \n" *
-        "    4 ...|———————[H ]—|...\n" *
+        "    2 ...|————————•———|...\n" *
         "         |            |   \n" *
-        "    5 ...|—[Pϕ]———————|...\n" *
+        "    1 ...|—[Ry]———————|...\n" *
         "\n]"
 
     io = IOBuffer()
@@ -160,7 +160,7 @@ end
     m_refstring =
     "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]), Int64[])\n" *
     "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]), Int64[])\n" *
-    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()), Int64[])\n" *
+    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()), Union{Int64, Expr}[])\n" *
     "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]), Int64[])\n"
 
     io = IOBuffer()
