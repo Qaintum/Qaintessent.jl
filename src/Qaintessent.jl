@@ -83,13 +83,19 @@ export
     Dag,
     optimize!
 
+include("zx.jl")
+export
+    ZXNode,
+    ZXCircuit,
+    zx_decompose
+
 include("openqasm/grammar.jl")
 include("openqasm/gate_transformers.jl")
 
 include("openqasm/transform_qasm.jl")
 export
     qasm2cgc
-    
+
 include("openqasm/transform_cgc.jl")
 export
     cgc2qasm
