@@ -7,36 +7,37 @@ function qft_circuit(N)
     main = vcat([
             [j == i ?
              single_qubit_circuit_gate(i, HadamardGate(), N) :
-             controlled_circuit_gate(j, i, PhaseShiftGate(2π/2^(j-i+1)), N) for j in i:N]
-        for i in 1:N]...)
+             controlled_circuit_gate(i, j, PhaseShiftGate(2π/2^(j-i+1)), N) for j in N:-1:i]
+        for i in N:-1:1]...)
     swap = [two_qubit_circuit_gate(i, N-i+1, SwapGate(), N) for i in 1:(N÷2)]
     CircuitGateChain{N}(N > 1 ? [main; swap] : main)
 end
 
+
 """
-    toffoli_circuit(cntrl, trg, N)
+    toffoli_circuit(trg, cntrl, N)
 
 construct the circuit for decomposing the Toffoli gate in Figure 4.9 of Nielsen and Chuang (2000). the constructed toffoli gate acts in circuit of `N` qubits, has controls
     on wires in Tuple `cntrl` and has target on wire `trg`.
 returns a `CircuitGateChain{N}` object.
 """
-function toffoli_circuit(cntrl::Tuple{<:Integer,<:Integer} , trg::Integer, N::Integer)
+function toffoli_circuit(trg::Integer, cntrl::Tuple{<:Integer,<:Integer}, N::Integer)
     CircuitGateChain{N}([
         single_qubit_circuit_gate(trg,                HadamardGate(), N),
-        controlled_circuit_gate(  cntrl[2], trg,      X,              N),
+        controlled_circuit_gate(  trg, cntrl[2],      X,              N),
         single_qubit_circuit_gate(trg,                TdagGate(),     N),
-        controlled_circuit_gate(  cntrl[1], trg,      X,              N),
+        controlled_circuit_gate(  trg, cntrl[1],      X,              N),
         single_qubit_circuit_gate(trg,                TGate(),        N),
-        controlled_circuit_gate(  cntrl[2], trg,      X,              N),
+        controlled_circuit_gate(  trg, cntrl[2],      X,              N),
         single_qubit_circuit_gate(trg,                TdagGate(),     N),
-        controlled_circuit_gate(  cntrl[1], trg,      X,              N),
+        controlled_circuit_gate(  trg, cntrl[1],      X,              N),
         single_qubit_circuit_gate(trg,                TGate(),        N),
         single_qubit_circuit_gate(cntrl[2],           TGate(),        N),
-        controlled_circuit_gate(  cntrl[1], cntrl[2], X,              N),
+        controlled_circuit_gate(  cntrl[2], cntrl[1], X,              N),
         single_qubit_circuit_gate(trg,                HadamardGate(), N),
         single_qubit_circuit_gate(cntrl[1],           TGate(),        N),
         single_qubit_circuit_gate(cntrl[2],           TdagGate(),     N),
-        controlled_circuit_gate(  cntrl[1], cntrl[2], X,              N),
+        controlled_circuit_gate(  cntrl[2], cntrl[1], X,              N),
     ])
 end
 
@@ -62,36 +63,34 @@ function vbe_adder_circuit(N::Integer)
     M = 3N + 1
     carry(a,b,c,d) = CircuitGateChain{M}(
     [
-        controlled_circuit_gate((b, c), d, X, M),
-        controlled_circuit_gate(b, c, X, M),
-        controlled_circuit_gate((a, c), d, X, M),
+        controlled_circuit_gate(d, (b, c), X, M),
+        controlled_circuit_gate(c, b, X, M),
+        controlled_circuit_gate(d, (a, c), X, M),
     ])
     rcarry(a,b,c,d) = CircuitGateChain{M}(
     [
-        controlled_circuit_gate((a, c), d, X, M),
-        controlled_circuit_gate(b, c, X, M),
-        controlled_circuit_gate((b, c), d, X, M),
+        controlled_circuit_gate(d, (a, c), X, M),
+        controlled_circuit_gate(c, b, X, M),
+        controlled_circuit_gate(d, (b, c), X, M),
     ])
     sum(a,b,c) = CircuitGateChain{M}(
     [
-        controlled_circuit_gate(b, c, X, M),
-        controlled_circuit_gate(a, c, X, M),
+        controlled_circuit_gate(c, b, X, M),
+        controlled_circuit_gate(c, a, X, M),
     ])
     rsum(a,b,c) = CircuitGateChain{M}(
     [
-        controlled_circuit_gate(a, c, X, M),
-        controlled_circuit_gate(b, c, X, M),
+        controlled_circuit_gate(c, a, X, M),
+        controlled_circuit_gate(c, b, X, M),
     ])
-
-    cgc = carry(N+1, M, M-N, N)
+    cgc = carry(2N+1, 1, N+1, 2N+2)
     for i in 2:N
-        cgc = cgc*carry(N+2-i, M+1-i, M+1-N-i, N+1-i)
+        cgc = cgc*carry(2N+i, i, N+i, 2N+i+1)
     end
 
-    cgc = cgc*CircuitGateChain{M}([controlled_circuit_gate(M-N+1, M-2N+1, X, M)]) *
-            sum(2, M-N+1, M-2N+1)
+    cgc = cgc*CircuitGateChain{M}([controlled_circuit_gate(2N, N, X, M)]) * sum(3N, N, 2N)
     for i in N-1:-1:1
-        cgc = cgc*rcarry(N+2-i, M+1-i, M+1-N-i, N+1-i) * sum(N+2-i, M+1-i, M+1-N-i)
+        cgc = cgc*rcarry(2N+i, i, N+i, 2N+i+1) * sum(2N+i, i, N+i)
     end
     return cgc
 end
@@ -108,12 +107,16 @@ function p_round(P::Function, M::Integer, N::Integer)
     for t in 1:tmax
         mmax = floor(Int, N/2^t) - 1
         for m in 1:mmax
-            push!(pchain, controlled_circuit_gate((P(t-1, 2m), P(t-1, 2m+1)), P(t, m), X, M))
+            push!(pchain, controlled_circuit_gate(P(t, m), (P(t-1, 2m), P(t-1, 2m+1)), X, M))
         end
     end
     return pchain
 end
 
+"""
+    p_round(P, M, N)
+        execute a P round for qcla algorithms
+"""
 function p_round(P::Function, M::Integer, N::Integer, Ñ::Integer)
     # Add gates for P rounds
     pchain = CircuitGate{<:Any,M,<:Any}[]
@@ -121,7 +124,7 @@ function p_round(P::Function, M::Integer, N::Integer, Ñ::Integer)
     for t in 1:tmax
         mmax = floor(Int, Ñ/2^t) - 1
         for m in 1:mmax
-            push!(pchain, controlled_circuit_gate((P(t-1, 2m), P(t-1, 2m+1)), P(t, m), X, M))
+            push!(pchain, controlled_circuit_gate(P(t, m), (P(t-1, 2m), P(t-1, 2m+1)), X, M))
         end
     end
     return pchain
@@ -138,7 +141,7 @@ function g_round(P::Function, G::Function, M::Integer, N::Integer)
     for t in 1:tmax
         mmax = floor(Int, N/2^t) - 1
         for m in 0:mmax
-            push!(gchain, controlled_circuit_gate(( G(2^t*m+2^(t-1)) , P(t-1, 2m+1)), G(2^t*m + 2^t), X, M))
+            push!(gchain, controlled_circuit_gate(G(2^t*m + 2^t), (G(2^t*m+2^(t-1)) , P(t-1, 2m+1)), X, M))
         end
     end
     return gchain
@@ -151,7 +154,7 @@ function g_round(P::Function, G::Function, M::Integer, N::Integer, Ñ::Integer)
     for t in 1:tmax
         mmax = floor(Int, Ñ/2^t) - 1
         for m in 0:mmax
-            push!(gchain, controlled_circuit_gate(( G(2^t*m+2^(t-1)) , P(t-1, 2m+1)), G(2^t*m + 2^t), X, M))
+            push!(gchain, controlled_circuit_gate(G(2^t*m + 2^t), (G(2^t*m+2^(t-1)), P(t-1, 2m+1)), X, M))
         end
     end
     return gchain
@@ -166,7 +169,7 @@ function c_round(P::Function, G::Function, M::Integer, N::Integer)
     for t in tmax:-1:1
         mmax = floor(Int, (N-2^(t-1))/2^t)
         for m in 1:mmax
-            push!(cchain, controlled_circuit_gate(( G(2^t*m) , P(t-1, 2m)), G(2^t*m + 2^(t-1)), X, M))
+            push!(cchain, controlled_circuit_gate(G(2^t*m + 2^(t-1)), (G(2^t*m), P(t-1, 2m)), X, M))
         end
     end
     return cchain
@@ -178,7 +181,7 @@ function c_round(P::Function, G::Function, M::Integer, N::Integer, Ñ::Integer)
     for t in tmax:-1:1
         mmax = floor(Int, (Ñ-2^(t-1))/2^t)
         for m in 1:mmax
-            push!(cchain, controlled_circuit_gate(( G(2^t*m) , P(t-1, 2m)), G(2^t*m + 2^(t-1)), X, M))
+            push!(cchain, controlled_circuit_gate(G(2^t*m + 2^(t-1)), (G(2^t*m), P(t-1, 2m)), X, M))
         end
     end
     return cchain
@@ -186,41 +189,30 @@ end
 
 """
     qcla_out_adder_circuit(N)
-
 Construct an out-of-place adder for 2 integers represented by `N` qubits. returns a `CircuitGateChain{3N+1}` object.
 Based on quantum carry-lookahead adder circuit by Draper et. al (Quant. Inf. Comp. 6, 351-369 (2006), arXiv:quant-ph/0406142)
 Returns a CircuitGateChain{3N+1} as there are N+1 ancillary wires
-
 If the two added integers are represented as:
-
 ``A = a_{0}\\times 2^{0} + a_{1} \\times 2^{1} + a_{2} \\times 2^{2} + .. + a_{N} \\times 2^{N} \\\\ B = b_{0}\\times 2^{0} + b_{1} \\times 2^{1} + b_{2} \\times 2^{2} + .. + b_{N} \\times 2^{N}``
-
 The input index should be ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N} + 1`` as Julia starts indexing at `1` and ``a_{0}`` as the fastest running index
-
 The output index will be in the form ``a_{0}a_{1}a_{2}..a_{N}b_{0}b_{1}b_{2}..b_{N}c_{0}c_{1}c_{2}..c_{N+1} + 1`` where:
-
 ``C = A+B = c_{0}\\times 2^{0} + c_{1} \\times 2^{1} + c_{2} \\times 2^{2} + ... + c_{N+1} \\times 2^{N+1}``
 """
 function qcla_out_adder_circuit(N)
 
-    n = 1
-    anc = 0
-    while 2^n < N
-        anc += N ÷ 2^n -1
-        n += 1
-    end
+    anc = N - count_ones(N) - floor(Int, log(N))
     M = 3N + anc + 1
 
     function a(m::Integer)
-        M - m
+        m + 1
     end
 
     function b(m::Integer)
-        M - N - m
+        N + m + 1
     end
 
     function s(m::Integer)
-        M - 2N - m
+        2N + m + 1
     end
 
     function G(m::Integer)
@@ -236,14 +228,15 @@ function qcla_out_adder_circuit(N)
             m += floor(Int, N/2^(l-1)-1)
             l -= 1
         end
-        m
+        3N + 1 + m
     end
 
     setup = CircuitGate{<:Any,M,<:Any}[]
-    push!(setup, controlled_circuit_gate((a(0), b(0)), s(1), X, M))
+
+    push!(setup, controlled_circuit_gate(s(1), (a(0), b(0)), X, M))
     for i in 1:N-1
-        push!(setup, controlled_circuit_gate((a(i), b(i)), s(i+1), X, M))
-        push!(setup, controlled_circuit_gate(a(i), b(i), X, M))
+        push!(setup, controlled_circuit_gate(s(i+1), (a(i), b(i)), X, M))
+        push!(setup, controlled_circuit_gate(b(i), a(i), X, M))
     end
     cgc = CircuitGateChain{M}(setup)
 
@@ -265,11 +258,11 @@ function qcla_out_adder_circuit(N)
     # Teardown
     teardown = CircuitGate{<:Any,M,<:Any}[]
 
-    push!(teardown, controlled_circuit_gate(b(0), s(0), X, M))
-    push!(teardown, controlled_circuit_gate(a(0), s(0), X, M))
+    push!(teardown, controlled_circuit_gate(s(0), b(0), X, M))
+    push!(teardown, controlled_circuit_gate(s(0), a(0), X, M))
     for i in 1:N-1
-        push!(teardown, controlled_circuit_gate(b(i), s(i), X, M))
-        push!(teardown, controlled_circuit_gate(a(i), b(i), X, M))
+        push!(teardown, controlled_circuit_gate(s(i), b(i), X, M))
+        push!(teardown, controlled_circuit_gate(b(i), a(i), X, M))
     end
 
     cgc *= CircuitGateChain{M}(teardown)
@@ -305,17 +298,18 @@ function qcla_inplace_adder_circuit(N)
 
     function a(m::Integer)
         m < N || error("a only takes m < N")
-        M - m
+        m + 1
     end
 
     function b(m::Integer)
         m < N || error("b only takes m < N")
-        M - N - m
+        N + m + 1
     end
 
     function G(m::Integer)
         m > 0 || error("G only takes positive integers")
-        anc + m
+        M - anc - m + 1
+        # 2N + m
     end
 
     function s(m::Integer)
@@ -335,14 +329,14 @@ function qcla_inplace_adder_circuit(N)
             m += floor(Int, N/2^(l-1)-1)
             l -= 1
         end
-        m
+        3N + m
     end
 
     # setup
     setup = CircuitGate{<:Any,M,<:Any}[]
     for i in 0:N-1
-        push!(setup, controlled_circuit_gate((a(i), b(i)), G(i+1), X, M))
-        push!(setup, controlled_circuit_gate(a(i), b(i), X, M))
+        push!(setup, controlled_circuit_gate(G(i+1), (a(i), b(i)), X, M))
+        push!(setup, controlled_circuit_gate(b(i), a(i), X, M))
     end
     setup = CircuitGateChain{M}(setup)
 
@@ -366,12 +360,12 @@ function qcla_inplace_adder_circuit(N)
 
     push!(intermediate, single_qubit_circuit_gate(b(0), X, M))
     for i in 1:N-2
-        push!(intermediate, controlled_circuit_gate(G(i), b(i), X, M))
+        push!(intermediate, controlled_circuit_gate(b(i), G(i), X, M))
         push!(intermediate, single_qubit_circuit_gate(b(i), X, M))
-        push!(intermediate, controlled_circuit_gate(a(i), b(i), X, M))
+        push!(intermediate, controlled_circuit_gate(b(i), a(i), X, M))
     end
     if N > 1
-        push!(intermediate, controlled_circuit_gate(G(N-1), b(N-1), X, M))
+        push!(intermediate, controlled_circuit_gate(b(N-1), G(N-1), X, M))
     end
 
     if N > 1
@@ -389,12 +383,12 @@ function qcla_inplace_adder_circuit(N)
     teardown = CircuitGate{<:Any,M,<:Any}[]
 
     if N > 1
-        push!(teardown, controlled_circuit_gate( (a(0), b(0)), G(1), X, M))
+        push!(teardown, controlled_circuit_gate(G(1), (a(0), b(0)), X, M))
     end
     push!(teardown, single_qubit_circuit_gate(b(0), X, M))
     for i in 1:N-2
-        push!(teardown, controlled_circuit_gate(a(i), b(i), X, M))
-        push!(teardown, controlled_circuit_gate( (a(i), b(i)), G(i+1), X, M))
+        push!(teardown, controlled_circuit_gate(b(i), a(i), X, M))
+        push!(teardown, controlled_circuit_gate(G(i+1), (a(i), b(i)), X, M))
         push!(teardown, single_qubit_circuit_gate(b(i), X, M))
     end
 

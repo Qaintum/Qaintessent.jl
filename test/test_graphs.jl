@@ -20,7 +20,7 @@ using Qaintessent
     cgc(θ, ϕ, χ, ωn) = CircuitGateChain{N}([
         single_qubit_circuit_gate(1, X, N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
-        controlled_circuit_gate((2), 1, Z, N),
+        controlled_circuit_gate(1, 2, Z, N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
         single_qubit_circuit_gate(1, X, N),
         single_qubit_circuit_gate(2, Z, N),
@@ -33,9 +33,9 @@ using Qaintessent
 
     cgc_refstring =
         "\n" *
-        "    1 —[X ]—————————————\n" *
+        "    2 ——•————[Z ]——[Y ]—\n" *
         "        |               \n" *
-        "    2 ——•————[Z ]——[Y ]—\n"
+        "    1 —[X ]—————————————\n"
 
     io = IOBuffer()
     show(io, cgc)
