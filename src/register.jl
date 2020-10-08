@@ -58,7 +58,7 @@ create expression to verify that classical register is equal to integer value `v
 """
 function reg_check(c::Qaintessent.CRegister, val::Int)
     r = Ref(c.n)
-    return :(bit2int($r[])==$val)
+    return :(Qaintessent.bit2int($r[])==$val)
 end
 
 """
