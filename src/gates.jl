@@ -29,9 +29,9 @@ Pauli Z gate
 """
 struct ZGate <: AbstractGate{1} end
 
-matrix(::XGate) = [0.  1.; 1.  0.]
+matrix(::XGate) = ComplexF64[0.  1.; 1.  0.]
 matrix(::YGate) = [0. -im; im  0.]
-matrix(::ZGate) = [1.  0.; 0. -1.]
+matrix(::ZGate) = ComplexF64[1.  0.; 0. -1.]
 
 LinearAlgebra.ishermitian(::XGate) = true
 LinearAlgebra.ishermitian(::YGate) = true
@@ -155,7 +155,7 @@ end
 function matrix(g::RyGate)
     c = cos(g.θ[]/2)
     s = sin(g.θ[]/2)
-    [c -s; s c]
+    ComplexF64[c -s; s c]
 end
 
 function LinearAlgebra.ishermitian(g::RyGate)
@@ -267,7 +267,7 @@ Swap gate
 struct SwapGate <: AbstractGate{2} end
 
 
-matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
+matrix(::SwapGate) = ComplexF64[1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 
 # swap gate is Hermitian
 LinearAlgebra.ishermitian(::SwapGate) = true
@@ -277,15 +277,16 @@ Base.adjoint(s::SwapGate) = s
 """
 General controlled gate: the `M` wires corresponding to the fastest running indices are the target and the remaining `N - M` wires the control
 """
-struct ControlledGate{M,N} <: AbstractGate{N}
+struct ControlledGate{M,N,G} <: AbstractGate{N}
     U::AbstractGate{M}
-    function ControlledGate{M,N}(U::AbstractGate{M}) where {M,N}
+    function ControlledGate{M,N,G}(U::AbstractGate{M}) where {M,N,G}
         M < N || error("Number of target wires of a controlled gate must be smaller than overall number of wires.")
-        new{M,N}(U)
+        g = typeof(U)
+        new{M,N,g}(U)
     end
 end
 
-function matrix(g::ControlledGate{M,N}) where {M,N}
+function matrix(g::ControlledGate{M,N,G}) where {M,N,G}
     Umat = matrix(g.U)
     CU = sparse(one(eltype(Umat)) * I, 2^N, 2^N)
     # Note: target qubit(s) corresponds to fastest varying index
@@ -293,13 +294,13 @@ function matrix(g::ControlledGate{M,N}) where {M,N}
     return CU
 end
 
-LinearAlgebra.ishermitian(g::ControlledGate{M,N}) where {M,N} =
+LinearAlgebra.ishermitian(g::ControlledGate{M,N,G}) where {M,N,G} =
     LinearAlgebra.ishermitian(g.U)
 
-Base.adjoint(g::ControlledGate{M,N}) where {M,N} =
-    ControlledGate{M,N}(Base.adjoint(g.U))
+Base.adjoint(g::ControlledGate{M,N,G}) where {M,N,G} =
+    ControlledGate{M,N,G}(Base.adjoint(g.U))
 
-controlled_not() = ControlledGate{1,2}(X)
+controlled_not() = ControlledGate{1,2,XGate}(X)
 
 isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 

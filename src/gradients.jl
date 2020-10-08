@@ -58,9 +58,9 @@ end
 backward(g::SwapGate, Δ::AbstractMatrix) = g
 
 
-function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
+function backward(g::ControlledGate{M,N,G}, Δ::AbstractMatrix) where {M,N,G}
     # Note: target qubits correspond to fastest varying indices
-    ControlledGate{M,N}(backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end]))
+    ControlledGate{M,N,G}(backward(g.U, Δ[end-2^M+1:end, end-2^M+1:end]))
 end
 
 

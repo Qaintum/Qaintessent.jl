@@ -248,7 +248,7 @@ function controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::NTuple{K,
     C + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
     length(intersect(itarget, icntrl)) == 0 || error("Control and target wires must be disjoint.")
 
-    CircuitGate((itarget..., icntrl...), ControlledGate{M,C+M}(U), N, ccntrl)
+    CircuitGate((itarget..., icntrl...), ControlledGate{M,C+M,typeof(U)}(U), N, ccntrl)
 end
 
 # control with QRegisters

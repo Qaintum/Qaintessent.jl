@@ -26,7 +26,7 @@ end
     cgc = toffoli_circuit(1, (3, 2), N)
 
     # reference
-    toffoli = ControlledGate{1,N}(X)
+    toffoli = ControlledGate{1,N,XGate}(X)
 
     @test Qaintessent.matrix(toffoli) ≈ Qaintessent.matrix(cgc)
 end

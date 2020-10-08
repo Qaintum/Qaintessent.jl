@@ -114,9 +114,9 @@ end
         cntrl_iwire = rand(1:N)
         targ_iwire = rand(vcat(1:cntrl_iwire-1..., cntrl_iwire+1:N...))
         g = YGate()
-        @test controlled_circuit_gate( targ_iwire,   cntrl_iwire,   g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2}(g), N)
-        @test controlled_circuit_gate( targ_iwire,  (cntrl_iwire,), g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2}(g), N)
-        @test controlled_circuit_gate((targ_iwire,), cntrl_iwire,   g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2}(g), N)
+        @test controlled_circuit_gate( targ_iwire,   cntrl_iwire,   g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2,YGate}(g), N)
+        @test controlled_circuit_gate( targ_iwire,  (cntrl_iwire,), g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2,YGate}(g), N)
+        @test controlled_circuit_gate((targ_iwire,), cntrl_iwire,   g, N) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate{1,2,YGate}(g), N)
     end
 end
 
@@ -232,7 +232,7 @@ end
 
     noncomm_gate_1 = single_qubit_circuit_gate(1, HadamardGate(), N)
     noncomm_gate_2 = single_qubit_circuit_gate(1, X, N)
-    
+
     @test_throws ErrorException("Measurement operators must pairwise commute.") MeasurementOps{N}([noncomm_gate_1, noncomm_gate_2])
 end
 
