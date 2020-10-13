@@ -207,7 +207,7 @@ end
 Base.adjoint(u::D̂{N}) where {N}  = D̂{N}(-u.α)
 
 function matrix(displacementop::D̂{N}) where {N}
-    exp(displacementop.α*Qaintessent.matrix(âDag{N}()) - conj(displacementop.α)*Qaintessent.matrix(â{N}()))
+    exp(displacementop.α*Qaintessent.matrix(âDag{100}()) - conj(displacementop.α)*Qaintessent.matrix(â{100}()))[1:N+1, 1:N+1]
 end
 
 matrix(cg::CircuitGate{N,N,D̂{N}}) where {N} = matrix(D̂{N}(cg.α))
@@ -221,12 +221,15 @@ squeezing operator used in a Fock basis
 struct Ŝ{N} <:AbstractGate{N}
     ζ::Real
 end
+
 Base.adjoint(s::Ŝ{N}) where {N}  = Ŝ{N}(-s.ζ)
 
-function matrix(squeeze::Ŝ{N}) where {N}
-    a2 = Qaintessent.matrix(â{N}())^2
-    adag2 = Qaintessent.matrix(âDag{N}())^2
-    exp(0.5squeeze.ζ * (a2 - adag2))
+function matrix(sq::Ŝ{N}) where {N}
+    a = Qaintessent.matrix(â{N}())
+    a2 = a*a
+    adag = Qaintessent.matrix(âDag{N}())
+    adag2 = adag*adag
+    exp(sq.ζ/2 *(a2 - adag2))
 end
 
 matrix(cg::CircuitGate{N,N,Ŝ{N}}) where {N} = matrix(Ŝ{N}(cg.ζ))
