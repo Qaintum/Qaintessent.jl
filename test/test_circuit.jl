@@ -29,7 +29,7 @@ end
 
     # two qubit gates
     @testset "two qubit circuit gates" begin
-        for g in [controlled_not(), SwapGate()]
+        for g in [EntanglementXXGate(θ), EntanglementYYGate(θ), EntanglementZZGate(θ), controlled_not(), SwapGate()]
             cg = CircuitGate((2, 3), g, 3)
             cgadj = adjoint(cg)
             Qaintessent.matrix(cgadj.gate) == adjoint(Qaintessent.matrix(cg.gate))

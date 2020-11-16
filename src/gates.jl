@@ -131,12 +131,8 @@ function matrix(g::RxGate)
     [c -im*s; -im*s c]
 end
 
-function LinearAlgebra.ishermitian(g::RxGate)
-    if mod2pi(g.θ[]) < eps()
-        return true
-    end
-    return false
-end
+LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[]/2)) < 4*eps()
+
 
 """
 Rotation-Y gate
@@ -158,12 +154,8 @@ function matrix(g::RyGate)
     [c -s; s c]
 end
 
-function LinearAlgebra.ishermitian(g::RyGate)
-    if mod2pi(g.θ[]) < eps()
-        return true
-    end
-    return false
-end
+LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[]/2)) < 4*eps()
+
 
 """
 Rotation-Z gate
@@ -179,15 +171,12 @@ struct RzGate <: AbstractGate{1}
 end
 
 function matrix(g::RzGate)
-    [Base.exp(-im*g.θ[]/2) 0; 0 Base.exp(im*g.θ[]/2)]
+    eθ = exp(im*g.θ[]/2)
+    [conj(eθ) 0; 0 eθ]
 end
 
-function LinearAlgebra.ishermitian(g::RzGate)
-    if mod2pi(g.θ[]) < eps()
-        return true
-    end
-    return false
-end
+LinearAlgebra.ishermitian(g::RzGate) = abs(sin(g.θ[]/2)) < 4*eps()
+
 
 Base.adjoint(g::RxGate) = RxGate(-g.θ[])
 Base.adjoint(g::RyGate) = RyGate(-g.θ[])
@@ -223,12 +212,7 @@ function matrix(g::RotationGate)
     cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
-function LinearAlgebra.ishermitian(g::RotationGate)
-    if norm(g.nθ + g.nθ) < eps()
-        return true
-    end
-    return false
-end
+LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ)/2)) < 8*eps()
 
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
@@ -272,6 +256,91 @@ matrix(::SwapGate) = [1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
 # swap gate is Hermitian
 LinearAlgebra.ishermitian(::SwapGate) = true
 Base.adjoint(s::SwapGate) = s
+
+
+"""
+Entanglement-XX gate
+
+``G_{x}(\\theta) = e^{-i \\theta X \\otimes X / 2}``
+
+Reference:\n
+    B. Kraus and J. I. Cirac\n
+    Optimal creation of entanglement using a two-qubit gate\n
+    Phys. Rev. A 63, 062309 (2001)
+"""
+struct EntanglementXXGate <: AbstractGate{2}
+    # use a reference type (array with 1 entry) for compatibility with Flux
+    θ::Vector{<:Real}
+    function EntanglementXXGate(θ::Real)
+        new([θ])
+    end
+end
+
+function matrix(g::EntanglementXXGate)
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
+    [c 0 0 -im*s; 0 c -im*s 0; 0 -im*s c 0; -im*s 0 0 c]
+end
+
+LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[]/2)) < 4*eps()
+
+
+"""
+Entanglement-YY gate
+
+``G_{y}(\\theta) = e^{-i \\theta Y \\otimes Y / 2}``
+
+Reference:\n
+    B. Kraus and J. I. Cirac\n
+    Optimal creation of entanglement using a two-qubit gate\n
+    Phys. Rev. A 63, 062309 (2001)
+"""
+struct EntanglementYYGate <: AbstractGate{2}
+    # use a reference type (array with 1 entry) for compatibility with Flux
+    θ::Vector{<:Real}
+    function EntanglementYYGate(θ::Real)
+        new([θ])
+    end
+end
+
+function matrix(g::EntanglementYYGate)
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
+    [c 0 0 im*s; 0 c -im*s 0; 0 -im*s c 0; im*s 0 0 c]
+end
+
+LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[]/2)) < 4*eps()
+
+
+"""
+Entanglement-ZZ gate
+
+``G_{z}(\\theta) = e^{-i \\theta Z \\otimes Z / 2}``
+
+Reference:\n
+    B. Kraus and J. I. Cirac\n
+    Optimal creation of entanglement using a two-qubit gate\n
+    Phys. Rev. A 63, 062309 (2001)
+"""
+struct EntanglementZZGate <: AbstractGate{2}
+    # use a reference type (array with 1 entry) for compatibility with Flux
+    θ::Vector{<:Real}
+    function EntanglementZZGate(θ::Real)
+        new([θ])
+    end
+end
+
+function matrix(g::EntanglementZZGate)
+    eθ = exp(im*g.θ[]/2)
+    diagm([conj(eθ), eθ, eθ, conj(eθ)])
+end
+
+LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[]/2)) < 4*eps()
+
+
+Base.adjoint(g::EntanglementXXGate) = EntanglementXXGate(-g.θ[])
+Base.adjoint(g::EntanglementYYGate) = EntanglementYYGate(-g.θ[])
+Base.adjoint(g::EntanglementZZGate) = EntanglementZZGate(-g.θ[])
 
 
 """
