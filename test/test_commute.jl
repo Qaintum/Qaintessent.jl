@@ -8,10 +8,8 @@ using Qaintessent
 @testset ExtendedTestSet "commute" begin
 
     # individual gates
-    θ = 0.7π
-    ϕ = 0.4π
-    nθ = randn(3)
-    gates = [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(nθ), PhaseShiftGate(ϕ), SwapGate(), controlled_not()]
+    gates = [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(2π*rand()), RyGate(2π*rand()), RzGate(2π*rand()), RotationGate(randn(3)), PhaseShiftGate(2π*rand()),
+             SwapGate(), EntanglementXXGate(2π*rand()), EntanglementYYGate(2π*rand()), EntanglementZZGate(2π*rand()), controlled_not()]
     for g1 in gates
         for g2 in gates
             @test iscommuting(g1, g2) == iscommuting(Qaintessent.matrix(g1), Qaintessent.matrix(g2))
@@ -36,7 +34,7 @@ using Qaintessent
     end
     cgates = [
         single_qubit_circuit_gate(rand(1:N), X, N),
-        single_qubit_circuit_gate(rand(1:N), RzGate(θ), N),
+        single_qubit_circuit_gate(rand(1:N), RzGate(2π*rand()), N),
         CircuitGate((2, 4), SwapGate(), N),
         ccg1,
         ccg2,
