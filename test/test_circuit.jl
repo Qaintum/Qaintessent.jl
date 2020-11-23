@@ -320,7 +320,7 @@ end
         single_qubit_circuit_gate(3, RyGate(1.5π), N),
         controlled_circuit_gate(2, c2[1], ZGate(), N),
     ]
-    cgc(gates)
+    append!(cgc, gates)
 
     cgc_ref = CircuitGateChain{N}([
         single_qubit_circuit_gate(2, Y, N),
@@ -359,7 +359,7 @@ end
         single_qubit_circuit_gate(3, RyGate(1.5π), N),
         controlled_circuit_gate(2, (c2[1],), ZGate(), N),
     ]
-    cgc(gates)
+    append!(cgc, gates)
 
     cgc_ref = CircuitGateChain{N}([
         single_qubit_circuit_gate(2, Y, N),
@@ -396,7 +396,7 @@ end
         controlled_circuit_gate(q1, 5, Y, N),
         two_qubit_circuit_gate(q2, q1, SwapGate(), N),
     ]
-    cgc(gates)
+    append!(cgc, gates)
 
     cgc_ref = CircuitGateChain{N}([
         single_qubit_circuit_gate(1, Y, N),
@@ -429,7 +429,7 @@ end
     @test apply(cgc_ref, ψ) ≈ apply(cgc, ψ)
 end
 
-@testset ExtendedTestSet "cgc functor" begin
+@testset ExtendedTestSet "cgc appending gates" begin
     c1 = creg(2)
     c2 = creg(4)
     q1 = qreg(3)
@@ -444,7 +444,7 @@ end
         single_qubit_circuit_gate(2, Y, N),
     ]
 
-    cgc1(gates)
+    append!(cgc1, gates)
     cgc1_ref = CircuitGateChain{10}(
     [
         single_qubit_circuit_gate(2, Y, N),
@@ -457,7 +457,7 @@ end
         single_qubit_circuit_gate(1, Y, N)
     ]
 
-    cgc2(gates)
+    append!(cgc2, gates)
     cgc2_ref = CircuitGateChain{10}(
     [
         single_qubit_circuit_gate(2, Y, N),
@@ -472,7 +472,7 @@ end
         two_qubit_circuit_gate(q1, q2, SwapGate(), N),
         two_qubit_circuit_gate(q1, q3[1], SwapGate(), N),
     ]
-    cgc3(gates)
+    append!(cgc3, gates)
 
     cgc3_ref = CircuitGateChain{10}(
     [
@@ -496,7 +496,7 @@ end
         controlled_circuit_gate(q1[3], q2, Y, N),
     ]
     # println(gates)
-    cgc4(gates)
+    append!(cgc4, gates)
 
     cgc4_ref = CircuitGateChain{10}(
     [
