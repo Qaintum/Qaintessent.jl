@@ -8,7 +8,6 @@ using RandomMatrices
 
 compiles quantum circuit from given unitary matrix.
 """
-
 function compile(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     isunitary(m) || error("Only unitary matrices can be compiled into a quantum circuit")
     s = size(m)
@@ -26,7 +25,69 @@ function compile(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
         return CircuitGateChain{N}(compile2qubit(m, N, wires))
     end
 
+    q,r = qr(m)
+
 end
+
+"""
+    qr_blocked(m::Matrix{Complex64,2})
+
+performs blocked qr decomposition on matrix `m`
+"""
+function qr_blocked!(m::AbstractMatrix{ComplexF64}, block_size=2::Integer)
+    N = size(m)[1]
+    N == size(m)[2] || error("Matrix `m` must be a square matrix")
+    if b > N
+        return qr_unblocked(m)
+    end
+
+    for x in 1:N÷block_size
+        for y in 1:block_size
+            i = block_size
+            m[col+block_size+j, row+block_size+1:N] -= m[col+block_size+j, row+1:row+block_size] * m[col+1:col+block_size, col+block]
+        end
+    end
+end
+
+"""
+    qr_unblocked(m::Matrix{Complex64,2})
+
+performs serial qr decomposition on matrix `m`
+"""
+function qr_unblocked!(m::AbstractMatrix{ComplexF64}, n=1::Integer)
+    N = size(m)[1]
+    τ = ComplexF64[]
+    for i in n:N-1
+        b = norm(m[1,1])
+        a = angle(m[1,1])
+        push!(τ, 1+b)
+        m[i,i] += exp(im*a)
+        m[:, i] ./ (exp(im*a)*(1+b))
+        m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))./m[i,i]
+    end
+    return τ
+end
+
+"""
+    qr_unblocked(m::Matrix{Complex64,2})
+
+performs serial qr decomposition on matrix `m`
+"""
+function qr_unblocked(m::AbstractMatrix{ComplexF64}, n=1::Integer)
+    m = deepcopy(m)
+    N = size(m)[1]
+    τ = ComplexF64[]
+    for i in n:N-1
+        push!(τ, 1/(1+norm(m[i,i])))
+        m[i,i] += exp(im*angle(m[i,i]))
+        m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))./m[i,i]
+    end
+    return m, τ
+end
+
+# function decomp()
+# end
+
 
 """
     compile1qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
