@@ -37,16 +37,37 @@ performs blocked qr decomposition on matrix `m`
 function qr_blocked!(m::AbstractMatrix{ComplexF64}, block_size=2::Integer)
     N = size(m)[1]
     N == size(m)[2] || error("Matrix `m` must be a square matrix")
-    if b > N
+    if block_size > N
         return qr_unblocked(m)
     end
-
-    for x in 1:N÷block_size
+    τ = ComplexF64[]
+    num_blocks = N÷block_size
+    for x in 0:num_blocks-1
+        row = x*block_size
+        col = x*block_size
         for y in 1:block_size
-            i = block_size
-            m[col+block_size+j, row+block_size+1:N] -= m[col+block_size+j, row+1:row+block_size] * m[col+1:col+block_size, col+block]
+                a = angle(m[row+y, col+y])
+                b = norm(m[row+y, col+y])
+                m[row+y,col+y] += exp(im*a)
+                m[row+y:N, col+y] =  m[row+y:N, col+y]./(exp(im*a)*(1+b))
+                push!(τ, 1+b)
+            if y < block_size
+                update1 = m[row+y+1:N, col+y] .* m[row+y, col+y+1]
+                update2 = m[row+y, col+y+1:N] .* m[row+y+1, col+y]
+                m[row+y+1:N,col+y+1] = m[row+y+1:N,col+y+1] - update1
+                m[row+y+1,col+y+2:N] = m[row+y+1,col+y+2:N] - update2[2:end]
+            end
+        end
+        if col + block_size < N
+            m[row+block_size+1:N, col+block_size+1:N] -= m[row+block_size+1:N, col+1:col+block_size] * m[row+1:row+block_size, col+block_size+1:N]
         end
     end
+    if N%block_size != 0
+        m_unblocked, τ_unblocked= qr_unblocked(m[num_blocks*block_size:end,num_blocks*block_size:end])
+        m[num_blocks*block_size:end,num_blocks*block_size:end] = m_unblocked
+        append!(τ, τ_unblocked)
+    end
+    return m, τ
 end
 
 """
@@ -58,12 +79,12 @@ function qr_unblocked!(m::AbstractMatrix{ComplexF64}, n=1::Integer)
     N = size(m)[1]
     τ = ComplexF64[]
     for i in n:N-1
-        b = norm(m[1,1])
-        a = angle(m[1,1])
+        b = norm(m[i,i])
+        a = angle(m[i,i])
         push!(τ, 1+b)
         m[i,i] += exp(im*a)
-        m[:, i] ./ (exp(im*a)*(1+b))
-        m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))./m[i,i]
+        m[i:N, i] =  m[i:N, i]./(exp(im*a)*(1+b))
+        m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))
     end
     return τ
 end
@@ -77,10 +98,15 @@ function qr_unblocked(m::AbstractMatrix{ComplexF64}, n=1::Integer)
     m = deepcopy(m)
     N = size(m)[1]
     τ = ComplexF64[]
+    x = zeros(ComplexF64, (N,N))
     for i in n:N-1
-        push!(τ, 1/(1+norm(m[i,i])))
-        m[i,i] += exp(im*angle(m[i,i]))
-        m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))./m[i,i]
+        b = norm(m[i,i])
+        a = angle(m[i,i])
+        push!(τ, 1+b)
+        m[i,i] += exp(im*a)
+        m[i:N, i] =  m[i:N, i]./(exp(im*a)*(1+b))
+        m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))
+        x[i+1:end, i+1:end] += (m[i+1:N, i]* transpose(m[i,i+1:N]))
     end
     return m, τ
 end
@@ -156,7 +182,6 @@ function decomposeSO4(m::AbstractMatrix{ComplexF64})
     r = real(ar/a)
     s = real(as/a)
 
-    println(p^2 + q^2 + r^2 + s^2)
     @assert  (p^2 + q^2 + r^2 + s^2) ≈ 1
 
     A = [p+q*im s+r*im; -s+r*im p-q*im]
@@ -183,7 +208,6 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     K_2[:,1] = K_2[:,1] * det(K_2)
 
     Diag = diagm(sqrt.(Diag))
-    println(prod(diag(Diag)))
     Diag[1] = Diag[1] * det(U) / det(Diag)
 
     P = K_2*Diag*inv(K_2)
