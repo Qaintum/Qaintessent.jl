@@ -41,14 +41,18 @@ end
 
 function backward(g::RotationGate, Δ::AbstractMatrix)
     θ = norm(g.nθ)
-    # TODO: handle case θ == 0
-    n = g.nθ/θ
-    c = cos(θ/2)
-    s = sin(θ/2)
-    dRθ = -s*I - im*c*pauli_vector(n...)
-    dn = (I - reshape(kron(n, n), 3, 3))/θ
-    # using conjugated derivative matrix
-    RotationGate([2*real(sum(conj(0.5*n[i]*dRθ - im*s*pauli_vector(dn[:,i]...)) .* Δ)) for i in 1:3])
+    if θ == 0
+        σ = (matrix(X), matrix(Y), matrix(Z))
+        RotationGate([real(sum(conj(-im*σ[i]) .* Δ)) for i in 1:3])
+    else
+        n = g.nθ/θ
+        c = cos(θ/2)
+        s = sin(θ/2)
+        dRθ = -s*I - im*c*pauli_vector(n...)
+        dn = (I - reshape(kron(n, n), 3, 3))/θ
+        # using conjugated derivative matrix
+        RotationGate([2*real(sum(conj(0.5*n[i]*dRθ - im*s*pauli_vector(dn[:, i]...)) .* Δ)) for i in 1:3])
+    end
 end
 
 
