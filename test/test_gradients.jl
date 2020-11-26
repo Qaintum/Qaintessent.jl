@@ -60,6 +60,15 @@ end
             dg = Qaintessent.backward(RotationGate(nθ), conj(Δ))
             @test isapprox(dg.nθ, ngrad[1], rtol=1e-6)
         end
+
+        begin
+            f(nθ) = 2*real(sum(Δ .* Qaintessent.matrix(RotationGate(nθ))))
+            # special case: zero vector
+            nθ = zeros(3)
+            ngrad = ngradient(f, nθ)
+            dg = Qaintessent.backward(RotationGate(nθ), conj(Δ))
+            @test isapprox(dg.nθ, ngrad[1], rtol=1e-6)
+        end
     end
 
     @testset "entanglement gates" begin
