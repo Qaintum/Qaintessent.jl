@@ -4,12 +4,62 @@ using JLD
 using RandomMatrices
 
 """
+    greyencode(n::Integer) = n ⊻ (n >> 1)
+
+returns grey encoding of given integer
+"""
+greyencode(n::Integer) = n ⊻ (n >> 1)
+
+"""
+    inverseM(N)
+
+finds inverse of M matrix of size 2^(N-1)×2^(N-1) with elements M_{i,j} equal to inner product of binary rep of i (classical) and j (grey code), i,j ∈ [1:2^(N-1)]
+utilizes algorithm from https://arxiv.org/pdf/quant-ph/0404089.pdf
+"""
+@memoize function inverseM(N)
+    m = 2^(N-1)
+    M = zeros((m,m))
+    for i in 1:m
+        for j in 1:m
+            M[i,j] = (-1)^count_ones((i-1) .& greyencode(j-1))
+        end
+    end
+    return inv(M)
+end
+
+"""
+    stateprep(u, N)
+
+creates unitary matrices P, Y ∈ C^(2^N × 2^N), P is diagonal and Y prepares the real part of u
+uses algorithm from arxiv:quant-ph/0410066
+"""
+function stateprep(u, N, n=1)
+    cg = AbstractCircuitGate{N}[]
+    k = 2
+    grey = zeros(Int, 2^(N-n))
+    for i in 0:N-2
+        grey[2^i:2^(i+1):end] .= i+n+1
+    end
+    grey[end] = N
+    θ = real.(atan.(-u[2:2:end]./u[1:2:end]).*2)
+    θ[isnan.(θ)] .= -π
+    M = inverseM(N-n+1)
+    θ = M*θ
+    for i in 1:2^(N-n)
+        push!(cg, CircuitGate((n,) , RyGate(θ[i]), N))
+        push!(cg, CircuitGate((n, grey[i]), ControlledGate{1,2}(X), N))
+    end
+    return cg
+end
+
+"""
     compile!(m::Matrix{Complex64,2}) where {N}
 
-compiles quantum circuit from given unitary matrix.
+compiles quantum circuit from given unitary matrix. usage of algorithms from
+ff10.1016/j.cpc.2019.107001f, 10.1103/PhysRevA.69.032315, arxiv.org:1003.5760, arxiv:quant-ph/0404089
 """
 function compile(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
-    isunitary(m) || error("Only unitary matrices can be compiled into a quantum circuit")
+    m*m' ≈ I || error("Only unitary matrices can be compiled into a quantum circuit")
     s = size(m)
     s[1] == s[2] || error("Only square matrices can be compiled into a quantum circuit")
 
@@ -25,8 +75,46 @@ function compile(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
         return CircuitGateChain{N}(compile2qubit(m, N, wires))
     end
 
-    q,r = qr(m)
+    cgc = AbstractCircuitGate{N}[]
+    QR, τ = qr_unblocked(m)
+    cgc = compilediag(diag(QR), N, wires)
 
+    Dg = fill(1.0+0.0im, (2^N))
+    Dg[1] = -1
+    Dgm = compilediag(Dg, N)
+
+    for i in 2^(N)-1:-1:1
+        prepd = AbstractCircuitGate{N}[]
+        u = zeros(ComplexF64, (2^N))
+        u[i+1:end] = QR[i+1:end, i]
+        u[i] = 1
+        u = u ./ norm(u)
+        angles = exp.(im.*angle.(u))
+        u = u ./ angles
+        D = compilediag(angles, N)
+
+        for j in 1:N-1
+            cg = stateprep(u[1:2^(j-1):end], N, j)
+            append!(prepd, cg)
+            u = apply(CircuitGateChain{N}(cg), u)
+        end
+        θ = real(atan(-u[2^(N-1)+1]./u[1]).*2)
+        if !isnan(θ)
+            cg = CircuitGate((N,), RyGate(θ), N)
+        else
+            cg = CircuitGate((N,), RyGate(-π), N)
+        end
+        push!(prepd, cg)
+
+        prep = reverse(adjoint.(prepd))
+        append!(prep, D)
+        prepend!(prepd, adjoint.(D))
+
+        append!(cgc, prepd)
+        append!(cgc, Dgm)
+        append!(cgc, prep)
+    end
+    return CircuitGateChain{N}(cgc)
 end
 
 """
@@ -48,8 +136,8 @@ function qr_blocked!(m::AbstractMatrix{ComplexF64}, block_size=2::Integer)
         for y in 1:block_size
                 a = angle(m[row+y, col+y])
                 b = norm(m[row+y, col+y])
-                m[row+y,col+y] += exp(im*a)
-                m[row+y:N, col+y] =  m[row+y:N, col+y]./(exp(im*a)*(1+b))
+                m[row+y,col+y] = -exp(im*a)
+                m[row+y+1:N, col+y] =  m[row+y+1:N, col+y]./(exp(im*a)*(1+b))
                 push!(τ, 1+b)
             if y < block_size
                 update1 = m[row+y+1:N, col+y] .* m[row+y, col+y+1]
@@ -82,8 +170,8 @@ function qr_unblocked!(m::AbstractMatrix{ComplexF64}, n=1::Integer)
         b = norm(m[i,i])
         a = angle(m[i,i])
         push!(τ, 1+b)
-        m[i,i] += exp(im*a)
-        m[i:N, i] =  m[i:N, i]./(exp(im*a)*(1+b))
+        m[i,i] = -exp(im*a)
+        m[i+1:N, i] =  m[i+1:N, i]./(exp(im*a)*(1+b))
         m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))
     end
     return τ
@@ -98,22 +186,16 @@ function qr_unblocked(m::AbstractMatrix{ComplexF64}, n=1::Integer)
     m = deepcopy(m)
     N = size(m)[1]
     τ = ComplexF64[]
-    x = zeros(ComplexF64, (N,N))
     for i in n:N-1
         b = norm(m[i,i])
         a = angle(m[i,i])
         push!(τ, 1+b)
-        m[i,i] += exp(im*a)
-        m[i:N, i] =  m[i:N, i]./(exp(im*a)*(1+b))
+        m[i,i] = -exp(im*a)
+        m[i+1:N, i] =  m[i+1:N, i]./(exp(im*a)*(1+b))
         m[i+1:N,i+1:N] -= (m[i+1:N, i]* transpose(m[i,i+1:N]))
-        x[i+1:end, i+1:end] += (m[i+1:N, i]* transpose(m[i,i+1:N]))
     end
     return m, τ
 end
-
-# function decomp()
-# end
-
 
 """
     compile1qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
@@ -194,7 +276,7 @@ end
 """
     compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 
-compiles an arbitrary U(4) matrix into a quantum circuit
+compiles an arbitrary U(4) matrix into a quantum circuit. Algorithm taken from https://arxiv.org/pdf/quant-ph/0308006.pdf, https://arxiv.org/pdf/quant-ph/0211002.pdf
 """
 function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     cg = AbstractCircuitGate{N}[]
@@ -240,7 +322,7 @@ end
 """
     η!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
 
-helper function. calculates η matrix used in compilediag.
+calculates η matrix used in compilediag.
 """
 function η!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
     for i in StepRange(1,1,l-1)
@@ -249,17 +331,9 @@ function η!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
 end
 
 """
-    grayencode(n::Integer) = n ⊻ (n >> 1)
-
-returns grey encoding of given integer
-"""
-grayencode(n::Integer) = n ⊻ (n >> 1)
-
-
-"""
     ηcol(l::Integer, n::Integer)
 
-helper function. calculates columns of η matrix used in compilediag.
+calculates columns of η matrix used in compilediag.
 """
 @memoize Dict function ηcol(l::Integer, n::Integer)
     vec = zeros(Integer, l)
@@ -277,11 +351,12 @@ helper function. calculates columns of η matrix used in compilediag.
 end
 
 """
-    flip_code(m::Integer, l::Integer)
+    flip_state(m::Integer, l::Integer)
 
-helper function. calculates the flip code of a given input matrix
+calculates the flip state of a given input matrix. algorithm taken from arxiv:quant-ph/0303039
 """
-@memoize Dict function flip_code(m::Integer, l::Integer)
+@memoize Dict function flip_state(m::Integer, l::Integer)
+    # calculates flip state of a given integer `x`
     f = filter(x->count_ones(x&m)%2==1, 1:l-1)
     sum(ηcol.((l-1,), f))
 end
@@ -289,7 +364,17 @@ end
 """
     svalue(i::Integer)
 
-helper function. calculates the set of integers required for flip code
+returns tuple of position of 1s in the binary representation of integer `i` starting from least significant digit.
+
+# Examples
+```julia-repl
+julia> svalue(2)
+(2,)
+julia> svalue(4)
+(3,)
+julia> svalue(7)
+(1,2,3)
+```
 """
 function svalue(i::Integer)
     b = Int[]
@@ -305,12 +390,13 @@ function svalue(i::Integer)
 end
 
 """
-    compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
+    compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
 
-compiles an arbitrary diagonal U(N) matrix into a quantum circuit. Algorithm taken from https://arxiv.org/pdf/quant-ph/0303039.pdf
+recursively compiles an arbitrary diagonal U(N) matrix into a quantum circuit. algorithm taken from arxiv:quant-ph/0303039
 """
 function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
     cgs = AbstractCircuitGate{N}[]
+    # single qubit diagonal matrix can be split into a phase shift + RzGate
     if length(d) == 2
         logd = imag.(log.(d))
         β = (logd[1] - logd[2])
@@ -328,13 +414,13 @@ function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
 
     ηplus = zeros(Float64, (l-1, l-1))
     for i in StepRange(1,1,l-1)
-        ηplus[:,i] = flip_code(grayencode(i), l)
+        ηplus[:,i] = flip_state(greyencode(i), l)
     end
 
     ηplus = inv(ηplus)
     α[2:end] = -0.5 * ηplus * ψ
 
-    gatewires = svalue(grayencode(1))
+    gatewires = svalue(greyencode(1))
     oldwires = ()
 
     for i in StepRange(2, 1, l)
@@ -342,14 +428,14 @@ function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
         for _ in 1:N-j-1
             rz = append!(rz, rz)
         end
-        s = filter(x->count_ones(x&grayencode(i-1))%2==1, 1:l-1)
+        s = filter(x->count_ones(x&greyencode(i-1))%2==1, 1:l-1)
         s = append!(2 .* s .+ 1, 2 .* s .+ 2)
 
         for k in symdiff(gatewires, oldwires)
             push!(cgs, CircuitGate((j+1, k+1+j), ControlledGate{1,2}(X), N))
         end
         oldwires = gatewires
-        gatewires = svalue(grayencode(i))
+        gatewires = svalue(greyencode(i))
         push!(cgs, CircuitGate((j+1,), RzGate(α[i]), N))
 
         rz[s] .= 1 ./rz[s]
