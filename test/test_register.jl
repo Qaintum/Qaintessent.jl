@@ -1,11 +1,14 @@
+using Test
+using TestSetExtensions
 using Qaintessent
+
 
 @testset ExtendedTestSet "registers" begin
     @testset "quantum register construction" begin
         N = 3
         q1 = qreg(3)
         cgc = CircuitGateChain([q1])
-        cgc([
+        append!(cgc, [
             single_qubit_circuit_gate(q1[3], X, N),
             single_qubit_circuit_gate(q1[1], Y, N),
             single_qubit_circuit_gate(q1[2], Z, N)
@@ -15,7 +18,7 @@ using Qaintessent
             single_qubit_circuit_gate(1, Y, N),
             single_qubit_circuit_gate(2, Z, N)
         ])
-        for i in 1:3
+        for i in 1:length(cgc)
             @test cgc[i] ≈ cgc_ref[i]
         end
     end
@@ -26,7 +29,7 @@ using Qaintessent
         q2 = qreg(2)
         q3 = qreg(5)
         cgc = CircuitGateChain([q1,q2,q3])
-        cgc([
+        append!(cgc, [
             single_qubit_circuit_gate(q1[3], X, N),
             single_qubit_circuit_gate(q1[1], Y, N),
             single_qubit_circuit_gate(q1[2], Z, N),
@@ -37,15 +40,15 @@ using Qaintessent
 
         ])
         cgc_ref = CircuitGateChain{N}([
-        single_qubit_circuit_gate(3, X, N),
-        single_qubit_circuit_gate(1, Y, N),
-        single_qubit_circuit_gate(2, Z, N),
-        controlled_circuit_gate(4, 8, Y, N),
-        controlled_circuit_gate(2, 5, Z, N),
-        controlled_circuit_gate(6, 9, TGate(), N),
-        controlled_circuit_gate(2, 4, SGate(), N),
-        ])
-        for i in 1:3
+            single_qubit_circuit_gate(3, X, N),
+            single_qubit_circuit_gate(1, Y, N),
+            single_qubit_circuit_gate(2, Z, N),
+            controlled_circuit_gate(4, 8, Y, N),
+            controlled_circuit_gate(2, 5, Z, N),
+            controlled_circuit_gate(7, 9, TGate(), N),
+            controlled_circuit_gate(2, 4, SGate(), N),
+            ])
+        for i in 1:length(cgc)
             @test cgc[i] ≈ cgc_ref[i]
         end
     end

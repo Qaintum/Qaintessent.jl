@@ -40,6 +40,17 @@ iscommuting(A::YGate, B::RyGate) = true
 iscommuting(A::RzGate, B::ZGate) = true
 iscommuting(A::ZGate, B::RzGate) = true
 
+# entanglement gates commute with each other
+iscommuting(A::EntanglementXXGate, B::EntanglementXXGate) = true
+iscommuting(A::EntanglementXXGate, B::EntanglementYYGate) = true
+iscommuting(A::EntanglementXXGate, B::EntanglementZZGate) = true
+iscommuting(A::EntanglementYYGate, B::EntanglementXXGate) = true
+iscommuting(A::EntanglementYYGate, B::EntanglementYYGate) = true
+iscommuting(A::EntanglementYYGate, B::EntanglementZZGate) = true
+iscommuting(A::EntanglementZZGate, B::EntanglementXXGate) = true
+iscommuting(A::EntanglementZZGate, B::EntanglementYYGate) = true
+iscommuting(A::EntanglementZZGate, B::EntanglementZZGate) = true
+
 # same number of control and target wires
 iscommuting(A::ControlledGate{M,N}, B::ControlledGate{M,N}) where {M,N} = iscommuting(A.U, B.U)
 
@@ -48,7 +59,6 @@ iscommuting(A::AbstractGate{N}, B::AbstractGate{N}) where {N} = iscommuting(Qain
 
 # catch case of incompatible dimensions
 iscommuting(A::AbstractGate{M}, B::AbstractGate{N}) where {M,N} = false
-
 
 
 """

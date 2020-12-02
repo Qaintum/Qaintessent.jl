@@ -17,35 +17,42 @@ backward(g::TdagGate, Δ::AbstractMatrix) = g
 
 backward(g::MatrixGate, Δ::AbstractMatrix) = g
 
+
 function backward(g::RxGate, Δ::AbstractMatrix)
-    c = cos(g.θ[1]/2)
-    s = sin(g.θ[1]/2)
-    # using conjugated derivative matrix
-    RxGate(2*sum(real([-0.5*s 0.5im*c; 0.5im*c -0.5*s] .* Δ)))
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
+    # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
+    RxGate(sum(real([-s im*c; im*c -s] .* Δ)))
 end
 
 function backward(g::RyGate, Δ::AbstractMatrix)
-    c = cos(g.θ[1]/2)
-    s = sin(g.θ[1]/2)
-    RyGate(2*sum(real([-0.5*s -0.5*c; 0.5*c -0.5*s] .* Δ)))
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
+    # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
+    RyGate(sum(real([-s -c; c -s] .* Δ)))
 end
 
 function backward(g::RzGate, Δ::AbstractMatrix)
-    # using conjugated derivative matrix
-    RzGate(2*real(0.5im*Base.exp(im*g.θ[1]/2)*Δ[1, 1] - 0.5im*Base.exp(-im*g.θ[1]/2)*Δ[2, 2]))
+    # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
+    eθ = exp(im*g.θ[]/2)
+    RzGate(real(im*eθ*Δ[1, 1] - im*conj(eθ)*Δ[2, 2]))
 end
 
 
 function backward(g::RotationGate, Δ::AbstractMatrix)
     θ = norm(g.nθ)
-    # TODO: handle case θ == 0
-    n = g.nθ/θ
-    c = cos(θ/2)
-    s = sin(θ/2)
-    dRθ = -s*I - im*c*pauli_vector(n...)
-    dn = (I - reshape(kron(n, n), 3, 3))/θ
-    # using conjugated derivative matrix
-    RotationGate([2*real(sum(conj(0.5*n[i]*dRθ - im*s*pauli_vector(dn[:,i]...)) .* Δ)) for i in 1:3])
+    if θ == 0
+        σ = (matrix(X), matrix(Y), matrix(Z))
+        RotationGate([real(sum(conj(-im*σ[i]) .* Δ)) for i in 1:3])
+    else
+        n = g.nθ/θ
+        c = cos(θ/2)
+        s = sin(θ/2)
+        dRθ = -s*I - im*c*pauli_vector(n...)
+        dn = (I - reshape(kron(n, n), 3, 3))/θ
+        # using conjugated derivative matrix
+        RotationGate([2*real(sum(conj(0.5*n[i]*dRθ - im*s*pauli_vector(dn[:, i]...)) .* Δ)) for i in 1:3])
+    end
 end
 
 
@@ -56,6 +63,27 @@ end
 
 
 backward(g::SwapGate, Δ::AbstractMatrix) = g
+
+
+function backward(g::EntanglementXXGate, Δ::AbstractMatrix)
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
+    # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
+    EntanglementXXGate(sum(real([-s 0 0 im*c; 0 -s im*c 0; 0 im*c -s 0; im*c 0 0 -s] .* Δ)))
+end
+
+function backward(g::EntanglementYYGate, Δ::AbstractMatrix)
+    c = cos(g.θ[]/2)
+    s = sin(g.θ[]/2)
+    # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
+    EntanglementYYGate(sum(real([-s 0 0 -im*c; 0 -s im*c 0; 0 im*c -s 0; -im*c 0 0 -s] .* Δ)))
+end
+
+function backward(g::EntanglementZZGate, Δ::AbstractMatrix)
+    eθ = exp(im*g.θ[]/2)
+    # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
+    EntanglementZZGate(sum(real(im*eθ*Δ[1, 1] - im*conj(eθ)*Δ[2, 2] - im*conj(eθ)*Δ[3, 3] + im*eθ*Δ[4, 4])))
+end
 
 
 function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}

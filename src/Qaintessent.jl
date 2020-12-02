@@ -26,6 +26,9 @@ export
     RotationGate,
     PhaseShiftGate,
     SwapGate,
+    EntanglementXXGate,
+    EntanglementYYGate,
+    EntanglementZZGate,
     ControlledGate,
     controlled_not,
     MatrixGate

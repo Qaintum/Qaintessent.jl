@@ -182,7 +182,7 @@ end
         single_qubit_circuit_gate(4, SGate(), N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
     ]
-    cgc_ref(gates_ref)
+    append!(cgc_ref, gates_ref)
 
     cgc = qasm2cgc(src1)
 
@@ -241,7 +241,7 @@ end
         single_qubit_circuit_gate(4, SGate(), N),
         single_qubit_circuit_gate(1, HadamardGate(), N),
     ]
-    cgc_ref(gates_ref)
+    append!(cgc_ref, gates_ref)
 
     @test src_ref == cgc2qasm(cgc_ref)
 end
