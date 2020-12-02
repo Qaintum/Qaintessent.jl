@@ -9,12 +9,12 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
 
 @testset ExtendedTestSet "quantum gates" begin
 
-    θ = 0.7*π
-    ϕ = 0.4*π
+    θ = 2π*rand()
+    ϕ = 2π*rand()
     n = randn(3); n /= norm(n)
 
     @testset "basic quantum gates" begin
-        for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ), controlled_not()]
+        for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ), SwapGate(), EntanglementXXGate(θ), EntanglementYYGate(θ), EntanglementZZGate(θ), controlled_not()]
             @test isunitary(g)
             gdag = adjoint(g)
 
@@ -23,15 +23,6 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         end
     end
 
-    @testset "parametrized quantum gates" begin
-        θ = rand(1:50)π
-        for g in [RxGate(θ), RyGate(θ), RzGate(θ), PhaseShiftGate(θ)]
-            @test isunitary(g)
-            gdag = adjoint(g)
-            @test Qaintessent.matrix(gdag) == adjoint(Qaintessent.matrix(g))
-            @test LinearAlgebra.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
-        end
-    end
 
     @testset "general rotation gate" begin
         @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
@@ -47,9 +38,9 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
     @testset "general rotation gate exceptions" begin
         @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate(θ, [1, 0, 0, 0]))
         @test_throws ErrorException("Norm of rotation axis vector must be 1.") Qaintessent.matrix(RotationGate(θ, [1, 2, 0]))
-
         @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate([0, θ, 0, 1]))
     end
+
 
     @testset "general unitary gate" begin
 

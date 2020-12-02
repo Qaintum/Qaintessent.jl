@@ -26,6 +26,9 @@ export
     RotationGate,
     PhaseShiftGate,
     SwapGate,
+    EntanglementXXGate,
+    EntanglementYYGate,
+    EntanglementZZGate,
     ControlledGate,
     controlled_not,
     MatrixGate
@@ -88,8 +91,8 @@ include("openqasm/gate_transformers.jl")
 
 include("openqasm/transform_qasm.jl")
 export
-  qasm2cgc
-    
+    qasm2cgc
+
 include("openqasm/transform_cgc.jl")
 export
     cgc2qasm
@@ -106,5 +109,7 @@ export
     Û,
     Ŝ,
     wigner
+
+include("compile.jl")
 
 end

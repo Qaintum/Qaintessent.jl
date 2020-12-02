@@ -450,7 +450,7 @@ mutable struct CircuitGateChain{N}
     creg::AbstractVector{BitArray{1}}
 
     @doc """
-        CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}, creg::AbstractVector{BitArray}=BitArray[]) where {N}
+        CircuitGateChain{N}(gates::AbstractVector{<:AbstractCircuitGate{N}}) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `CircuitGate{N}` objects.
     """
@@ -460,12 +460,12 @@ mutable struct CircuitGateChain{N}
     end
 
     @doc """
-        CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}, creg::AbstractVector{BitArray}=BitArray[]) where {N}
+        CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}, creg::AbstractVector{BitArray{1}}=BitArray{1}[]) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits, constructing from vector of `Moment{N}` objects.
     """
-    function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}, creg::Union{AbstractVector{BitArray},AbstractVector{Integer}}=BitArray[]) where {N}
-        new(moments, BitArray{1}[])
+    function CircuitGateChain{N}(moments::AbstractVector{<:AbstractMoment{N}}, creg::AbstractVector{BitArray{1}}=BitArray{1}[]) where {N}
+        new(moments, creg)
     end
 
     @doc """
@@ -486,7 +486,7 @@ mutable struct CircuitGateChain{N}
             push!(creg, reg.n)
             ccount += length(reg.n)
         end
-        cgc = new{N-1}(Moment{N-1}[], creg)
+        new{N-1}(Moment{N-1}[], creg)
     end
 
     @doc """
@@ -501,7 +501,7 @@ mutable struct CircuitGateChain{N}
             reg.ind .= [N:N+reg.n-1...]
             N += reg.n
         end
-        cgc = new{N-1}(Moment{N-1}[], creg)
+        new{N-1}(Moment{N-1}[], creg)
     end
 
     @doc """
@@ -517,7 +517,7 @@ mutable struct CircuitGateChain{N}
             push!(creg, reg.n)
             ccount += length(reg.n)
         end
-        cgc = new{N}(Moment{N}[], creg)
+        new{N}(Moment{N}[], creg)
     end
 
     @doc """
@@ -590,7 +590,7 @@ function Base.iterate(cgc::CircuitGateChain{N}, state=1) where {N}
 end
 
 # implement methods required for iteration
-function Base.firstindex(cgc::CircuitGateChain{N}) where {N}
+function Base.firstindex(::CircuitGateChain{N}) where {N}
     return 1
 end
 
@@ -602,21 +602,14 @@ function Base.length(cgc::CircuitGateChain{N}) where {N}
     return length(cgc.moments)
 end
 
-Base.size(cgc::CircuitGateChain{N}) where {N} = N
+Base.size(::CircuitGateChain{N}) where {N} = N
 
 function Base.:*(cgc1::CircuitGateChain{N}, cgc2::CircuitGateChain{N}) where {N}
-    append!(cgc1.moments, cgc2.moments)
-    creg_length = length(cgc1.creg) - length(cgc2.creg)
-    if creg_length > 0
-        append!(cgc2.creg, fill(0, (creg_length,)))
-    elseif creg_length < 0
-        append!(cgc1.creg, fill(0, (abs(creg_length)),))
-    end
-    cgc1.creg = cgc1.creg .| cgc2.creg
-    return cgc1
+    # TODO: might need to revise classical register merging
+    return CircuitGateChain{N}(vcat(cgc1.moments, cgc2.moments), vcat(cgc1.creg, cgc2.creg))
 end
 
-function Base.reverse(cgc::CircuitGateChain{N}) where {N}
+function Base.reverse!(cgc::CircuitGateChain{N}) where {N}
     for i in length(cgc)
         cgc[i] = reverse(cgc[i])
     end
@@ -625,7 +618,7 @@ function Base.reverse(cgc::CircuitGateChain{N}) where {N}
 end
 
 
-function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
+function Base.append!(cgc::CircuitGateChain{N}, g::CircuitGate{M,N,G}) where {M,N,G<:AbstractGate}
     max_creg = sum(length.(cgc.creg))
     if g.ccntrl isa Vector{Integer}
         for reg in g.ccntrl
@@ -636,35 +629,36 @@ function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}) where {M,N,G<:Abstrac
     push!(cgc.moments, Moment{N}(g))
 end
 
-function (cgc::CircuitGateChain{N})(g::CircuitGate{M,N,G}, max_creg::Int) where {M,N,G<:AbstractGate}
+function Base.append!(cgc::CircuitGateChain{N}, g::CircuitGate{M,N,G}, max_creg::Int) where {M,N,G<:AbstractGate}
     if g.ccntrl isa Vector{Integer}
         for reg in g.ccntrl
             reg <= max_creg || error("Attempt to access classical bit " * string(reg) * " in CircuitGateChain with " * string(max_creg) * " classical bits")
         end
     end
-
     push!(cgc.moments, Moment{N}(g))
 end
 
-function (cgc::CircuitGateChain{N})(g::Array{<:CircuitGate{M,N,G} where M where G,1}) where {N}
+function Base.append!(cgc::CircuitGateChain{N}, g::Array{<:CircuitGate{M,N,G} where M where G,1}) where {N}
     max_creg = sum(length.(cgc.creg))
     for cg in g
-        cgc(cg, max_creg)
+        Base.append!(cgc, cg, max_creg)
     end
 end
 
-function (cgc::CircuitGateChain{N})(g::Array{<:Any,1}) where {N}
+function Base.append!(cgc::CircuitGateChain{N}, g::AbstractVector) where {N}
     max_creg = sum(length.(cgc.creg))
-    cgc(g, max_creg)
+    Base.append!(cgc, g, max_creg)
 end
 
-function (cgc::CircuitGateChain{N})(g::Array{<:Any,1}, max_creg::Int) where {N}
+function Base.append!(cgc::CircuitGateChain{N}, g::AbstractVector, max_creg::Int) where {N}
     for cg in g
         if cg isa AbstractVector
-            cgc.(cg, max_creg)
+            for g in cg
+                Base.append!(cgc, g, max_creg)
+            end
             continue
         end
-        cgc(cg, max_creg)
+        Base.append!(cgc, cg, max_creg)
     end
 end
 
