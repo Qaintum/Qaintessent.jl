@@ -13,8 +13,9 @@ greyencode(n::Integer) = n ⊻ (n >> 1)
 """
     inverseM(N)
 
-finds inverse of M matrix of size 2^(N-1)×2^(N-1) with elements M_{i,j} equal to inner product of binary rep of i (classical) and j (grey code), i,j ∈ [1:2^(N-1)]
-utilizes algorithm from https://arxiv.org/pdf/quant-ph/0404089.pdf
+finds inverse of M matrix of size 2^(N-1)×2^(N-1) with elements M_{i,j} equal
+to inner product of binary rep of i (classical) and j (grey code), i,j ∈ [1:2^(N-1)]
+utilizes algorithm from arxiv:quant-ph/0404089
 """
 @memoize function inverseM(N)
     m = 2^(N-1)
@@ -30,7 +31,7 @@ end
 """
     stateprep(u, N)
 
-creates unitary matrices P, Y ∈ C^(2^N × 2^N), P is diagonal and Y prepares the real part of u
+creates Array of CircuitGate objects preparing state `u` over `N` qubits..
 uses algorithm from arxiv:quant-ph/0410066
 """
 function stateprep(u, N, n=1)
@@ -147,11 +148,13 @@ function qr_blocked!(m::AbstractMatrix{ComplexF64}, block_size=2::Integer)
             end
         end
         if col + block_size < N
-            m[row+block_size+1:N, col+block_size+1:N] -= m[row+block_size+1:N, col+1:col+block_size] * m[row+1:row+block_size, col+block_size+1:N]
+            m[row+block_size+1:N, col+block_size+1:N] -=
+                m[row+block_size+1:N, col+1:col+block_size] *
+                m[row+1:row+block_size, col+block_size+1:N]
         end
     end
     if N%block_size != 0
-        m_unblocked, τ_unblocked= qr_unblocked(m[num_blocks*block_size:end,num_blocks*block_size:end])
+        m_unblocked, τ_unblocked= qr_unblocked(m[num_blocks*block_size:end, num_blocks*block_size:end])
         m[num_blocks*block_size:end,num_blocks*block_size:end] = m_unblocked
         append!(τ, τ_unblocked)
     end
@@ -213,15 +216,15 @@ function compile1qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
         wires = [1]
     end
     cg = AbstractCircuitGate{N}[]
-
-    return append!(cg, single_qubit_circuit_gate.((wires[1],), [RzGate(θ2), RxGate(ϕ), RzGate(θ1)], (N,))), phase
+    append!(cg, single_qubit_circuit_gate.((wires[1],), [RzGate(θ2), RxGate(ϕ), RzGate(θ1)], (N,)))
+    return cg, phase
 end
 
 """
     decomposeSO4(m::AbstractMatrix{ComplexF64})
 
-decomposes a SO(4) matrix into 2 SU(2) matrices, such that M∈SO(4), A,B ∈ SU(2)
-M ≊ A ⊗ B under the magic basis homomorphism.
+decomposes a SO(4) matrix into 2 SU(2) matrices, such that `m`∈SO(4), A,B ∈ SU(2)
+via isoclinic decomposition. m ≊ A ⊗ B under the magic basis homomorphism.
 """
 function decomposeSO4(m::AbstractMatrix{ComplexF64})
     size(m)[1] == size(m)[2] || error("decomposeSO4 only works on square matrices")
@@ -272,11 +275,11 @@ function decomposeSO4(m::AbstractMatrix{ComplexF64})
     return A, B
 end
 
-# Algorithm taken from https://arxiv.org/abs/quant-ph/0211002
 """
     compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 
-compiles an arbitrary U(4) matrix into a quantum circuit. Algorithm taken from https://arxiv.org/pdf/quant-ph/0308006.pdf, https://arxiv.org/pdf/quant-ph/0211002.pdf
+compiles an arbitrary U(4) matrix into a quantum circuit. Algorithm taken from
+arxiv:quant-ph/0308006, arxiv:quant-ph/0211002
 """
 function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     cg = AbstractCircuitGate{N}[]
@@ -294,9 +297,7 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 
     P = K_2*Diag*inv(K_2)
     K_1 = inv(P)*U
-
     C, D = decomposeSO4(inv(K_2)*K_1)
-    # @assert kron(C,D) ≈ U_56
 
     append!(cg, compile1qubit(C, N, [2])[1])
     append!(cg, compile1qubit(D, N, [1])[1])
@@ -312,7 +313,7 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
                     CircuitGate((2, 1), ControlledGate{1,2}(X), N)])
 
     A, B = decomposeSO4(K_2)
-    # @assert kron(A,B) ≈ U_12
+
     append!(cg, compile1qubit(A, N, [2])[1])
     append!(cg, compile1qubit(B, N, [1])[1])
 
@@ -320,11 +321,12 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 end
 
 """
-    η!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
+    fillψ!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
 
-calculates η matrix used in compilediag.
+fills empty vector `ψ`, such that  ψ = −im*[logχ1(d) log χ2(d) ··· logχl−1(U)],
+where χn(d) = d[2n-1]*d[2n+2]/(d[2n]*d[2n+1]) per arxiv:quant-ph/0303039
 """
-function η!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
+function fillψ!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
     for i in StepRange(1,1,l-1)
         ψ[i] = imag(log(d[2i-1]*d[2i+2]/(d[2i]*d[2i+1])))
     end
@@ -333,7 +335,23 @@ end
 """
     ηcol(l::Integer, n::Integer)
 
-calculates columns of η matrix used in compilediag.
+calculates a single flip state for given integer `n` and a column length of `l`,
+    where 0 <= n <= l. returns a vector of length l, where vec[n] = 1, vec[n+1] = -1.
+    if n == 0, vec[1] = -1, if n==l, vec[l] = 1
+# Examples
+```julia-repl
+julia> l = 4
+julia> ηcol(4, 0)
+[-1, 0, 0, 0]
+julia> ηcol(4, 1)
+[1, -1, 0, 0]
+julia> ηcol(4, 2)
+[0, 1, -1, 0]
+julia> ηcol(4, 3)
+[0, 0, 1, -1]
+julia> ηcol(4, 4)
+[0, 0, 0, 1]
+```
 """
 @memoize Dict function ηcol(l::Integer, n::Integer)
     vec = zeros(Integer, l)
@@ -353,10 +371,12 @@ end
 """
     flip_state(m::Integer, l::Integer)
 
-calculates the flip state of a given input matrix. algorithm taken from arxiv:quant-ph/0303039
+calculates the `m`th column of the η⊗ matrix by summing all flip states
+associated with the binary representation of `m` over the span of [1,l-1]
+algorithm taken from arxiv:quant-ph/0303039
 """
 @memoize Dict function flip_state(m::Integer, l::Integer)
-    # calculates flip state of a given integer `x`
+    # calculates flip states of a given integer `x`
     f = filter(x->count_ones(x&m)%2==1, 1:l-1)
     sum(ηcol.((l-1,), f))
 end
@@ -392,7 +412,8 @@ end
 """
     compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
 
-recursively compiles an arbitrary diagonal U(N) matrix into a quantum circuit. algorithm taken from arxiv:quant-ph/0303039
+recursively compiles an arbitrary diagonal unitary matrix D_{2^N} ∈ C^(2^N×2^N) into a quantum circuit. algorithm taken from arxiv:quant-ph/0303039
+D_{2^N} can be decomposed into D_{2^(N-1)} ∈ C^(2^(N-1)×2^(N-1)) ⊗ exp(i*ϕ)*RzGate(θ)
 """
 function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
     cgs = AbstractCircuitGate{N}[]
@@ -410,7 +431,7 @@ function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
     ψ = zeros(Float64, l-1)
     α = zeros(Float64, l)
 
-    η!(d, ψ, l)
+    fillψ!(d, ψ, l)
 
     ηplus = zeros(Float64, (l-1, l-1))
     for i in StepRange(1,1,l-1)
