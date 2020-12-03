@@ -7,7 +7,7 @@ Quantum Register of `N` qubits.
 
 """
 struct QRegister <: Register
-    #TODO: Create function to read QRegister using ind
+    # TODO: Create function to read QRegister using ind
     "value stored by register"
     n::Int
     "vector of quantum wire numbers in this quantum register"
@@ -54,7 +54,7 @@ end
 
 function int2bit(x::Int64; pad=nothing)
     if isnothing(pad)
-        pad = floor(Int64, log2(3)+1)
+        pad = floor(Int64, log2(3) + 1)
     end
     BitArray(digits(x, base=2, pad=pad) |> reverse)
 end
@@ -64,7 +64,7 @@ function bit2int(b::BitArray)
     num = 0
     count = 0
     while !isempty(b)
-        num += pop!(b)*2^count
+        num += pop!(b) * 2^count
         count += 1
     end
     num
@@ -78,7 +78,7 @@ create expression to verify that classical register is equal to integer value `v
 """
 function reg_check(c::Qaintessent.CRegister, val::Int)
     r = Ref(c.n)
-    return :(Qaintessent.bit2int($r[])==$val)
+    return :(Qaintessent.bit2int($r[]) == $val)
 end
 
 """
