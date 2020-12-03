@@ -69,8 +69,8 @@ Test whether two controlled circuit gates commute.
 function iscommuting(A::CircuitGate{L,N,ControlledGate{S,L}}, B::CircuitGate{M,N,ControlledGate{T,M}}) where {L,M,N,S,T}
 
     # check whether only control wires overlap, if at all
-    if (length(intersect(A.iwire[end-S+1:end], B.iwire)) == 0 &&
-        length(intersect(B.iwire[end-T+1:end], A.iwire)) == 0)
+    if (length(intersect(A.iwire[end - S + 1:end], B.iwire)) == 0 &&
+        length(intersect(B.iwire[end - T + 1:end], A.iwire)) == 0)
         return true
     end
 
