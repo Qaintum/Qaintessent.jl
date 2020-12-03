@@ -18,7 +18,7 @@ julia> cartesian_tuples(2, 3)
 ```
 """
 cartesian_tuples(d::Integer, N::Integer) =
-    Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
+    Tuple.(CartesianIndices(Tuple(fill(0:d - 1, N))))
 
 
 """
@@ -34,4 +34,4 @@ comm(A::AbstractMatrix, B::AbstractMatrix) = A * B - B * A
 
 Assemble the "Pauli vector" matrix.
 """
-pauli_vector(x, y, z) = [z x - im*y; x + im*y -z]
+pauli_vector(x, y, z) = [z x - im * y; x + im * y -z]
