@@ -26,7 +26,7 @@ function matrix(ρ::DensityMatrix{N}) where {N}
     ]
     mat = zeros(Complex{eltype(ρ.v)}, 2^N, 2^N)
     for (i, pt) in enumerate(cartesian_tuples(4, N))
-        mat += ρ.v[i] * kron([halfpauli[p+1] for p in reverse(pt)]...)
+        mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(pt)]...)
     end
     return mat
 end
@@ -43,7 +43,7 @@ function density_from_statevector(ψ::AbstractVector)
     ]
     v = zeros(4^N)
     for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        v[i] = real(dot(ψ, kron([pauli[p+1] for p in reverse(pt)]...) * ψ))
+        v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(pt)]...) * ψ))
     end
     return DensityMatrix{N}(v)
 end
@@ -57,7 +57,7 @@ encoded as `DensityMatrix{N}`. `ipauli[j]` specifies the j-th matrix as integer 
 """
 function pauli_group_matrix(ipauli::AbstractVector{<:Integer})
     i4 = Matrix{Int}(I, 4, 4)
-    DensityMatrix{length(ipauli)}(kron([2 * i4[i+1, :] for i in reverse(ipauli)]...))
+    DensityMatrix{length(ipauli)}(kron([2 * i4[i + 1, :] for i in reverse(ipauli)]...))
 end
 
 function pauli_group_matrix(paulistring::String)
