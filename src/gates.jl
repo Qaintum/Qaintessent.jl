@@ -93,10 +93,10 @@ T† gate
 struct TdagGate <: AbstractGate{1} end
 
 matrix(::SGate) = [1. 0.; 0. im]
-matrix(::TGate) = [1. 0.; 0. Base.exp(im*π/4)]
+matrix(::TGate) = [1. 0.; 0. Base.exp(im * π / 4)]
 
 matrix(::SdagGate) = [1. 0.; 0. -im]
-matrix(::TdagGate) = [1. 0.; 0. Base.exp(-im*π/4)]
+matrix(::TdagGate) = [1. 0.; 0. Base.exp(-im * π / 4)]
 
 LinearAlgebra.ishermitian(::SGate) = false
 LinearAlgebra.ishermitian(::TGate) = false
@@ -126,12 +126,12 @@ struct RxGate <: AbstractGate{1}
 end
 
 function matrix(g::RxGate)
-    c = cos(g.θ[]/2)
-    s = sin(g.θ[]/2)
-    [c -im*s; -im*s c]
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
+    [c -im * s; -im * s c]
 end
 
-LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[]/2)) < 4*eps()
+LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
 """
@@ -146,15 +146,15 @@ struct RyGate <: AbstractGate{1}
     function RyGate(θ::Real)
         new([θ])
     end
-end
+    end
 
 function matrix(g::RyGate)
-    c = cos(g.θ[]/2)
-    s = sin(g.θ[]/2)
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
     [c -s; s c]
 end
 
-LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[]/2)) < 4*eps()
+LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
 """
@@ -171,11 +171,11 @@ struct RzGate <: AbstractGate{1}
 end
 
 function matrix(g::RzGate)
-    eθ = exp(im*g.θ[]/2)
+    eθ = exp(im * g.θ[] / 2)
     [conj(eθ) 0; 0 eθ]
 end
 
-LinearAlgebra.ishermitian(g::RzGate) = abs(sin(g.θ[]/2)) < 4*eps()
+LinearAlgebra.ishermitian(g::RzGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
 Base.adjoint(g::RxGate) = RxGate(-g.θ[])
@@ -199,7 +199,7 @@ struct RotationGate <: AbstractGate{1}
     function RotationGate(θ::Real, n::AbstractVector{<:Real})
         length(n) == 3 || error("Rotation axis vector must have length 3.")
         norm(n) ≈ 1 || error("Norm of rotation axis vector must be 1.")
-        new(n*θ)
+        new(n * θ)
     end
 end
 
@@ -208,11 +208,11 @@ function matrix(g::RotationGate)
     if θ == 0
         return Matrix{Complex{eltype(g.nθ)}}(I, 2, 2)
     end
-    n = g.nθ/θ
-    cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
+    n = g.nθ / θ
+    cos(θ / 2) * I - im * sin(θ / 2) * pauli_vector(n...)
 end
 
-LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ)/2)) < 8*eps()
+LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ) / 2)) < 8 * eps()
 
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
@@ -231,9 +231,9 @@ struct PhaseShiftGate <: AbstractGate{1}
     end
 end
 
-matrix(g::PhaseShiftGate) = [1 0; 0 Base.exp(im*g.ϕ[])]
+matrix(g::PhaseShiftGate) = [1 0; 0 Base.exp(im * g.ϕ[])]
 
-function LinearAlgebra.ishermitian(g::PhaseShiftGate)
+    function LinearAlgebra.ishermitian(g::PhaseShiftGate)
     if abs(g.ϕ[]) < eps()
         return true
     end
@@ -277,12 +277,12 @@ struct EntanglementXXGate <: AbstractGate{2}
 end
 
 function matrix(g::EntanglementXXGate)
-    c = cos(g.θ[]/2)
-    s = sin(g.θ[]/2)
-    [c 0 0 -im*s; 0 c -im*s 0; 0 -im*s c 0; -im*s 0 0 c]
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
+    [c 0 0 -im * s; 0 c -im * s 0; 0 -im * s c 0; -im * s 0 0 c]
 end
 
-LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[]/2)) < 4*eps()
+LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
 """
@@ -304,12 +304,12 @@ struct EntanglementYYGate <: AbstractGate{2}
 end
 
 function matrix(g::EntanglementYYGate)
-    c = cos(g.θ[]/2)
-    s = sin(g.θ[]/2)
-    [c 0 0 im*s; 0 c -im*s 0; 0 -im*s c 0; im*s 0 0 c]
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
+    [c 0 0 im * s; 0 c -im * s 0; 0 -im * s c 0; im * s 0 0 c]
 end
 
-LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[]/2)) < 4*eps()
+LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
 """
@@ -331,11 +331,11 @@ struct EntanglementZZGate <: AbstractGate{2}
 end
 
 function matrix(g::EntanglementZZGate)
-    eθ = exp(im*g.θ[]/2)
+    eθ = exp(im * g.θ[] / 2)
     diagm([conj(eθ), eθ, eθ, conj(eθ)])
 end
 
-LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[]/2)) < 4*eps()
+LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
 Base.adjoint(g::EntanglementXXGate) = EntanglementXXGate(-g.θ[])
@@ -358,7 +358,7 @@ function matrix(g::ControlledGate{M,N}) where {M,N}
     Umat = matrix(g.U)
     CU = sparse(one(eltype(Umat)) * I, 2^N, 2^N)
     # Note: target qubit(s) corresponds to fastest varying index
-    CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
+    CU[end - size(Umat, 1) + 1:end, end - size(Umat, 2) + 1:end] = Umat
     return CU
 end
 
@@ -373,7 +373,7 @@ controlled_not() = ControlledGate{1,2}(X)
 isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 
 
-"""
+    """
 MatrixGate: general gate constructed from an unitary matrix
 """
 struct MatrixGate{N} <: AbstractGate{N}
@@ -394,7 +394,7 @@ Base.adjoint(g::MatrixGate{N}) where {N} = MatrixGate(Base.adjoint(g.matrix))
 LinearAlgebra.ishermitian(g::MatrixGate{M}) where {M} =
     LinearAlgebra.ishermitian(Qaintessent.matrix(g))
 
-function Base.isapprox(g1::G, g2::G) where {G<:AbstractGate{N}} where {N}
+function Base.isapprox(g1::G, g2::G) where {G <: AbstractGate{N}} where {N}
     for name in fieldnames(G)
         if !(getfield(g1, name) ≈ getfield(g2, name))
             return false
