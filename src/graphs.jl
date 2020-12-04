@@ -108,7 +108,7 @@ function Base.size(d::Dag)
     count = 0
     for i in 1:length(d.iwire)
         wire = d.iwire[i]
-        while wire.next != nothing
+        while wire.next !== nothing
             count += 1
             wire = wire.next
         end
