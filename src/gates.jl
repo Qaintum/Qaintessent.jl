@@ -29,9 +29,9 @@ Pauli Z gate
 """
 struct ZGate <: AbstractGate{1} end
 
-matrix(::XGate) = [0.  1.; 1.  0.]
-matrix(::YGate) = [0. -im; im  0.]
-matrix(::ZGate) = [1.  0.; 0. -1.]
+matrix(::XGate)::Matrix{ComplexF64} = ComplexF64[0.  1.; 1.  0.]
+matrix(::YGate)::Matrix{ComplexF64} = ComplexF64[0. -im; im  0.]
+matrix(::ZGate)::Matrix{ComplexF64} = ComplexF64[1.  0.; 0. -1.]
 
 LinearAlgebra.ishermitian(::XGate) = true
 LinearAlgebra.ishermitian(::YGate) = true
@@ -55,7 +55,7 @@ Hadamard gate
 """
 struct HadamardGate <: AbstractGate{1} end
 
-matrix(::HadamardGate) = [1 1; 1 -1] / sqrt(2)
+matrix(::HadamardGate)::Matrix{ComplexF64} = ComplexF64[1 1; 1 -1] / sqrt(2)
 
 LinearAlgebra.ishermitian(::HadamardGate) = true
 # Hadamard gate is Hermitian
@@ -92,11 +92,11 @@ T† gate
 """
 struct TdagGate <: AbstractGate{1} end
 
-matrix(::SGate) = [1. 0.; 0. im]
-matrix(::TGate) = [1. 0.; 0. Base.exp(im * π / 4)]
+matrix(::SGate)::Matrix{ComplexF64} = ComplexF64[1. 0.; 0. im]
+matrix(::TGate)::Matrix{ComplexF64} = ComplexF64[1. 0.; 0. Base.exp(im * π / 4)]
 
-matrix(::SdagGate) = [1. 0.; 0. -im]
-matrix(::TdagGate) = [1. 0.; 0. Base.exp(-im * π / 4)]
+matrix(::SdagGate)::Matrix{ComplexF64} = ComplexF64[1. 0.; 0. -im]
+matrix(::TdagGate)::Matrix{ComplexF64} = ComplexF64[1. 0.; 0. Base.exp(-im * π / 4)]
 
 LinearAlgebra.ishermitian(::SGate) = false
 LinearAlgebra.ishermitian(::TGate) = false
@@ -118,17 +118,17 @@ Rotation-X gate
 """
 struct RxGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{<:Real}
+    θ::Vector{Float64}
 
     function RxGate(θ::Real)
         new([θ])
     end
 end
 
-function matrix(g::RxGate)
-    c = cos(g.θ[] / 2)
-    s = sin(g.θ[] / 2)
-    [c -im * s; -im * s c]
+function matrix(g::RxGate)::Matrix{ComplexF64}
+    c = cos(g.θ[1] / 2.0)
+    s = sin(g.θ[1] / 2.0)
+    ComplexF64[c -im * s; -im * s c]
 end
 
 LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
@@ -141,17 +141,17 @@ Rotation-Y gate
 """
 struct RyGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{<:Real}
+    θ::Vector{Float64}
 
     function RyGate(θ::Real)
         new([θ])
     end
     end
 
-function matrix(g::RyGate)
+function matrix(g::RyGate)::Matrix{ComplexF64}
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
-    [c -s; s c]
+    ComplexF64[c -s; s c]
 end
 
 LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
@@ -164,15 +164,15 @@ Rotation-Z gate
 """
 struct RzGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{<:Real}
+    θ::Vector{Float64}
     function RzGate(θ::Real)
         new([θ])
     end
 end
 
-function matrix(g::RzGate)
+function matrix(g::RzGate)::Matrix{ComplexF64}
     eθ = exp(im * g.θ[] / 2)
-    [conj(eθ) 0; 0 eθ]
+    ComplexF64[conj(eθ) 0; 0 eθ]
 end
 
 LinearAlgebra.ishermitian(g::RzGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
@@ -189,7 +189,7 @@ General rotation operator gate: rotation by angle `θ` around unit vector `n`.
 ``R_{\\vec{n}}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec{n}\\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate{1}
-    nθ::AbstractVector{<:Real}
+    nθ::AbstractVector{Float64}
 
     function RotationGate(nθ::AbstractVector{<:Real})
         length(nθ) == 3 || error("Rotation axis vector must have length 3.")
@@ -224,7 +224,7 @@ Phase shift gate
 """
 struct PhaseShiftGate <: AbstractGate{1}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    ϕ::Vector{<:Real}
+    ϕ::Vector{Float64}
 
     function PhaseShiftGate(ϕ::Real)
         new([ϕ])
@@ -270,16 +270,16 @@ Reference:\n
 """
 struct EntanglementXXGate <: AbstractGate{2}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{<:Real}
+    θ::Vector{Float64}
     function EntanglementXXGate(θ::Real)
         new([θ])
     end
 end
 
-function matrix(g::EntanglementXXGate)
+function matrix(g::EntanglementXXGate)::Matrix{ComplexF64}
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
-    [c 0 0 -im * s; 0 c -im * s 0; 0 -im * s c 0; -im * s 0 0 c]
+    ComplexF64[c 0 0 -im * s; 0 c -im * s 0; 0 -im * s c 0; -im * s 0 0 c]
 end
 
 LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
@@ -297,16 +297,16 @@ Reference:\n
 """
 struct EntanglementYYGate <: AbstractGate{2}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{<:Real}
+    θ::Vector{Float64}
     function EntanglementYYGate(θ::Real)
         new([θ])
     end
 end
 
-function matrix(g::EntanglementYYGate)
+function matrix(g::EntanglementYYGate)::Matrix{ComplexF64}
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
-    [c 0 0 im * s; 0 c -im * s 0; 0 -im * s c 0; im * s 0 0 c]
+    ComplexF64[c 0 0 im * s; 0 c -im * s 0; 0 -im * s c 0; im * s 0 0 c]
 end
 
 LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
@@ -324,13 +324,13 @@ Reference:\n
 """
 struct EntanglementZZGate <: AbstractGate{2}
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{<:Real}
+    θ::Vector{Float64}
     function EntanglementZZGate(θ::Real)
         new([θ])
     end
 end
 
-function matrix(g::EntanglementZZGate)
+function matrix(g::EntanglementZZGate)::Matrix{ComplexF64}
     eθ = exp(im * g.θ[] / 2)
     diagm([conj(eθ), eθ, eθ, conj(eθ)])
 end
@@ -354,9 +354,9 @@ struct ControlledGate{M,N} <: AbstractGate{N}
     end
 end
 
-function matrix(g::ControlledGate{M,N}) where {M,N}
-    Umat = matrix(g.U)
-    CU = sparse(one(eltype(Umat)) * I, 2^N, 2^N)
+function matrix(g::ControlledGate{M,N})::Matrix{ComplexF64} where {M,N}
+    Umat::Matrix{ComplexF64} = matrix(g.U)
+    CU = sparse(one(ComplexF64) * I, 2^N, 2^N)
     # Note: target qubit(s) corresponds to fastest varying index
     CU[end - size(Umat, 1) + 1:end, end - size(Umat, 2) + 1:end] = Umat
     return CU
@@ -377,7 +377,7 @@ isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 MatrixGate: general gate constructed from an unitary matrix
 """
 struct MatrixGate{N} <: AbstractGate{N}
-    matrix::AbstractMatrix
+    matrix::Matrix{ComplexF64}
     function MatrixGate(m)
         d = 2
         @assert size(m, 1) == size(m, 2)
