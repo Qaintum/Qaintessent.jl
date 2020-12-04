@@ -45,7 +45,7 @@ function creg(n::Int)
 end
 
 # make Registers indexable
-function Base.getindex(r::Register, i::Integer) where {N}
+function Base.getindex(r::Register, i::Integer)
     !any(r.ind .== 0) || error("Register object has yet to be used in a CircuitGateChain object")
     1 <= i <= length(r.ind) || throw(BoundsError(ind, i))
     return r.ind[i]
@@ -86,7 +86,7 @@ end
 
 Set the classical register `reg` bit `index` to value `value`
 """
-function set_creg!(reg::CRegister, index::Int, value::Bool) where {N}
+function set_creg!(reg::CRegister, index::Int, value::Bool)
     index = length(reg.n) - index + 1
     reg.n[index] = value
 end
@@ -96,7 +96,7 @@ end
 
 Set the classical register `reg` to value `value`
 """
-function set_creg!(reg::CRegister, value::Int) where {N}
+function set_creg!(reg::CRegister, value::Int)
     l = length(reg.n)
     log2(value) <= l || error("Unable to store integer value " * string(value) * " in BitArray of size " * string(l))
     reg.n .= int2bit(value; pad=l)
