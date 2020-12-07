@@ -18,7 +18,11 @@ julia> cartesian_tuples(2, 3)
 ```
 """
 cartesian_tuples(d::Integer, N::Integer) =
-    Tuple.(CartesianIndices(Tuple(fill(0:d - 1, N))))
+    cartesian_tuples(d, Val(N))
+
+
+cartesian_tuples(d::Integer, ::Val{N}) where {N} =
+    Tuple.(CartesianIndices(NTuple{N, UnitRange{Int64}}(fill(0:d - 1, N))))
 
 
 """
