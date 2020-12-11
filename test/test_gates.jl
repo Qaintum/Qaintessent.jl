@@ -82,7 +82,7 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         U, _ = qr(A)
         U = Array(U)
         gateU = MatrixGate(U)
-        cgateU = ControlledGate{M,N}(gateU)
+        cgateU = ControlledGate(gateU, M)
 
         cgateUdag = adjoint(cgateU)
         @test LinearAlgebra.ishermitian(cgateU) == (Qaintessent.matrix(cgateU) == Qaintessent.matrix(cgateUdag))
