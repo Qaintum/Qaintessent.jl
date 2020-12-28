@@ -1,21 +1,21 @@
 
 # `backward` functions return gates storing derivatives
 
-backward(g::XGate, Δ::AbstractMatrix) = g
-backward(g::YGate, Δ::AbstractMatrix) = g
-backward(g::ZGate, Δ::AbstractMatrix) = g
+backward(g::XGate, ::AbstractMatrix) = g
+backward(g::YGate, ::AbstractMatrix) = g
+backward(g::ZGate, ::AbstractMatrix) = g
 
 
-backward(g::HadamardGate, Δ::AbstractMatrix) = g
+backward(g::HadamardGate, ::AbstractMatrix) = g
 
 
-backward(g::SGate, Δ::AbstractMatrix) = g
-backward(g::TGate, Δ::AbstractMatrix) = g
+backward(g::SGate, ::AbstractMatrix) = g
+backward(g::TGate, ::AbstractMatrix) = g
 
-backward(g::SdagGate, Δ::AbstractMatrix) = g
-backward(g::TdagGate, Δ::AbstractMatrix) = g
+backward(g::SdagGate, ::AbstractMatrix) = g
+backward(g::TdagGate, ::AbstractMatrix) = g
 
-backward(g::MatrixGate, Δ::AbstractMatrix) = g
+backward(g::MatrixGate, ::AbstractMatrix) = g
 
 
 function backward(g::RxGate, Δ::AbstractMatrix)
@@ -62,7 +62,7 @@ function backward(g::PhaseShiftGate, Δ::AbstractMatrix)
 end
 
 
-backward(g::SwapGate, Δ::AbstractMatrix) = g
+backward(g::SwapGate, ::AbstractMatrix) = g
 
 
 function backward(g::EntanglementXXGate, Δ::AbstractMatrix)
@@ -86,37 +86,37 @@ function backward(g::EntanglementZZGate, Δ::AbstractMatrix)
 end
 
 
-function backward(g::ControlledGate{M,N}, Δ::AbstractMatrix) where {M,N}
+function backward(g::ControlledGate{G}, Δ::AbstractMatrix) where {G}
     # Note: target qubits correspond to fastest varying indices
-    ControlledGate{M,N}(backward(g.U, Δ[end - 2^M + 1:end, end - 2^M + 1:end]))
+    ControlledGate(backward(g.U, Δ[end-2^target(g)+1:end, end-2^target(g)+1:end]), control(g))
 end
 
 
-function backward(cg::CircuitGate{M,N,G}, ψ::AbstractVector, Δ::AbstractVector) where {M,N,G}
+function backward(cg::CircuitGate{M,G}, ψ::AbstractVector, Δ::AbstractVector, N::Int) where {M,G}
     ρ = rdm(N, cg.iwire, Δ, ψ)
-    CircuitGate{M,N,G}(cg.iwire, backward(cg.gate, ρ))
+    CircuitGate{M,G}(cg.iwire, backward(cg.gate, ρ))
 end
 
-function backward(m::Moment{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
-    gates = AbstractCircuitGate{N}[]
+function backward(m::Moment, ψ::AbstractVector, Δ::AbstractVector, N::Int)
+    gates = AbstractCircuitGate[]
     for cg in reverse(m.gates)
         Udag = Base.adjoint(cg)
         ψ = apply(Udag, ψ)
         # backward step of quantum state
-        pushfirst!(gates, backward(cg, ψ, Δ))
+        pushfirst!(gates, backward(cg, ψ, Δ, N))
         Δ = apply(Udag, Δ)
     end
-    return Moment{N}(gates), ψ, Δ
+    return Moment(gates), ψ, Δ
 end
 
-function backward(cgc::CircuitGateChain{N}, ψ::AbstractVector, Δ::AbstractVector) where {N}
-    dcgc = CircuitGateChain{N}(AbstractCircuitGate{N}[])
-    for moment in reverse(cgc.moments)
+function backward(moments::Vector{Moment}, ψ::AbstractVector, Δ::AbstractVector, N::Int)
+    dmoments = Moment[]
+    for moment in reverse(moments)
         # backward step of quantum state
-        (m, ψ, Δ) = backward(moment, ψ, Δ)
-        pushfirst!(dcgc.moments, m)
+        (m, ψ, Δ) = backward(moment, ψ, Δ, N)
+        pushfirst!(dmoments, m)
     end
-    return dcgc, Δ
+    return dmoments, Δ
 end
 
 
@@ -131,14 +131,14 @@ the overall return value is the tuple (dc::Circuit{N}, dψ::AbstractVector).
 """
 function gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}) where {N}
     # length of circuit output vector must match gradient vector
-    @assert length(Δ) == length(c.meas.mops)
+    @assert length(Δ) == length(c.meas)
     # forward pass through unitary gates
-    ψ = apply(c.cgc, ψ)
+    ψ = apply(c.moments, ψ)
     # gradient (conjugated Wirtinger derivatives) of cost function with respect to ψ
-    ψbar = sum([Δ[i] * (c.meas.mops[i] * ψ) for i in 1:length(Δ)])
+    ψbar = sum([Δ[i] * (matrix(c.meas[i]) * ψ) for i in 1:length(Δ)])
     # backward pass through unitary gates
-    dcgc, ψbar = backward(c.cgc, ψ, ψbar)
+    dcgc, ψbar = backward(c.moments, ψ, ψbar, N)
     # TODO: efficiently represent Kronecker product without explicitly storing matrix entries
-    dmeas = MeasurementOps{N}([Δ[i] * reshape(kron(conj(ψ), ψ), length(ψ), length(ψ)) for i in 1:length(Δ)])
+    dmeas = MeasurementOperator.([Δ[i] * reshape(kron(conj(ψ), ψ), length(ψ), length(ψ)) for i in 1:length(Δ)], (Tuple(1:N),))
     return Circuit{N}(dcgc, dmeas), ψbar
 end
