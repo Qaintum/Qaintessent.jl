@@ -1,6 +1,7 @@
 using LinearAlgebra
 using StaticArrays
 using SparseArrays
+using MacroTools
 
 """
     AbstractGate
@@ -8,7 +9,7 @@ using SparseArrays
 Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 """
 abstract type AbstractGate end
-matrix(g::AbstractGate)::SparseMatrixCSC{Complex{Float64},Int64} = matrix(typeof(g), data(g))
+matrix(g::AbstractGate)::SparseMatrixCSC{Complex{Float64},Int} = matrix(typeof(g), data(g))
 
 """
 Pauli X gate
@@ -50,9 +51,9 @@ Y = YGate()
 Z = ZGate()
 
 # wires
-wires(::XGate)::Int64 = 1
-wires(::YGate)::Int64 = 1
-wires(::ZGate)::Int64 = 1
+wires(::XGate)::Int = 1
+wires(::YGate)::Int = 1
+wires(::ZGate)::Int = 1
 
 
 """
@@ -69,7 +70,7 @@ LinearAlgebra.ishermitian(::HadamardGate) = true
 Base.adjoint(H::HadamardGate) = H
 
 # wires
-wires(::HadamardGate)::Int64 = 1
+wires(::HadamardGate)::Int = 1
 
 
 """
@@ -121,10 +122,10 @@ Base.adjoint(::SdagGate) = SGate()
 Base.adjoint(::TdagGate) = TGate()
 
 # wires
-wires(::SGate)::Int64 = 1
-wires(::TGate)::Int64 = 1
-wires(::SdagGate)::Int64 = 1
-wires(::TdagGate)::Int64 = 1
+wires(::SGate)::Int = 1
+wires(::TGate)::Int = 1
+wires(::SdagGate)::Int = 1
+wires(::TdagGate)::Int = 1
 
 
 """
@@ -153,7 +154,7 @@ end
 LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::RxGate)::Int64 = 1
+wires(::RxGate)::Int = 1
 
 
 """
@@ -179,7 +180,7 @@ end
 LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::RyGate)::Int64 = 1
+wires(::RyGate)::Int = 1
 
 """
 Rotation-Z gate
@@ -207,7 +208,7 @@ Base.adjoint(g::RyGate) = RyGate(-g.θ[])
 Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # wires
-wires(::RzGate)::Int64 = 1
+wires(::RzGate)::Int = 1
 
 """
 General rotation operator gate: rotation by angle `θ` around unit vector `n`.
@@ -246,7 +247,7 @@ LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ) / 2)) < 8 * eps
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 # wires
-wires(::RotationGate)::Int64 = 1
+wires(::RotationGate)::Int = 1
 
 
 """
@@ -275,7 +276,7 @@ end
 Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
 
 # wires
-wires(::PhaseShiftGate)::Int64 = 1
+wires(::PhaseShiftGate)::Int = 1
 
 """
 Swap gate
@@ -293,7 +294,7 @@ LinearAlgebra.ishermitian(::SwapGate) = true
 Base.adjoint(s::SwapGate) = s
 
 # wires
-wires(::SwapGate)::Int64 = 2
+wires(::SwapGate)::Int = 2
 
 """
 Entanglement-XX gate
@@ -322,7 +323,7 @@ end
 LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::EntanglementXXGate)::Int64 = 2
+wires(::EntanglementXXGate)::Int = 2
 
 """
 Entanglement-YY gate
@@ -351,7 +352,7 @@ end
 LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::EntanglementYYGate)::Int64 = 2
+wires(::EntanglementYYGate)::Int = 2
 
 """
 Entanglement-ZZ gate
@@ -380,7 +381,7 @@ end
 LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::EntanglementZZGate)::Int64 = 2
+wires(::EntanglementZZGate)::Int = 2
 
 Base.adjoint(g::EntanglementXXGate) = EntanglementXXGate(-g.θ[])
 Base.adjoint(g::EntanglementYYGate) = EntanglementYYGate(-g.θ[])
@@ -392,24 +393,20 @@ General controlled gate: the `M` wires corresponding to the fastest running indi
 """
 struct ControlledGate{G} <: AbstractGate
     U::G
-    M::Int64
-    N::Int64
-    function ControlledGate(U::AbstractGate, M::Int64)
-        new{typeof(U)}(U, M, M+wires(U))
-    end
+    M::Int
 
-    function ControlledGate(U::AbstractGate, M::Int64, N::Int64)
-        M < N || error("Number of controlled wires `N` must be less than number of total wires `N`")
-        new{typeof(U)}(U, M, M+wires(U))
+    function ControlledGate(U::AbstractGate, M::Int)
+        new{typeof(U)}(U, M)
     end
-
 end
 
 # wires
-wires(g::ControlledGate)::Int64 = g.M + wires(g.U)
+wires(g::ControlledGate)::Int = g.M + wires(g.U)
+target(g::ControlledGate) = wires(g.U)
+control(g::ControlledGate) = g.M
 
 function matrix(g::ControlledGate{G}) where {G <:AbstractGate}
-    N = g.N
+    N = wires(g)
     Umat = matrix(g.U)
     CU = sparse(1:2^N, 1:2^N, ones(ComplexF64, 2^N))
     # Note: target qubit(s) corresponds to fastest varying index
@@ -432,7 +429,7 @@ isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 MatrixGate: general gate constructed from an unitary matrix
 """
 struct MatrixGate <: AbstractGate
-    matrix::SparseMatrixCSC{Complex{Float64},Int64}
+    matrix::SparseMatrixCSC{Complex{Float64},Int}
     function MatrixGate(m)
         @assert size(m, 1) == size(m, 2)
         isunitary(m) || error("Quantum operators must be unitary")
@@ -441,9 +438,11 @@ struct MatrixGate <: AbstractGate
 end
 
 # wires
-wires(g::MatrixGate)::Int64 = Int(log(2, size(g.matrix, 1)))
+wires(g::MatrixGate)::Int = Int(log(2, size(g.matrix, 1)))
 
 matrix(g::MatrixGate) = g.matrix
+
+matrix(g::SparseMatrixCSC{Complex{Float64},Int}) = g
 
 Base.adjoint(g::MatrixGate) = MatrixGate(Base.adjoint(g.matrix))
 
