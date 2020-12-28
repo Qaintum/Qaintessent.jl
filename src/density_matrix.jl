@@ -7,7 +7,7 @@ Density matrix, represented with respect to identity and Pauli basis (σ_j/2) by
 """
 struct DensityMatrix{N}
     "coefficients with respect to identity and Pauli basis"
-    v::AbstractVector{<:Real}
+    v::AbstractVector{Float64}
 
     function DensityMatrix{N}(v::AbstractVector{<:Real}) where {N}
         length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N`.")
@@ -32,17 +32,18 @@ function matrix(ρ::DensityMatrix{N}) where {N}
 end
 
 
-function density_from_statevector(ψ::AbstractVector)
+function density_from_statevector(ψ::Vector{G}) where {G}
     N = convert(Int, log2(length(ψ)))
     @assert 2^N == length(ψ)
-    pauli = [
-        sparse(I, 2, 2),
-        sparse(matrix(X)),
-        sparse(matrix(Y)),
-        sparse(matrix(Z)),
+    mX = matrix(XGate())
+    mY = matrix(YGate())
+    mZ = matrix(ZGate())
+    Id = ComplexF64[1 0; 0 1]
+    pauli = Matrix{ComplexF64}[
+        Id, mX, mY, mZ
     ]
     v = zeros(4^N)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
+    for (i, pt) in enumerate((cartesian_tuples(4, Val(N))))
         v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(pt)]...) * ψ))
     end
     return DensityMatrix{N}(v)
