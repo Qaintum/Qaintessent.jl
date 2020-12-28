@@ -4,8 +4,8 @@ using LinearAlgebra
 using Qaintessent
 
 
-function isunitary(cb::CircuitGateChain)
-    Qaintessent.matrix(cb) * Qaintessent.matrix(Base.adjoint(cb)) ≈ I
+function isunitary(cb::Vector{CircuitGate})
+    matrix(cb) * matrix(Base.adjoint(cb)) ≈ I
 end
 
 
@@ -23,10 +23,10 @@ end
 
 @testset ExtendedTestSet "toffoli circuit test" begin
     N = 3
-    cgc = toffoli_circuit(1, (3, 2), N)
+    cgc = toffoli_circuit(1, (3, 2))
 
     # reference
-    toffoli = ControlledGate{1,N}(X)
+    toffoli = circuit_gate(1, X, 3, 2)
 
     @test Qaintessent.matrix(toffoli) ≈ Qaintessent.matrix(cgc)
 end
@@ -71,7 +71,7 @@ end
 
 
 @testset ExtendedTestSet "qcla in place adder test" begin
-    for N in 1:5
+    for N in 1:4
         n = 1
         anc = 0
         while 2^n < N
@@ -89,7 +89,7 @@ end
         ψ[index+1] = 1.0
 
         ψ = apply(cgc, ψ)
-        answer = (findall(x -> x == 1, ψ)[1] - 1) >> N
+        answer = ((findall(x -> x == 1, ψ)[1] - 1) >> N)
         @test answer == a + b
     end
 end
