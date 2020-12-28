@@ -114,12 +114,12 @@ end
 
         for j in 1:N-1
             cg = Qaintessent.stateprep(ψ[1:2^(j-1):end], N, j)
-            ψ = apply(CircuitGateChain{N}(cg), ψ)
+            ψ = apply(cg, ψ)
         end
         θ = real(atan(-ψ[2^(N-1)+1]./ψ[1]).*2)
 
         if !isnan(θ)
-            cg = CircuitGate((N,), RyGate(θ), N)
+            cg = CircuitGate((N,), RyGate(θ))
             ψ = apply(cg, ψ)
         end
 
