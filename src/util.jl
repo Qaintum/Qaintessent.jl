@@ -1,3 +1,4 @@
+using LinearAlgebra
 
 """
     cartesian_tuples(d, N)
@@ -42,12 +43,12 @@ pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
 """
     binary_rep(x::Integer, M::Integer)
 
-Return binary representation of Integer `x` for `M` bits with least significant bit last.
+Return binary representation of Integer `x` for `M` bits with least significant bit first.
 """
 
 function binary_rep(x::Integer, M::Integer)
     m = BitArray(undef, M)
-    for i in M:-1:1
+    for i in 1:M
         m[i] = x & 1
         x = x >> 1
     end
@@ -57,12 +58,28 @@ end
 """
     binary_rep!(x::Integer, M::Integer)
 
-Return binary representation of Integer `x` for `M` bits with least significant bit last.
+Return binary representation of Integer `x` for `M` bits with least significant bit first.
 """
 function binary_rep!(m::BitArray{1}, x::Integer, M::Integer)
-    for i in M:-1:1
+    for i in 1:M
         m[i] = x & 1
         x = x >> 1
     end
     m
+end
+
+"""
+    intlog2(x::Integer)
+
+returns log 2 with integer inputs
+"""
+function intlog2(x::Integer)
+    x == 0 && error("Logarithm of 0 is undefined")
+    x < 0 && error("Logarithm of negative number is undefined")
+    ret::Int = 0
+    while x > 1
+        x = x >> 1
+        ret += 1
+    end
+    ret
 end
