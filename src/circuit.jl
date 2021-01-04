@@ -28,7 +28,7 @@ mutable struct Moment
         Nmin = 0
         for circuit_gate in g
             length(intersect(iwire, circuit_gate.iwire)) == 0 || error("Only gates on different wires are allowed in a Moment")
-            Nmin = maximum((Nmin, wires(circuit_gate.gate)))
+            Nmin = maximum((Nmin, num_wires(circuit_gate.gate)))
             append!(iwire, collect(circuit_gate.iwire))
         end
         new(g)
@@ -103,7 +103,7 @@ end
 @memoize function Base.size(m::Moment)
     Nmin = 0
     for circuit_gate in m
-        Nmin = maximum((Nmin, maximum(wires(circuit_gate))))
+        Nmin = maximum((Nmin, maximum(num_wires(circuit_gate))))
     end
     Nmin
 end
@@ -164,7 +164,7 @@ struct MeasurementOperator{M,G}
     operator::G
     iwire::NTuple{M,Int}
     function MeasurementOperator(cg::G, iwire::NTuple{M,Integer}) where {M,G <:AbstractGate}
-        M == wires(cg) || error("CircuitGate affecting $(wires(cg)) wires given, `iwire` of length $(length(iwire)) provided")
+        M == num_wires(cg) || error("CircuitGate affecting $(num_wires(cg)) wires given, `iwire` of length $(length(iwire)) provided")
         cg == adjoint(cg) || error("Measurement operator must be Hermitian.")
         new{M,G}(cg, iwire)
     end

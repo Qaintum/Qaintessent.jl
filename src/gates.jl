@@ -51,9 +51,9 @@ Y = YGate()
 Z = ZGate()
 
 # wires
-wires(::XGate)::Int = 1
-wires(::YGate)::Int = 1
-wires(::ZGate)::Int = 1
+num_wires(::XGate)::Int = 1
+num_wires(::YGate)::Int = 1
+num_wires(::ZGate)::Int = 1
 
 
 """
@@ -70,7 +70,7 @@ LinearAlgebra.ishermitian(::HadamardGate) = true
 Base.adjoint(H::HadamardGate) = H
 
 # wires
-wires(::HadamardGate)::Int = 1
+num_wires(::HadamardGate)::Int = 1
 
 
 """
@@ -122,10 +122,10 @@ Base.adjoint(::SdagGate) = SGate()
 Base.adjoint(::TdagGate) = TGate()
 
 # wires
-wires(::SGate)::Int = 1
-wires(::TGate)::Int = 1
-wires(::SdagGate)::Int = 1
-wires(::TdagGate)::Int = 1
+num_wires(::SGate)::Int = 1
+num_wires(::TGate)::Int = 1
+num_wires(::SdagGate)::Int = 1
+num_wires(::TdagGate)::Int = 1
 
 
 """
@@ -154,7 +154,7 @@ end
 LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::RxGate)::Int = 1
+num_wires(::RxGate)::Int = 1
 
 
 """
@@ -180,7 +180,7 @@ end
 LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::RyGate)::Int = 1
+num_wires(::RyGate)::Int = 1
 
 """
 Rotation-Z gate
@@ -208,7 +208,7 @@ Base.adjoint(g::RyGate) = RyGate(-g.θ[])
 Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # wires
-wires(::RzGate)::Int = 1
+num_wires(::RzGate)::Int = 1
 
 """
 General rotation operator gate: rotation by angle `θ` around unit vector `n`.
@@ -247,7 +247,7 @@ LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ) / 2)) < 8 * eps
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
 
 # wires
-wires(::RotationGate)::Int = 1
+num_wires(::RotationGate)::Int = 1
 
 
 """
@@ -276,7 +276,7 @@ end
 Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
 
 # wires
-wires(::PhaseShiftGate)::Int = 1
+num_wires(::PhaseShiftGate)::Int = 1
 
 """
 Swap gate
@@ -294,7 +294,7 @@ LinearAlgebra.ishermitian(::SwapGate) = true
 Base.adjoint(s::SwapGate) = s
 
 # wires
-wires(::SwapGate)::Int = 2
+num_wires(::SwapGate)::Int = 2
 
 """
 Entanglement-XX gate
@@ -323,7 +323,7 @@ end
 LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::EntanglementXXGate)::Int = 2
+num_wires(::EntanglementXXGate)::Int = 2
 
 """
 Entanglement-YY gate
@@ -352,7 +352,7 @@ end
 LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::EntanglementYYGate)::Int = 2
+num_wires(::EntanglementYYGate)::Int = 2
 
 """
 Entanglement-ZZ gate
@@ -381,7 +381,7 @@ end
 LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
-wires(::EntanglementZZGate)::Int = 2
+num_wires(::EntanglementZZGate)::Int = 2
 
 Base.adjoint(g::EntanglementXXGate) = EntanglementXXGate(-g.θ[])
 Base.adjoint(g::EntanglementYYGate) = EntanglementYYGate(-g.θ[])
@@ -401,12 +401,12 @@ struct ControlledGate{G} <: AbstractGate
 end
 
 # wires
-wires(g::ControlledGate)::Int = g.M + wires(g.U)
-target(g::ControlledGate) = wires(g.U)
-control(g::ControlledGate) = g.M
+num_wires(g::ControlledGate)::Int = g.M + num_wires(g.U)
+target_wires(g::ControlledGate) = num_wires(g.U)
+control_wires(g::ControlledGate) = g.M
 
 function matrix(g::ControlledGate{G}) where {G <:AbstractGate}
-    N = wires(g)
+    N = num_wires(g)
     Umat = matrix(g.U)
     CU = sparse(1:2^N, 1:2^N, ones(ComplexF64, 2^N))
     # Note: target qubit(s) corresponds to fastest varying index
@@ -438,7 +438,7 @@ struct MatrixGate <: AbstractGate
 end
 
 # wires
-wires(g::MatrixGate)::Int = Int(log(2, size(g.matrix, 1)))
+num_wires(g::MatrixGate)::Int = Int(log(2, size(g.matrix, 1)))
 
 matrix(g::MatrixGate) = g.matrix
 

@@ -88,7 +88,7 @@ end
 
 function backward(g::ControlledGate{G}, Δ::AbstractMatrix) where {G}
     # Note: target qubits correspond to fastest varying indices
-    ControlledGate(backward(g.U, Δ[end-2^target(g)+1:end, end-2^target(g)+1:end]), control(g))
+    ControlledGate(backward(g.U, Δ[end-2^target_wires(g)+1:end, end-2^target_wires(g)+1:end]), control_wires(g))
 end
 
 

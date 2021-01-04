@@ -59,7 +59,7 @@ view(g) = view(g, [1])
 
 function view(g::ControlledGate, i::Vector{Int64})
     gate = fill("——•———", length(i))
-    gate[1:wires(g.U)] = view(g.U)[1]
+    gate[1:num_wires(g.U)] = view(g.U)[1]
     return gate, i
 end
 
@@ -181,7 +181,6 @@ function _show(io::IO, c::Vector{Moment}, N::Union{Nothing,Int}=nothing)
     end
     cg = getproperty.(c, :gates)
     cg = collect(Base.Iterators.flatten(cg))
-    println(typeof(cg))
     Base.show(io::IO, cg, N)
 end
 

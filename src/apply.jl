@@ -209,7 +209,7 @@ end
 function _apply(cg::CircuitGate{M,ControlledGate{G}}, ψ::Vector{<:Complex}, N::Int) where {M,G}
     A = copy(ψ) # TODO: copy only what's needed
     A = reshape(A, fill(2, N)...)
-    T = target(cg.gate)
+    T = target_wires(cg.gate)
     itarget  = cg.iwire[1:T]
     icontrol = cg.iwire[T+1:M]
 
@@ -588,10 +588,10 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix{N}) where
     halfpauli = [Matrix{Float64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
     
     # M is the length of iwire, T is the number of target wires
-    T = target(cg.gate)
+    T = target_wires(cg.gate)
 
     # number of control wires
-    C = control(cg.gate)
+    C = control_wires(cg.gate)
 
     ttuples = reshape(Qaintessent.cartesian_tuples(4, T), :)
     ctuples = reshape(Qaintessent.cartesian_tuples(4, C), :)

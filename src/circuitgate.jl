@@ -24,7 +24,7 @@ struct CircuitGate{M,G} <: AbstractCircuitGate
     Creates a `CircuitGate{M,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
     """
     function CircuitGate{M,G}(iwire::NTuple{M,<:Integer}, gate::G) where {M,G <: AbstractGate}
-        M == wires(gate) || error("$G affects $(wires(gate)) wires but $M wires, $iwire, were passed.")
+        M == num_wires(gate) || error("$G affects $(num_wires(gate)) wires but $M wires, $iwire, were passed.")
         M ≥ 1 || error("Need at least one wire to act on.")
         length(unique(iwire)) == M || error("Wire indices must be unique.")
         minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
@@ -100,7 +100,7 @@ function matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
     gmat = sparse(I, 2^N, 2^N)
     for cg in cgs
         iwire = Int[i for i in cg.iwire]
-        gmat = _matrix(matrix(cg.gate), iwire, N, wires(cg.gate)) * gmat
+        gmat = _matrix(matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat
     end
     
     return gmat
@@ -257,4 +257,4 @@ function controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::NTuple{K,
     CircuitGate((itarget..., icntrl...), ControlledGate(U, C))
 end
 
-wires(cg::CircuitGate) = cg.iwire
+num_wires(cg::CircuitGate) = cg.iwire
