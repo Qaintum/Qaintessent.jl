@@ -28,7 +28,7 @@ Apply a `CircuitGate{M, N, G}` to a quantum state vector `ψ`.
 """
 function apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
     l = length(ψ)::Int
-    N = intlog2(l)
+    N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
 
     _apply(cg, ψ, N)
@@ -41,7 +41,7 @@ Apply a `CircuitGate{M, G}` to a quantum state vector `ψ`.
 """
 function apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
     l = length(ψ)::Int
-    N = intlog2(l)
+    N = Qaintessent.intlog2(l)
     ψl = deepcopy(ψ)
     l == 2^N || error("Vector length must be a power of 2")
     for cg in cgs 
@@ -51,7 +51,7 @@ function apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
 end
 
 function _apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}, N::Int) where {M,G}
-    gtuples = reshape(cartesian_tuples(2, M), :)
+    gtuples = reshape(Qaintessent.cartesian_tuples(2, M), :)
     U = matrix(cg.gate)
     ψ = reshape(ψ, fill(2, N)...)
 
@@ -231,7 +231,7 @@ returns state vector of `N` qubits after applying a `Moment{N}` object to a quan
 function apply(m::Moment, ψ::Vector{<:Complex}) 
     N_moment = size(m)
     l = length(ψ)::Int    
-    N_ψ = intlog2(l)
+    N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
     N_moment <= N_ψ || error("Moment affecting $N_moment qubits applied to $N_ψ qubits")
     _apply(m, ψ, N_ψ)   
@@ -240,7 +240,7 @@ end
 function apply(m::Vector{Moment}, ψ::Vector{<:Complex})
     N_moment = maximum(size.(m))
     l = length(ψ)::Int    
-    N_ψ = intlog2(l)
+    N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
     N_moment <= N_ψ || error("Moment affecting $N_moment qubits applied to $N_ψ qubits")
     for moment in m
@@ -265,7 +265,7 @@ returns state vector of `N` qubits after applying a `Moment{N}` object to a quan
 function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:AbstractGate}
     N_moment = size(m)
     l = length(ψ)::Int    
-    N_ψ = intlog2(l)
+    N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
     N_moment <= N_ψ || error("MeasurementOperator affecting $N_moment qubits applied to $N_ψ qubits")
     c = circuit_gate((m.iwire...), m.operator)
@@ -275,7 +275,7 @@ end
 function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:AbstractMatrix}
     N_moment = size(m)
     l = length(ψ)::Int    
-    N_ψ = intlog2(l)
+    N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
     N_moment <= N_ψ || error("MeasurementOperator affecting $N_moment qubits applied to $N_ψ qubits")
     apply(m.operator, ψ)   
@@ -593,8 +593,8 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix{N}) where
     # number of control wires
     C = control(cg.gate)
 
-    ttuples = reshape(cartesian_tuples(4, T), :)
-    ctuples = reshape(cartesian_tuples(4, C), :)
+    ttuples = reshape(Qaintessent.cartesian_tuples(4, T), :)
+    ctuples = reshape(Qaintessent.cartesian_tuples(4, C), :)
 
     # conjugation by |1><1| represented with respect to Pauli basis
     conj1X1 = [
@@ -664,7 +664,7 @@ function apply(cg::CircuitGate{M,<:AbstractGate}, ρ::DensityMatrix{N}) where {M
     pauli = [Matrix{Float64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
     halfpauli = [Matrix{Float64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
 
-    gtuples = reshape(cartesian_tuples(4, M), :)
+    gtuples = reshape(Qaintessent.cartesian_tuples(4, M), :)
 
     U = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
