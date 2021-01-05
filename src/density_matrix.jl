@@ -7,7 +7,7 @@ Density matrix, represented with respect to identity and Pauli basis (σ_j/2) by
 """
 struct DensityMatrix{N}
     "coefficients with respect to identity and Pauli basis"
-    v::AbstractVector{Float64}
+    v::Vector{Float64}
 
     function DensityMatrix{N}(v::AbstractVector{<:Real}) where {N}
         length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N`.")
