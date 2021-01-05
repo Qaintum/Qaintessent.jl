@@ -49,8 +49,21 @@ end
 
 returns matrix representation of a `Moment{M}` object that can applied to a state vector of `N` qubits.
 """
-function matrix(m::Moment) 
-    N = size(m)
+function matrix(m::Moment, N::Int=0)
+    if N == 0
+        N = size(m)
+    end
+    mat = matrix(m[1], N)
+    for i in 2:length(m)
+        mat = matrix(m[i], N) * mat
+    end
+    mat
+end
+
+function matrix(m::Vector{Moment}, N::Int=0) 
+    if N == 0
+        N = maximum(size.(m))
+    end
     mat = matrix(m[1], N)
     for i in 2:length(m)
         mat = matrix(m[i], N) * mat
@@ -213,7 +226,6 @@ function matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
         N >= maximum(iwire) || error("CircuitGate applied to iwires, $iwire. Input circuit size `N` is $N")
     end
 
-    # TODO: handle sparse matrices efficiently
     gmat = matrix(m.operator)
 
     _matrix(gmat, iwire, N, M)
@@ -235,7 +247,7 @@ struct Circuit{N}
     """
     function Circuit{N}(mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
         if isnothing(mops)
-            return new(Moment[])
+            return new{N}(Moment[])
         end
         meas_N = maximum(size.(mops))
         meas_N <= N || error("Measurement operators affecting $meas_N wires provided for Circuit of size $N")
@@ -278,7 +290,7 @@ struct Circuit{N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `AbstractCircuitGate` objects.
     """
-    function Circuit{N}(gate::AbstractCircuitGate, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
+    function Circuit{N}(gate::CircuitGate, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
         if isnothing(mops)
             return new{N}(Moment(gate))
         end
@@ -286,7 +298,7 @@ struct Circuit{N}
     end
 
     @doc """
-        Circuit{N}(moments::Vector{Moment}, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing)
+    Circuit{N}(moments::Vector{Moment}, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `AbstractCircuitGate` objects.
     """
@@ -297,6 +309,8 @@ struct Circuit{N}
         new{N}(moments, mops)
     end
 end
+
+matrix(c::Circuit{N}) where {N} = matrix(c.moments, N)
 
 function add_measurement!(c::Circuit{N}, mops::Vector{<:MeasurementOperator}) where {N}
     meas_N = maximum(size.(mops))
@@ -328,32 +342,33 @@ function distribution(c::Circuit, ψ::AbstractVector)
     return apply(c.moments, ψ)
 end
 
-function Base.append!(c::Circuit, gate::CircuitGate)
-    N = maximum(gate.iwire)
-    c.N >= N || error("CircuitGate `cg` has maximum iwire `N`, $N. However, Circuit object `c` has size of $(c.N)")
+function Base.append!(c::Circuit{N}, gate::CircuitGate) where {N}
+    cg_N = maximum(gate.iwire)
+    cg_N <= N || error("CircuitGate `cg` has maximum iwire `N`, $cg_N. However, Circuit object `c` has size of $N")
     push!(c.moments, Moment(gate))
 end
 
-function Base.append!(c::Circuit{N}, gates::Vector{CircuitGate}) where {N}
+function Base.append!(c::Circuit{N}, gates::Vector{<:CircuitGate}) where {N}
     j = 1
-    iwires = falses(c.N)
-    gates = Moment[]
+    iwires = falses(N)
+    buffer = CircuitGate[]
     for (i, cg) in enumerate(gates)
         cgwires = collect(cg.iwire)
-        all(cgwires .<= N) || error("Unable to add gate with `iwire`: $(cg.iwire), with maximum circuit size `N`: $(c.N)")
+        all(cgwires .<= N) || error("Unable to add gate with `iwire`: $(cg.iwire), with maximum circuit size `N`: $(N)")
         if any(iwires[cgwires])
-            push!(gates, Moment(gates[j:i-1]))
+            push!(c.moments, Moment(buffer))
             j = i
             iwires[:] .= false
-            gates = Moment[]
+            iwires[cgwires] .= true
+            buffer = CircuitGate[cg]
         else
             iwires[cgwires] .= true
-            push!(gates, cg)
+            push!(buffer, cg)
         end
     end
-    append!(c.moments, Moment(gates[j:end]))
+    push!(c.moments, Moment(buffer))
 end
 
 Base.size(::Circuit{N}) where {N} = N
 
-Base.length(c::Circuit) = length(c.moment)
+Base.length(c::Circuit) = length(c.moments)
