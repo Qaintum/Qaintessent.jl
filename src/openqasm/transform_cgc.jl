@@ -76,7 +76,6 @@ function cgc2qasm(c::Circuit{N}) where {N}
     include "qelib1.inc";\n
     """
     header *= "qreg qregister[" * string(N) * "];\n"
-    println(join(trans_moment.(c.moments), "\n"))
     header = header .* join(trans_moment.(c.moments), "\n")    
     return header
 end
