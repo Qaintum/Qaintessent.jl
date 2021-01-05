@@ -34,14 +34,6 @@ export
     MatrixGate,
     matrix
 
-# include("register.jl")
-# export
-#     qreg,
-#     creg,
-#     reg_check,
-#     set_creg!,
-#     add_creg!
-
 include("circuitgate.jl")
 export
     AbstractCircuitGate,
@@ -76,21 +68,30 @@ export
 include("gradients.jl")
 include("view.jl")
 
-# include("graphs.jl")
-# export
-#     Dag,
-#     optimize!
+include("graphs.jl")
+export
+    Dag,
+    optimize
 
-# include("openqasm/grammar.jl")
-# include("openqasm/gate_transformers.jl")
+include("openqasm/register.jl")
+export
+    qreg,
+    creg,
+    reg_check,
+    set_creg!,
+    add!,
+    add_control!
 
-# include("openqasm/transform_qasm.jl")
-# export
-#     qasm2cgc
+include("openqasm/grammar.jl")
+include("openqasm/gate_transformers.jl")
 
-# include("openqasm/transform_cgc.jl")
-# export
-#     cgc2qasm
+include("openqasm/transform_qasm.jl")
+export
+    qasm2cgc
+
+include("openqasm/transform_cgc.jl")
+export
+    cgc2qasm
 
 include("compile.jl")
 
