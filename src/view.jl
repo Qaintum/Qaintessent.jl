@@ -132,6 +132,9 @@ function momentdiagram(io::IO, m::Moment, N::Union{Nothing,Int}=nothing)
 end
 
 function Base.show(io::IO, m::AbstractVector{Moment})
+    if length(m) == 0
+        return
+    end
     N = maximum(size.(m))
     for moment in m
         momentdiagram(io, moment, N)
