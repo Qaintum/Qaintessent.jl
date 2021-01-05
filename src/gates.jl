@@ -1,7 +1,6 @@
 using LinearAlgebra
 using StaticArrays
 using SparseArrays
-using MacroTools
 
 """
     AbstractGate
