@@ -81,7 +81,7 @@ function rec(ctx_tokens)
     end
 end
 
-function trans_reg(ctx_tokens, cregs, qregs)
+function trans_reg(ctx_tokens, qregs)
     function app(op, args...)
         args = map(rec, args)
         op = Symbol(op)
@@ -96,17 +96,14 @@ function trans_reg(ctx_tokens, cregs, qregs)
         ) =>
             let id = Symbol(id),
                 n = parse(Int, n)
-                if regtype == "qreg"
-                    return :($id = qreg($n); push!($qregs, $id))
-                else
-                    return :($id = creg($n); push!($cregs, $id))
-                end
+                
+                return :($id = qreg($n); push!($qregs, $id))
             end
 
         Struct_mainprogram(
             prog = stmts
         ) =>
-            let stmts = trans_reg.(stmts, cregs, qregs)
+            let stmts = trans_reg.(stmts, qregs)
                 stmts
             end
         _ => nothing
@@ -136,79 +133,79 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
         Struct_cx(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
-                :(append!($qasm_cgc, [controlled_circuit_gate(($ref2), ($ref1), X, $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref2), X, ($ref1))]))
             end
 
         Struct_ch(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
-                :(append!($qasm_cgc, [controlled_circuit_gate(($ref2), ($ref1), HadamardGate(), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref2), HadamardGate(), ($ref1))]))
             end
 
         Struct_u(in1=in1, in2=in2, in3=in3, out=out) =>
             let (a, b, c) = map(rec, (in1, in2, in3)),
                 ref = :($(rec(out))[1])
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), RzGate($a), $N[]),
-                   single_qubit_circuit_gate(($ref), RyGate($b), $N[]),
-                   single_qubit_circuit_gate(($ref), RzGate($c), $N[]),]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), RzGate($a)),
+                   circuit_gate(($ref), RyGate($b)),
+                   circuit_gate(($ref), RzGate($c)),]))
             end
 
         Struct_x(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), X, $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), X)]))
             end
 
         Struct_y(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), Y, $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), Y)]))
             end
 
         Struct_z(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), Z, $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), Z)]))
             end
 
         Struct_h(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), HadamardGate(), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), HadamardGate())]))
             end
 
         Struct_t(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), TGate(), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), TGate())]))
             end
 
         Struct_tdg(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), TdagGate(), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), TdagGate())]))
             end
 
         Struct_s(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), SGate(), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), SGate())]))
             end
 
         Struct_sdg(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), SdagGate(), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), SdagGate())]))
             end
 
         Struct_rx(in=in, out=out) =>
             let ref = :($(rec(out))),
                 arg = :($(rec(in)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), RxGate($arg), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), RxGate($arg))]))
             end
 
         Struct_ry(in=in, out=out) =>
             let ref = :($(rec(out))),
                 arg = :($(rec(in)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), RyGate($arg), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), RyGate($arg))]))
             end
 
         Struct_rz(in=in, out=out) =>
             let ref = :($(rec(out))),
                 arg = :($(rec(in)))
-                :(append!($qasm_cgc, [single_qubit_circuit_gate(($ref), RzGate($arg), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($ref), RzGate($arg))]))
             end
 
         Struct_crz(in=in, out1=out1, out2=out2) =>
@@ -216,7 +213,7 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 cntrl = :($(rec(out1))),
                 arg = :($(rec(in)))
 
-                :(append!($qasm_cgc, [controlled_circuit_gate(($out), ($cntrl), RzGate($arg), $N[])]))
+                :(append!($qasm_cgc, [circuit_gate(($out), RzGate($arg), ($cntrl))]))
             end
 
         Struct_gate(
@@ -245,24 +242,24 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 end
             end
 
-        Struct_ifstmt(l=Token(str=l), r=r, gate_name=Token(str=gate_name), args=nothing, outs=outs) =>
-            let l = Symbol(l),
-                r = rec(r),
-                refs = rec(outs),
-                gate_name = Symbol("custom_gate_"*gate_name)
+        # Struct_ifstmt(l=Token(str=l), r=r, gate_name=Token(str=gate_name), args=nothing, outs=outs) =>
+        #     let l = Symbol(l),
+        #         r = rec(r),
+        #         refs = rec(outs),
+        #         gate_name = Symbol("custom_gate_"*gate_name)
 
-                :($gate_name(nothing, reg_check($l,$r), $(refs...); qasm_cgc=$qasm_cgc, N=$N))
-            end
+        #         :($gate_name(nothing, reg_check($l,$r), $(refs...); qasm_cgc=$qasm_cgc, N=$N))
+        #     end
 
-        Struct_ifstmt(l=Token(str=l), r=r, gate_name=Token(str=gate_name), args=exprlist, outs=outs) =>
-            let l = Symbol(l),
-                r = rec(r),
-                refs = rec(outs),
-                exprs = Expr(:tuple, rec(exprlist)...),
-                gate_name = Symbol("custom_gate_"*gate_name)
+        # Struct_ifstmt(l=Token(str=l), r=r, gate_name=Token(str=gate_name), args=exprlist, outs=outs) =>
+        #     let l = Symbol(l),
+        #         r = rec(r),
+        #         refs = rec(outs),
+        #         exprs = Expr(:tuple, rec(exprlist)...),
+        #         gate_name = Symbol("custom_gate_"*gate_name)
 
-                :($gate_name($exprs, reg_check($l,$r), $(refs...); qasm_cgc=$qasm_cgc, N=$N))
-            end
+        #         :($gate_name($exprs, reg_check($l,$r), $(refs...); qasm_cgc=$qasm_cgc, N=$N))
+        #     end
 
         Struct_mainprogram(
             prog = stmts
@@ -277,12 +274,11 @@ end
 
 function transform_qasm(ctx_tokens)
 
-    cregs = Qaintessent.CRegister[]
     qregs = Qaintessent.QRegister[]
-    reg_declr = trans_reg(ctx_tokens, Ref(cregs), Ref(qregs))
+    reg_declr = trans_reg(ctx_tokens, Ref(qregs))
     eval.(reg_declr)
 
-    qasm_cgc = CircuitGateChain(qregs, cregs)
+    qasm_cgc = Circuit(qregs...)
     N = size(qasm_cgc)
 
     gates_declr = trans_gates(ctx_tokens, Ref(qasm_cgc), Ref(N))
