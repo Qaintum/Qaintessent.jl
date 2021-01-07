@@ -287,6 +287,11 @@ function transform_qasm(ctx_tokens)
     qasm_cgc
 end
 
+"""
+    qasm2cgc(txt::String)
+
+converts OpenQASM 2.0 text to Circuit{N} object
+"""
 function qasm2cgc(txt::String)
     qasmlex = lex(txt)
     qasmparse = parse_qasm(qasmlex)

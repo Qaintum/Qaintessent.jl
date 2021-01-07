@@ -72,6 +72,11 @@ function trans_moment(m::Moment)
     end
 end
 
+"""
+    cgc2qasm(c::Circuit{N}) where {N}
+
+converts Circuit{N} object to OpenQASM 2.0 representation
+"""
 function cgc2qasm(c::Circuit{N}) where {N}
     global classical_register_count = 1
     header = """OPENQASM 2.0;\n
