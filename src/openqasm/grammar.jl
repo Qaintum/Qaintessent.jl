@@ -44,6 +44,7 @@ RBNF.@parser QASMLang begin
     u          := ['U', '(', in1=nnexp, ',', in2=nnexp, ',', in3=nnexp, ')', out=argument, ';']
     cx         := ["CX", out1=argument, ',', out2=argument, ';']
     ch         := ["ch", out1=argument, ',', out2=argument, ';']
+    swap       := ["swap", out1=argument, ',', out2=argument, ';']
     h          := ['h',  out=argument, ';']
     x          := ['x',  out=argument, ';']
     y          := ['y',  out=argument, ';']
@@ -55,7 +56,7 @@ RBNF.@parser QASMLang begin
     rx         := ["rx",  '(', in=nnexp, ')', out=argument, ';']
     ry         := ["ry",  '(', in=nnexp, ')', out=argument, ';']
     rz         := ["rz",  '(', in=nnexp, ')', out=argument, ';']
-    crz        := ["crz",  '(', in=nnexp, ')', out1=argument, out2=argument, ';']
+    crz        := ["crz",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
 
     iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
 
