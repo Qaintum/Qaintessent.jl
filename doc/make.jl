@@ -7,8 +7,7 @@ makedocs(
         "Section" => [
             "gates.md",
             "circuit.md",
-            "gradients.md",
-            "models.md",
+            "gradients.md",            
             "view.md",
             "qasm.md"
         ]
