@@ -314,7 +314,7 @@ end
 
 
 """
-    apply(c::Circuit{N}, ψ::Vector{<:Complex}) 
+    apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
 
 returns list of expectation values from measurement operators in `c.meas` after applying circuit gates in `c.cgc` on state vector of `N` qubits `ψ`
 """
