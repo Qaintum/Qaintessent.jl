@@ -31,7 +31,7 @@ mutable struct Moment
             Nmin = maximum((Nmin, num_wires(gate.gate)))
             append!(iwire, collect(gate.iwire))
         end
-        new(g)
+        new(gs)
     end
 end
 
