@@ -8,6 +8,7 @@ using MLStyle
 @as_record XGate
 @as_record YGate
 @as_record ZGate
+@as_record SwapGate
 @as_record RxGate
 @as_record RyGate
 @as_record RzGate
@@ -37,6 +38,7 @@ function trans_g(g::AbstractGate)
         SdagGate() => "sdg"
         TGate() => "t"
         TdagGate() => "tdg"
+        SwapGate() => "swap"
         RxGate(θ=θ) => "rx(" * string(θ[1]) * ")"
         RyGate(θ=θ) => "ry(" * string(θ[1]) * ")"
         RzGate(θ=θ) => "rz(" * string(θ[1]) * ")"
@@ -53,7 +55,7 @@ function trans_cg(cg::CircuitGate{M,G}) where {M,G}
         CircuitGate(iwire=iwire,
             gate=gate
             ) => let id = trans_g(gate)
-                    return string(id) * " " * join( "qregister[" .* string.(reverse(iwire)) .* "]" ,",") * ";"
+                    return string(id) * " " * join( "qregister[" .* string.(reverse(iwire.-1)) .* "]" ,",") * ";"
                 end
     end
 end
