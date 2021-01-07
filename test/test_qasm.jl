@@ -147,6 +147,9 @@ end
         syndrome(theta) d1,d2,d3,a1,a2;
         syndrome(theta) d2,d3,a1,d1,a2;
         rx(theta) d2;
+        cx d3,a1;
+        cx a1,d3;
+        cx d3,a1;
     }
     syn2drome(0.1*pi) d[0],d[1],d[2],a[0],a[1];
     t d[1];
@@ -173,6 +176,7 @@ end
         circuit_gate(5, X, 4),
         circuit_gate(1, RyGate(0.1π)),
         circuit_gate(2, RxGate(0.1π)),        
+        circuit_gate(4, 3, SwapGate()),
         circuit_gate(2, TGate()),
         circuit_gate(4, SGate()),
         circuit_gate(1, HadamardGate()),
@@ -181,7 +185,6 @@ end
     append!(cgc_ref, gates_ref)
 
     cgc = qasm2cgc(src1)
-
     ψ = randn(ComplexF64, 2^N)
     
     @test apply(cgc_ref.moments, ψ) ≈ apply(cgc.moments, ψ)
@@ -195,21 +198,21 @@ end
     include "qelib1.inc";
 
     qreg qregister[8];
+    cx qregister[0],qregister[3];
+    cx qregister[1],qregister[3];
     cx qregister[1],qregister[4];
     cx qregister[2],qregister[4];
-    cx qregister[2],qregister[5];
-    cx qregister[3],qregister[5];
-    ry(0.3141592653589793) qregister[4];
+    ry(0.3141592653589793) qregister[3];
+    cx qregister[1],qregister[0];
+    cx qregister[2],qregister[0];
+    cx qregister[2],qregister[4];
+    cx qregister[3],qregister[4];
+    ry(0.3141592653589793) qregister[0];
+    rx(0.3141592653589793) qregister[1];
     cx qregister[2],qregister[1];
-    cx qregister[3],qregister[1];
-    cx qregister[3],qregister[5];
-    cx qregister[4],qregister[5];
-    ry(0.3141592653589793) qregister[1];
-    rx(0.3141592653589793) qregister[2];
-    cx qregister[3],qregister[2];
-    t qregister[2];
-    s qregister[4];
-    h qregister[1];"""
+    t qregister[1];
+    s qregister[3];
+    h qregister[0];"""
 
     d1 = qreg(3)
     a1 = qreg(2)
@@ -237,5 +240,9 @@ end
     ]
     append!(cgc_ref, gates_ref)
 
+    ψ = randn(ComplexF64, 2^N)
+    cgc = qasm2cgc(src_ref)
+
+    @test apply(cgc.moments, ψ) ≈ apply(cgc_ref.moments, ψ)
     @test src_ref == cgc2qasm(cgc_ref)
 end

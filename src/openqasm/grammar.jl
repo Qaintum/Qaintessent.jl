@@ -44,7 +44,6 @@ RBNF.@parser QASMLang begin
     u          := ['U', '(', in1=nnexp, ',', in2=nnexp, ',', in3=nnexp, ')', out=argument, ';']
     cx         := ["CX", out1=argument, ',', out2=argument, ';']
     ch         := ["ch", out1=argument, ',', out2=argument, ';']
-    swap       := ["swap", out1=argument, ',', out2=argument, ';']
     h          := ['h',  out=argument, ';']
     x          := ['x',  out=argument, ';']
     y          := ['y',  out=argument, ';']
