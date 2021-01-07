@@ -68,10 +68,10 @@ export
 include("gradients.jl")
 include("view.jl")
 
-include("graphs.jl")
-export
-    Dag,
-    optimize
+# include("graphs.jl")
+# export
+#     Dag,
+#     optimize
 
 include("openqasm/register.jl")
 export
