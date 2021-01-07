@@ -166,6 +166,33 @@ function Base.adjoint(cg::Vector{<:CircuitGate})
     reverse(adjoint.(cg))
 end
 
+"""
+    circuit_gate
+
+Construct a `CircuitGate` object from basic gate types.
+"""
+function circuit_gate(iwire::Integer, gate::AbstractGate, control::Integer...)
+    circuit_gate(iwire, gate, control)
+end
+
+function circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::NTuple{M,Integer}=NTuple{0,Integer}()) where {M}
+    if isempty(control)
+        return CircuitGate((iwire1, iwire2), gate)
+    end
+    C = length(control)
+    return CircuitGate((iwire1, iwire2, control...), ControlledGate(gate, M))
+end
+
+function circuit_gate(iwire1::NTuple{L,Integer}, gate::AbstractGate, control::NTuple{M,Integer}=NTuple{0,Integer}()) where {L,M}
+    if isempty(control)
+        return CircuitGate(iwire1, gate)
+    end
+    return CircuitGate((iwire1..., control...), ControlledGate(gate, M))
+end
+
+function circuit_gate(iwire1::NTuple{M,Integer}, gate::AbstractGate, control::Integer...) where {M}
+    circuit_gate(iwire1, gate, control)
+end
 
 """
 single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer)
@@ -182,10 +209,6 @@ function circuit_gate(iwire::Integer, gate::AbstractGate, control::NTuple{M,Inte
     return CircuitGate((iwire, control...), ControlledGate(gate, M))
 end
 
-function circuit_gate(iwire::Integer, gate::AbstractGate, control::Integer...)
-    circuit_gate(iwire, gate, control)
-end
-
 """
 two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
 
@@ -194,27 +217,9 @@ Construct a `CircuitGate{2,G}` object of basic gate type `gate` affecting wires 
 two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate) =
 CircuitGate((iwire1, iwire2), gate)
 
-function circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::NTuple{M,Integer}=NTuple{0,Integer}()) where {M}
-    if isempty(control)
-        return CircuitGate((iwire1, iwire2), gate)
-    end
-    C = length(control)
-    return CircuitGate((iwire1, iwire2, control...), ControlledGate(gate, M))
-end
 
 function circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::Integer...)
     circuit_gate(iwire1, iwire2, gate, control)
-end
-
-function circuit_gate(iwire1::NTuple{L,Integer}, gate::AbstractGate, control::NTuple{M,Integer}=NTuple{0,Integer}()) where {L,M}
-    if isempty(control)
-        return CircuitGate(iwire1, gate)
-    end
-    return CircuitGate((iwire1..., control...), ControlledGate(gate, M))
-end
-
-function circuit_gate(iwire1::NTuple{M,Integer}, gate::AbstractGate, control::Integer...) where {M}
-    circuit_gate(iwire1, gate, control)
 end
 
 # single control and target wire
