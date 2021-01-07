@@ -97,7 +97,7 @@ function matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
     end
 
     # TODO: handle sparse matrices efficiently
-    gmat = sparse(I, 2^N, 2^N)
+    gmat = sparse((1.0 + 0.0im)*I, 2^N, 2^N)
     for cg in cgs
         iwire = Int[i for i in cg.iwire]
         gmat = _matrix(matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat

@@ -8,7 +8,7 @@ using SparseArrays
 Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 """
 abstract type AbstractGate end
-matrix(g::AbstractGate)::SparseMatrixCSC{Complex{Float64},Int} = matrix(typeof(g), data(g))
+# matrix(g::AbstractGate)::SparseMatrixCSC{Complex{Float64},Int} = matrix(typeof(g), data(g))
 
 """
 Pauli X gate
@@ -31,9 +31,9 @@ Pauli Z gate
 """
 struct ZGate <: AbstractGate end
 
-matrix(::Type{XGate}, ::Nothing) = sparse([1,2],[2,1], ComplexF64[1,1])
-matrix(::Type{YGate}, ::Nothing) = sparse([1,2],[2,1], ComplexF64[-im,im])
-matrix(::Type{ZGate}, ::Nothing) = sparse([1,2],[1,2], ComplexF64[1,-1])
+matrix(::XGate) = sparse([1,2],[2,1], ComplexF64[1,1])
+matrix(::YGate) = sparse([1,2],[2,1], ComplexF64[-im,im])
+matrix(::ZGate) = sparse([1,2],[1,2], ComplexF64[1,-1])
 
 LinearAlgebra.ishermitian(::XGate) = true
 LinearAlgebra.ishermitian(::YGate) = true
@@ -62,7 +62,7 @@ Hadamard gate
 """
 struct HadamardGate <: AbstractGate end
 
-matrix(::Type{HadamardGate}, ::Nothing) = ComplexF64[1 1; 1 -1] / sqrt(2)
+matrix(::HadamardGate) = sparse([1,1,2,2],[1,2,1,2], ComplexF64[1, 1, 1, -1] / sqrt(2)) 
 
 LinearAlgebra.ishermitian(::HadamardGate) = true
 # Hadamard gate is Hermitian
@@ -102,11 +102,11 @@ T† gate
 """
 struct TdagGate <: AbstractGate end
 
-matrix(::Type{SGate}, ::Nothing)::Matrix{ComplexF64} = sparse([1,2],[1,2], ComplexF64[1,im])
-matrix(::Type{TGate}, ::Nothing)::Matrix{ComplexF64} = sparse([1,2],[1,2], ComplexF64[1,Base.exp(im * π / 4)])
+matrix(::SGate) = sparse([1,2],[1,2], ComplexF64[1,im])
+matrix(::TGate) = sparse([1,2],[1,2], ComplexF64[1,Base.exp(im * π / 4)])
 
-matrix(::Type{SdagGate}, ::Nothing)::Matrix{ComplexF64} = sparse([1,2],[1,2], ComplexF64[1,-im])
-matrix(::Type{TdagGate}, ::Nothing)::Matrix{ComplexF64} = sparse([1,2],[1,2], ComplexF64[1,Base.exp(-im * π / 4)])
+matrix(::SdagGate) = sparse([1,2],[1,2], ComplexF64[1,-im])
+matrix(::TdagGate) = sparse([1,2],[1,2], ComplexF64[1,Base.exp(-im * π / 4)])
 
 LinearAlgebra.ishermitian(::SGate) = false
 LinearAlgebra.ishermitian(::TGate) = false
@@ -142,9 +142,9 @@ struct RxGate <: AbstractGate
 end
 
 
-function matrix(::Type{RxGate}, data::Vector{Float64})
-    c = cos(data[] / 2.0)
-    s = sin(data[] / 2.0)
+function matrix(g::RxGate)
+    c = cos(g.θ[] / 2.0)
+    s = sin(g.θ[] / 2.0)
     sparse([1,2,1,2],[1,1,2,2], ComplexF64[c, -im * s, -im * s, c])
 end
 
@@ -170,9 +170,9 @@ struct RyGate <: AbstractGate
     end
 end
 
-function matrix(::Type{RyGate}, data::Vector{Float64})
-    c = cos(data[] / 2.0)
-    s = sin(data[] / 2.0)
+function matrix(g::RyGate)
+    c = cos(g.θ[] / 2.0)
+    s = sin(g.θ[] / 2.0)
     sparse([1,2,1,2],[1,1,2,2], ComplexF64[c, s, -s, c])
 end
 
@@ -194,8 +194,8 @@ struct RzGate <: AbstractGate
     end
 end
 
-function matrix(::Type{RzGate}, data::Vector{Float64})
-    eθ = exp(im * data[] / 2)
+function matrix(g::RzGate)
+    eθ = exp(im * g.θ[] / 2)
     sparse([1,2],[1,2], ComplexF64[conj(eθ), eθ])
 end
 
@@ -229,12 +229,12 @@ struct RotationGate <: AbstractGate
     end
 end
 
-function matrix(::Type{RotationGate}, data::Vector{Float64})
-    θ = norm(data)
+function matrix(g::RotationGate)
+    θ = norm(g.nθ)
     if θ == 0
         return sparse([1,2],[1,2], ComplexF64[1, 1])
     end
-    n = data / θ
+    n = g.nθ / θ
     s = im * sin(θ / 2)
     c = cos(θ / 2)
     v = ComplexF64[c - s*n[3], - s*n[1] - im * s*n[2], - s*n[1] + im * s*n[2], cos(θ / 2) + s*n[3]]
@@ -263,7 +263,7 @@ struct PhaseShiftGate <: AbstractGate
     end
 end
 
-matrix(::Type{PhaseShiftGate}, data::Vector{Float64}) = sparse([1,2],[1,2], ComplexF64[1, Base.exp(im * data[])])
+matrix(g::PhaseShiftGate) = sparse([1,2],[1,2], ComplexF64[1, Base.exp(im * g.ϕ[])])
 
 function LinearAlgebra.ishermitian(g::PhaseShiftGate)
     if abs(g.ϕ[]) < eps()
@@ -286,7 +286,7 @@ struct SwapGate <: AbstractGate end
 
 
 # matrix(::Type{SwapGate}, ::Nothing) = ComplexF64[1. 0. 0. 0.; 0. 0. 1. 0.; 0. 1. 0. 0.; 0. 0. 0. 1.]
-matrix(::Type{SwapGate}, ::Nothing) = sparse([1,3,2,4],[1,2,3,4], ComplexF64[1,1,1,1])
+matrix(::SwapGate,) = sparse([1,3,2,4],[1,2,3,4], ComplexF64[1,1,1,1])
 
 # swap gate is Hermitian
 LinearAlgebra.ishermitian(::SwapGate) = true
@@ -313,9 +313,9 @@ struct EntanglementXXGate <: AbstractGate
     end
 end
 
-function matrix(::Type{EntanglementXXGate}, data::Vector{Float64})
-    c = cos(data[] / 2)
-    s = sin(data[] / 2)
+function matrix(g::EntanglementXXGate)
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
     sparse([1,4,2,3,2,3,1,4],[1,1,2,2,3,3,4,4], ComplexF64[c,-im*s,c,-im*s,-im*s,c,-im*s,c])
 end
 
@@ -342,9 +342,9 @@ struct EntanglementYYGate <: AbstractGate
     end
 end
 
-function matrix(::Type{EntanglementYYGate}, data::Vector{Float64})
-    c = cos(data[] / 2)
-    s = sin(data[] / 2)
+function matrix(g::EntanglementYYGate)
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
     sparse([1,4,2,3,2,3,1,4],[1,1,2,2,3,3,4,4], ComplexF64[c,im*s,c,-im*s,-im*s,c,im*s,c])
 end
 
@@ -371,8 +371,8 @@ struct EntanglementZZGate <: AbstractGate
     end
 end
 
-function matrix(::Type{EntanglementZZGate}, data::Vector{Float64})
-    eθ = exp(im * data[] / 2)
+function matrix(g::EntanglementZZGate)
+    eθ = exp(im * g.θ[] / 2)
     sparse([1,2,3,4],[1,2,3,4], ComplexF64[conj(eθ), eθ, eθ, conj(eθ)])
 end
 

@@ -23,13 +23,13 @@ mutable struct Moment
 
     Create a `Moment` object consisting of multiple `CircuitGate` objects.
     """
-    function Moment(g::Vector{<:AbstractCircuitGate})
+    function Moment(gs::Vector{<:AbstractCircuitGate})
         iwire = Integer[]
         Nmin = 0
-        for circuit_gate in g
-            length(intersect(iwire, circuit_gate.iwire)) == 0 || error("Only gates on different wires are allowed in a Moment")
-            Nmin = maximum((Nmin, num_wires(circuit_gate.gate)))
-            append!(iwire, collect(circuit_gate.iwire))
+        for gate in gs
+            length(intersect(iwire, gate.iwire)) == 0 || error("Only gates on different wires are allowed in a Moment")
+            Nmin = maximum((Nmin, num_wires(gate.gate)))
+            append!(iwire, collect(gate.iwire))
         end
         new(g)
     end
@@ -60,7 +60,7 @@ function matrix(m::Moment, N::Int=0)
     mat
 end
 
-function matrix(m::Vector{Moment}, N::Int=0) 
+function matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{Float64},Int}
     if N == 0
         N = maximum(size.(m))
     end
