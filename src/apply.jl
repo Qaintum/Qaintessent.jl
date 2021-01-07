@@ -22,7 +22,7 @@ function _apply(m::AbstractMatrix, ψ::Vector{<:Complex})
 end
 
 """
-    apply(cg::CircuitGate{M,G}, ψ::AbstractVector) where {M,G}
+    apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
 
 Apply a `CircuitGate{M,G}` to a quantum state vector `ψ`.
 """
@@ -35,7 +35,7 @@ function apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
 end
 
 """
-    apply(cg::CircuitGate{M,G}, ψ::AbstractVector) where {M,G}
+    apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
 
 Apply a `CircuitGate{M,G}` to a quantum state vector `ψ`.
 """
