@@ -58,7 +58,7 @@ end
 compiles quantum circuit from given unitary matrix. usage of algorithms from
 ff10.1016/j.cpc.2019.107001f, 10.1103/PhysRevA.69.032315, arxiv.org:1003.5760, arxiv:quant-ph/0404089
 """
-function compile(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
+function unitary2circuit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     m * m' ≈ I || error("Only unitary matrices can be compiled into a quantum circuit")
     s = size(m)
     s[1] == s[2] || error("Only square matrices can be compiled into a quantum circuit")
