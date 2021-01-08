@@ -32,7 +32,10 @@ export
     ControlledGate,
     controlled_not,
     MatrixGate,
-    matrix
+    matrix,
+    sparse_matrix,
+    num_wires,
+    get_data
 
 include("circuitgate.jl")
 export
@@ -69,11 +72,6 @@ export
 include("gradients.jl")
 include("view.jl")
 
-# include("graphs.jl")
-# export
-#     Dag,
-#     optimize
-
 include("openqasm/register.jl")
 export
     qreg,
@@ -94,6 +92,7 @@ include("openqasm/transform_cgc.jl")
 export
     cgc2qasm
 
-include("compile.jl")
+include("unitary2circuit.jl")
+export unitary2circuit
 
 end
