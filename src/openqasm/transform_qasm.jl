@@ -279,7 +279,7 @@ function transform_qasm(ctx_tokens)
     eval.(reg_declr)
 
     qasm_cgc = Circuit(qregs...)
-    N = size(qasm_cgc)
+    N = num_wires(qasm_cgc)
 
     gates_declr = trans_gates(ctx_tokens, Ref(qasm_cgc), Ref(N))
     eval.(gates_declr)

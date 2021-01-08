@@ -143,8 +143,8 @@ function set_creg!(reg::CRegister, value::Int)
     reg.n .= int2bit(value; pad=l)
 end
 
-Base.size(creg::CRegister) = creg.N
-Base.size(qreg::QRegister) = qreg.N
+num_wires(creg::CRegister) = creg.N
+num_wires(qreg::QRegister) = qreg.N
 
 """
     Circuit(regs::Register...)
@@ -169,12 +169,12 @@ end
 
 function add!(g::AbstractGate, q::QRegister)
     isdefined(q.circuit, :reference) || error("Register object has yet to be used in a Circuit object")
-    if num_wires(g) == size(q)
+    if num_wires(g) == num_wires(q)
         append!(q.circuit.reference[], circuit_gate(q[:], g))
     end 
-    num_wires(g) == 1 || error("AbstractGate $g is applied to $(num_wires(g)) wires, quantum register of size $(size(q)) provided. Unable to determine gates to be applied.")
+    num_wires(g) == 1 || error("AbstractGate $g is applied to $(num_wires(g)) wires, quantum register of size $(num_wires(q)) provided. Unable to determine gates to be applied.")
 
-    for i in 1:size(q)
+    for i in 1:num_wires(q)
         append!(q.circuit.reference[], circuit_gate(q[i], g))
     end
 end
@@ -198,7 +198,7 @@ function add_control!(g::AbstractGate, target_q::QRegister, control_q::QRegister
     target_q.circuit.reference[] === control_q.circuit.reference[] || error("Target quantum register and control quantum register are used in different circuits")
 
     circuit_length = num_wires(g)
-    num_wires(g) == size(target_q) || error("Gate affecting $(num_wires(g)) qubits applied to quantum register of $(size(target_q)) qubits")
+    num_wires(g) == num_wires(target_q) || error("Gate affecting $(num_wires(g)) qubits applied to quantum register of $(num_wires(target_q)) qubits")
     append!(target_q.circuit.reference[], circuit_gate((target_q.ind...), g, control_q.ind...))
 end
 
