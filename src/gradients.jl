@@ -42,7 +42,7 @@ end
 function backward(g::RotationGate, Δ::AbstractMatrix)
     θ = norm(g.nθ)
     if θ == 0
-        σ = (matrix(X), matrix(Y), matrix(Z))
+        σ = (sparse_matrix(X), sparse_matrix(Y), sparse_matrix(Z))
         RotationGate([real(sum(conj(-im * σ[i]) .* Δ)) for i in 1:3])
     else
         n = g.nθ / θ
@@ -135,7 +135,7 @@ function gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}
     # forward pass through unitary gates
     ψ = apply(c.moments, ψ)
     # gradient (conjugated Wirtinger derivatives) of cost function with respect to ψ
-    ψbar = sum([Δ[i] * (matrix(c.meas[i]) * ψ) for i in 1:length(Δ)])
+    ψbar = sum([Δ[i] * (sparse_matrix(c.meas[i]) * ψ) for i in 1:length(Δ)])
     # backward pass through unitary gates
     dcgc, ψbar = backward(c.moments, ψ, ψbar, N)
     # TODO: efficiently represent Kronecker product without explicitly storing matrix entries

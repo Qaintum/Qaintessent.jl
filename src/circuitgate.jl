@@ -44,7 +44,7 @@ end
 
 data(cg::CircuitGate) = data(cg.gate)
 
-function Base.size(cg::CircuitGate{M,G}) where {M,G}
+function num_wires(cg::CircuitGate{M,G}) where {M,G}
     return maximum([cg.iwire... M])
 end
 
@@ -68,30 +68,30 @@ LinearAlgebra.ishermitian(cg::CircuitGate) = LinearAlgebra.ishermitian(cg.gate)
 
 
 """
-matrix(cg::CircuitGate{M,G}) where {M,G<:AbstractGate}
+sparse_matrix(cg::CircuitGate{M,G}) where {M,G<:AbstractGate}
 
 returns matrix representation of a `CircuitGate{M,G}` object that can applied to a state vector of `N` qubits.
 """
-function matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: AbstractGate}
+function sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: AbstractGate}
     # convert to array
-    iwire = Int[i for i in cg.iwire]
+    iwire = collect(cg.iwire)
 
     if N == 0
-        N = size(cg)
+        N = num_wires(cg)
     else
         N >= maximum(iwire) || error("CircuitGate applied to iwires, $iwire. Input circuit size `N` is $N")
     end
 
     # TODO: handle sparse matrices efficiently
-    gmat = matrix(cg.gate)
+    gmat = sparse_matrix(cg.gate)
     
     _matrix(gmat, iwire, N, M)
 end
 
-function matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
-    Nmin = maximum(size.(cgs))
+function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
+    Nmin = maximum(num_wires.(cgs))
     if N == 0
-        N = maximum(size.(cgs))
+        N = maximum(num_wires.(cgs))
     else
         N >= Nmin || error("Vector of CircuitGate applied to $Nmin wires. Input circuit size `N` is $N")
     end
@@ -99,8 +99,8 @@ function matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
     # TODO: handle sparse matrices efficiently
     gmat = sparse((1.0 + 0.0im)*I, 2^N, 2^N)
     for cg in cgs
-        iwire = Int[i for i in cg.iwire]
-        gmat = _matrix(matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat
+        iwire = collect(cg.iwire)
+        gmat = _matrix(sparse_matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat
     end
     
     return gmat
@@ -261,5 +261,3 @@ function controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::NTuple{K,
     # length(intersect(itarget, icntrl)) == 0 || error("Control and target wires must be disjoint.")
     CircuitGate((itarget..., icntrl...), ControlledGate(U, C))
 end
-
-num_wires(cg::CircuitGate) = cg.iwire

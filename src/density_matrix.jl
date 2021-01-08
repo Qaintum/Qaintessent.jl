@@ -20,9 +20,9 @@ function matrix(ρ::DensityMatrix{N}) where {N}
     # Pauli matrix basis (including identity matrix)
     halfpauli = [
         Matrix{Float64}(0.5I, 2, 2),
-        0.5 * matrix(X),
-        0.5 * matrix(Y),
-        0.5 * matrix(Z),
+        0.5 * sparse_matrix(X),
+        0.5 * sparse_matrix(Y),
+        0.5 * sparse_matrix(Z),
     ]
     mat = zeros(Complex{eltype(ρ.v)}, 2^N, 2^N)
     for (i, pt) in enumerate(cartesian_tuples(4, N))
@@ -35,9 +35,9 @@ end
 function density_from_statevector(ψ::Vector{G}) where {G}
     N = convert(Int, log2(length(ψ)))
     @assert 2^N == length(ψ)
-    mX = matrix(XGate())
-    mY = matrix(YGate())
-    mZ = matrix(ZGate())
+    mX = sparse_matrix(XGate())
+    mY = sparse_matrix(YGate())
+    mZ = sparse_matrix(ZGate())
     Id = ComplexF64[1 0; 0 1]
     pauli = Matrix{ComplexF64}[
         Id, mX, mY, mZ

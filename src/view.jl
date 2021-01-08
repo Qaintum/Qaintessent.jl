@@ -135,7 +135,7 @@ function Base.show(io::IO, m::AbstractVector{Moment})
     if length(m) == 0
         return
     end
-    N = maximum(size.(m))
+    N = maximum(num_wires.(m))
     for moment in m
         momentdiagram(io, moment, N)
     end
@@ -149,7 +149,7 @@ end
 
 function Base.show(io::IO, c::Vector{<:AbstractCircuitGate}, N::Union{Nothing,Int}=nothing)
     if isnothing(N)
-        N = maximum(size.(c))
+        N = maximum(num_wires.(c))
     end
     w, g = wire_enum(N)
     i = Int[]

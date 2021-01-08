@@ -45,28 +45,28 @@ function Base.adjoint(m::Moment)
 end
 
 """
-    matrix(m::Moment) 
+    sparse_matrix(m::Moment) 
 
 returns matrix representation of a `Moment{M}` object that can applied to a state vector of `N` qubits.
 """
-function matrix(m::Moment, N::Int=0)
+function sparse_matrix(m::Moment, N::Int=0)
     if N == 0
-        N = size(m)
+        N = num_wires(m)
     end
-    mat = matrix(m[1], N)
+    mat = sparse_matrix(m[1], N)
     for i in 2:length(m)
-        mat = matrix(m[i], N) * mat
+        mat = sparse_matrix(m[i], N) * mat
     end
     mat
 end
 
-function matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{Float64},Int}
+function sparse_matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{Float64},Int}
     if N == 0
-        N = maximum(size.(m))
+        N = maximum(num_wires.(m))
     end
-    mat = matrix(m[1], N)
+    mat = sparse_matrix(m[1], N)
     for i in 2:length(m)
-        mat = matrix(m[i], N) * mat
+        mat = sparse_matrix(m[i], N) * mat
     end
     mat
 end
@@ -113,7 +113,7 @@ function Base.reverse(m::Moment)
     Moment(reverse(m.gates))
 end
 
-@memoize function Base.size(m::Moment)
+@memoize function num_wires(m::Moment)
     Nmin = 0
     for circuit_gate in m
         Nmin = maximum((Nmin, maximum(num_wires(circuit_gate))))
@@ -161,7 +161,7 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
                 colind = koffset + dot(collect(jw), strides[iwire]) + 1
                 ρ[i, j] += ψ[rowind] * conj(χ[colind])
             end
-    end
+        end
     end
 
     return ρ
@@ -196,6 +196,9 @@ end
 
 mop(operator, iwire) = MeasurementOperator(operator, iwire)
 
+@memoize function num_wires(m::MeasurementOperator)
+    length(m.iwire)
+end
 @memoize function Base.size(m::MeasurementOperator)
     length(m.iwire)
 end
@@ -212,13 +215,13 @@ end
 end
 
 """
-    matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
+    sparse_matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
 
 returns matrix representation of a `MeasurementOperator{M,G}` object that can applied to a state vector of `N` qubits.
 """
-function matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
+function sparse_matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
     # convert to array
-    iwire = Int[i for i in m.iwire]
+    iwire = collect(m.iwire)
 
     if N == 0
         N = maximum([iwire' M])
@@ -226,7 +229,7 @@ function matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
         N >= maximum(iwire) || error("CircuitGate applied to iwires, $iwire. Input circuit size `N` is $N")
     end
 
-    gmat = matrix(m.operator)
+    gmat = sparse_matrix(m.operator)
 
     _matrix(gmat, iwire, N, M)
 end
@@ -249,7 +252,7 @@ struct Circuit{N}
         if isnothing(mops)
             return new{N}(Moment[])
         end
-        meas_N = maximum(size.(mops))
+        meas_N = maximum(num_wires.(mops))
         meas_N <= N || error("Measurement operators affecting $meas_N wires provided for Circuit of size $N")
         check_commute(mops) || error("Measurement operators do not commute") 
         return new{N}(Moment[], mops)
@@ -310,7 +313,7 @@ struct Circuit{N}
     end
 end
 
-matrix(c::Circuit{N}) where {N} = matrix(c.moments, N)
+sparse_matrix(c::Circuit{N}) where {N} = sparse_matrix(c.moments, N)
 
 function add_measurement!(c::Circuit{N}, mops::Vector{<:MeasurementOperator}) where {N}
     meas_N = maximum(size.(mops))
@@ -369,6 +372,6 @@ function Base.append!(c::Circuit{N}, gates::Vector{<:CircuitGate}) where {N}
     push!(c.moments, Moment(buffer))
 end
 
-Base.size(::Circuit{N}) where {N} = N
+num_wires(::Circuit{N}) where {N} = N
 
 Base.length(c::Circuit) = length(c.moments)

@@ -229,7 +229,7 @@ end
 returns state vector of `N` qubits after applying a `Moment{N}` object to a quantum state vector of `N` qubits `ψ`
 """
 function apply(m::Moment, ψ::Vector{<:Complex}) 
-    N_moment = size(m)
+    N_moment = num_wires(m)
     l = length(ψ)::Int    
     N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
@@ -238,7 +238,7 @@ function apply(m::Moment, ψ::Vector{<:Complex})
 end
 
 function apply(m::Vector{Moment}, ψ::Vector{<:Complex})
-    N_moment = maximum(size.(m))
+    N_moment = maximum(num_wires.(m))
     l = length(ψ)::Int    
     N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
@@ -263,7 +263,7 @@ returns state vector of `N` qubits after applying a `Moment{N}` object to a quan
 """
 
 function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:AbstractGate}
-    N_moment = size(m)
+    N_moment = num_wires(m)
     l = length(ψ)::Int    
     N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")
@@ -273,7 +273,7 @@ function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:A
 end
 
 function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:AbstractMatrix}
-    N_moment = size(m)
+    N_moment = num_wires(m)
     l = length(ψ)::Int    
     N_ψ = Qaintessent.intlog2(l)
     l == 2^N_ψ || error("Vector length must be a power of 2")

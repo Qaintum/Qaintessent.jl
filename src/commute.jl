@@ -53,7 +53,7 @@ iscommuting(::EntanglementZZGate, ::EntanglementYYGate) = true
 iscommuting(::EntanglementZZGate, ::EntanglementZZGate) = true
 
 # cover MatrixGate, too
-iscommuting(A::AbstractGate, B::AbstractGate) = iscommuting(Qaintessent.matrix(A), Qaintessent.matrix(B))
+iscommuting(A::AbstractGate, B::AbstractGate) = iscommuting(Qaintessent.sparse_matrix(A), Qaintessent.sparse_matrix(B))
 
 """
     iscommuting(A, B)
@@ -73,7 +73,7 @@ function iscommuting(A::CircuitGate{L,ControlledGate{G}}, B::CircuitGate{M,Contr
     end
 
     # TODO: more fine-grained case switches for partially overlapping 'iwire'
-    iscommuting(Qaintessent.matrix(A, N), Qaintessent.matrix(B, N))
+    iscommuting(Qaintessent.sparse_matrix(A, N), Qaintessent.sparse_matrix(B, N))
 end
 
 
@@ -93,7 +93,7 @@ function iscommuting(A::CircuitGate{L,G}, B::CircuitGate{M,H}) where {L,M,G,H}
     end
 
     # TODO: more fine-grained case switches for partially overlapping 'iwire'
-    iscommuting(Qaintessent.matrix(A,N), Qaintessent.matrix(B,N))
+    iscommuting(Qaintessent.sparse_matrix(A,N), Qaintessent.sparse_matrix(B,N))
 end
 
 function iscommuting(A::MeasurementOperator{L,G}, B::MeasurementOperator{M,H}) where {L,M,G,H}
@@ -106,7 +106,7 @@ function iscommuting(A::MeasurementOperator{L,G}, B::MeasurementOperator{M,H}) w
         return iscommuting(A.operator, B.operator)
     end
     
-    iscommuting(matrix(A, N), matrix(B, N))
+    iscommuting(sparse_matrix(A, N), sparse_matrix(B, N))
 end
 
 
@@ -116,7 +116,7 @@ function iscommuting(A::MeasurementOperator{M,G}, B::MeasurementOperator{L,H}) w
     end
 
     N = maximum((maximum(A.iwire), maximum(B.iwire)))
-    iscommuting(matrix(A, N), matrix(B, N))
+    iscommuting(sparse_matrix(A, N), sparse_matrix(B, N))
 end
 
 iscommuting(A::MeasurementOperator{M,G}, B::MeasurementOperator{L,H}) where {L,M,G<:AbstractMatrix,H<:AbstractGate} = iscommuting(B, A)
