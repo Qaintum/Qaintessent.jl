@@ -17,7 +17,7 @@ using Qaintessent
             circuit_gate(1, Y),
             circuit_gate(2, Z)
         ])
-        @test matrix(cgc) ≈ matrix(cgc_ref)
+        @test sparse_matrix(cgc) ≈ sparse_matrix(cgc_ref)
     end
 
     @testset "quantum register wire numbers with multiple registers" begin
@@ -45,7 +45,7 @@ using Qaintessent
             circuit_gate(2, SGate(), 4),
             ])
         
-        @test matrix(cgc) ≈ matrix(cgc_ref)
+        @test sparse_matrix(cgc) ≈ sparse_matrix(cgc_ref)
     end
 
     @testset "quantum register exceptions" begin

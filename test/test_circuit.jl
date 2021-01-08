@@ -5,7 +5,7 @@ using Qaintessent
 
 
 function isunitary(cg::CircuitGate)
-    matrix(cg) * matrix(Base.adjoint(cg)) ≈ I
+    sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)) ≈ I
 end
 
 @testset ExtendedTestSet "circuit gates" begin
@@ -18,8 +18,8 @@ end
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             cg = CircuitGate((2,), g)
             cgadj = adjoint(cg)
-            Qaintessent.matrix(cgadj.gate) == adjoint(Qaintessent.matrix(cg.gate))
-            @test LinearAlgebra.ishermitian(cg) == (Qaintessent.matrix(cg) == Qaintessent.matrix(adjoint(cg)))
+            Qaintessent.sparse_matrix(cgadj.gate) == adjoint(Qaintessent.sparse_matrix(cg.gate))
+            @test LinearAlgebra.ishermitian(cg) == (Qaintessent.sparse_matrix(cg) == Qaintessent.sparse_matrix(adjoint(cg)))
         end
     end
 
@@ -28,32 +28,32 @@ end
         for g in [EntanglementXXGate(θ), EntanglementYYGate(θ), EntanglementZZGate(θ), controlled_not(), SwapGate()]
             cg = CircuitGate((2, 3), g)
             cgadj = adjoint(cg)
-            Qaintessent.matrix(cgadj.gate) == adjoint(Qaintessent.matrix(cg.gate))
-            @test LinearAlgebra.ishermitian(cg) == (Qaintessent.matrix(cg) == Qaintessent.matrix(adjoint(cg)))
+            Qaintessent.sparse_matrix(cgadj.gate) == adjoint(Qaintessent.sparse_matrix(cg.gate))
+            @test LinearAlgebra.ishermitian(cg) == (Qaintessent.sparse_matrix(cg) == Qaintessent.sparse_matrix(adjoint(cg)))
         end
     end
 
     # Y acting on second wire
     @testset "apply circuit gate to second wire" begin
         cg = CircuitGate((2,), Y)
-        @test Qaintessent.matrix(cg, 3) ≈ kron(kron(Matrix(I, 2, 2), Qaintessent.matrix(Y)), Matrix(I, 2, 2))
+        @test Qaintessent.sparse_matrix(cg, 3) ≈ kron(kron(Matrix(I, 2, 2), Qaintessent.sparse_matrix(Y)), Matrix(I, 2, 2))
         @test isunitary(cg)
     end
 
     # flip control and target
     @testset "flip control and target circuit gate" begin
         cg = CircuitGate((2, 1), controlled_not())
-        @test Qaintessent.matrix(cg) ≈ [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
+        @test Qaintessent.sparse_matrix(cg) ≈ [1 0 0 0; 0 0 0 1; 0 0 1 0; 0 1 0 0]
         @test isunitary(cg)
     end
 
     # third qubit as control and first qubit as target
     @testset "shift control and target circuit gate" begin
         cg = circuit_gate(1, HadamardGate(), 3)
-        @test Qaintessent.matrix(cg) ≈ [
+        @test Qaintessent.sparse_matrix(cg) ≈ [
             Matrix(I, 4, 4) fill(0, 4, 2) fill(0, 4, 2);
-            fill(0, 2, 4) Qaintessent.matrix(HadamardGate()) fill(0, 2, 2);
-            fill(0, 2, 6) Qaintessent.matrix(HadamardGate())]
+            fill(0, 2, 4) Qaintessent.sparse_matrix(HadamardGate()) fill(0, 2, 2);
+            fill(0, 2, 6) Qaintessent.sparse_matrix(HadamardGate())]
         @test isunitary(cg)
     end
 
@@ -141,7 +141,7 @@ end
         @test madj[1] ≈ adjoint(h)
         @test madj[2] ≈ adjoint(g)
 
-        @test matrix(adjoint(m)) ≈ adjoint(matrix(m))
+        @test sparse_matrix(adjoint(m)) ≈ adjoint(sparse_matrix(m))
     end
 
     @testset "moments reverse" begin
@@ -171,7 +171,7 @@ end
     large_matrix = Matrix{Float64}(I, 2^(N)+1, 2^(N)+1)
     uneven_matrix = Matrix{Float64}(I, 2^(N), 2^(N+1))
     iwires = (3,4)
-    non_hermitian_matrix = Qaintessent.matrix(circuit_gate(1, RxGate(0.2), 2))
+    non_hermitian_matrix = Qaintessent.sparse_matrix(circuit_gate(1, RxGate(0.2), 2))
 
     @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(small_matrix, iwires)
     @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(small_matrix, iwires)
@@ -182,8 +182,8 @@ end
     @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOperator(non_hermitian_matrix, iwires)
     @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOperator(non_hermitian_matrix, iwires)
 
-    noncomm_matrix_1 = matrix(circuit_gate(1, HadamardGate(), 2))
-    noncomm_matrix_2 = matrix(circuit_gate(1, X, 2))
+    noncomm_matrix_1 = sparse_matrix(circuit_gate(1, HadamardGate(), 2))
+    noncomm_matrix_2 = sparse_matrix(circuit_gate(1, X, 2))
     m = MeasurementOperator.([noncomm_matrix_1, noncomm_matrix_2], (iwires,))
     @test Qaintessent.check_commute(m) == false
 end

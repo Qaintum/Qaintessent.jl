@@ -12,7 +12,7 @@ using Qaintessent
              SwapGate(), EntanglementXXGate(2π*rand()), EntanglementYYGate(2π*rand()), EntanglementZZGate(2π*rand()), controlled_not()]
     for g1 in gates
         for g2 in gates
-            @test iscommuting(g1, g2) == iscommuting(matrix(g1), matrix(g2))
+            @test iscommuting(g1, g2) == iscommuting(sparse_matrix(g1), sparse_matrix(g2))
         end
     end
 
@@ -41,7 +41,7 @@ using Qaintessent
     ]
     for cg1 in cgates
         for cg2 in cgates
-            @test iscommuting(cg1, cg2) == iscommuting(Qaintessent.matrix(cg1, N), Qaintessent.matrix(cg2, N))
+            @test iscommuting(cg1, cg2) == iscommuting(Qaintessent.sparse_matrix(cg1, N), Qaintessent.sparse_matrix(cg2, N))
         end
     end
 end

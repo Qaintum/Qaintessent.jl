@@ -19,15 +19,26 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
             gdag = adjoint(g)
 
             @test Qaintessent.matrix(gdag) == adjoint(Qaintessent.matrix(g))
+            @test Qaintessent.sparse_matrix(gdag) == adjoint(Qaintessent.sparse_matrix(g))
+            @test Qaintessent.matrix(g) == Qaintessent.sparse_matrix(g)
             @test LinearAlgebra.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
+            @test LinearAlgebra.ishermitian(g) == (Qaintessent.sparse_matrix(gdag) == Qaintessent.sparse_matrix(g))
         end
     end
 
 
     @testset "general rotation gate" begin
+        @test Qaintessent.sparse_matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.sparse_matrix(RxGate(θ))
+        @test Qaintessent.sparse_matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.sparse_matrix(RyGate(θ))
+        @test Qaintessent.sparse_matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.sparse_matrix(RzGate(θ))
+
         @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
         @test Qaintessent.matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.matrix(RyGate(θ))
         @test Qaintessent.matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.matrix(RzGate(θ))
+
+        @test Qaintessent.sparse_matrix(RotationGate([θ, 0, 0])) ≈ Qaintessent.sparse_matrix(RxGate(θ))
+        @test Qaintessent.sparse_matrix(RotationGate([0, θ, 0])) ≈ Qaintessent.sparse_matrix(RyGate(θ))
+        @test Qaintessent.sparse_matrix(RotationGate([0, 0, θ])) ≈ Qaintessent.sparse_matrix(RzGate(θ))
 
         @test Qaintessent.matrix(RotationGate([θ, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
         @test Qaintessent.matrix(RotationGate([0, θ, 0])) ≈ Qaintessent.matrix(RyGate(θ))
@@ -39,6 +50,10 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate(θ, [1, 0, 0, 0]))
         @test_throws ErrorException("Norm of rotation axis vector must be 1.") Qaintessent.matrix(RotationGate(θ, [1, 2, 0]))
         @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate([0, θ, 0, 1]))
+
+        @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.sparse_matrix(RotationGate(θ, [1, 0, 0, 0]))
+        @test_throws ErrorException("Norm of rotation axis vector must be 1.") Qaintessent.sparse_matrix(RotationGate(θ, [1, 2, 0]))
+        @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.sparse_matrix(RotationGate([0, θ, 0, 1]))
     end
 
 
@@ -55,13 +70,14 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         @test Qaintessent.matrix(gateU) ≈ U
         @test isunitary(gateU)
         @test LinearAlgebra.ishermitian(gateU) == (Qaintessent.matrix(gateUdag) == Qaintessent.matrix(gateU))
+        @test LinearAlgebra.ishermitian(gateU) == (Qaintessent.sparse_matrix(gateUdag) == Qaintessent.sparse_matrix(gateU))
 
-        U = Qaintessent.matrix(X)
+        U = Qaintessent.sparse_matrix(X)
         gateU = MatrixGate(U)
         gateUdag = adjoint(gateU)
-        @test Qaintessent.matrix(gateU) ≈ U
+        @test Qaintessent.sparse_matrix(gateU) ≈ U
         @test isunitary(gateU)
-        @test true == (Qaintessent.matrix(gateUdag) == Qaintessent.matrix(gateU))
+        @test true == (Qaintessent.sparse_matrix(gateUdag) == Qaintessent.sparse_matrix(gateU))
     end
 
     # not unitary
@@ -85,6 +101,7 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         cgateU = ControlledGate(gateU, M)
 
         cgateUdag = adjoint(cgateU)
+        @test LinearAlgebra.ishermitian(cgateU) == (Qaintessent.sparse_matrix(cgateU) == Qaintessent.sparse_matrix(cgateUdag))
         @test LinearAlgebra.ishermitian(cgateU) == (Qaintessent.matrix(cgateU) == Qaintessent.matrix(cgateUdag))
     end
 end

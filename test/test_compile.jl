@@ -148,7 +148,7 @@ end
         U = Matrix(U)
         M = Stewart(ComplexF64, 2^N)
 
-        cgc = Qaintessent.compile(deepcopy(U), N)
+        cgc = unitary2circuit(deepcopy(U), N)
 
         ψ = rand(ComplexF64, 2^N)
         ψ_ref = U*ψ
@@ -163,7 +163,7 @@ end
         U = Matrix(U)
         M = Stewart(ComplexF64, 2)
 
-        cgc = Qaintessent.compile(U, N)
+        cgc = unitary2circuit(U, N)
 
         ψ = rand(ComplexF64, 2^N)
 
@@ -178,7 +178,7 @@ end
         U = diagm(exp.(im .* rand(Float64, 2^N)))
         M = Stewart(ComplexF64, 2^N)
 
-        cgc = Qaintessent.compile(U, N)
+        cgc = unitary2circuit(U, N)
 
         ψ = rand(ComplexF64, 2^N)
 
@@ -194,7 +194,7 @@ end
         U = Matrix(U)
         M = Stewart(ComplexF64, 2^N)
 
-        cgc = Qaintessent.compile(U, N)
+        cgc = unitary2circuit(U, N)
         ψ = rand(ComplexF64, 2^N)
 
         ψ_ref = U*ψ

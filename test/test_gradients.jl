@@ -38,7 +38,7 @@ end
         Δ = randn(ComplexF64, 2, 2)
 
         for g in [RxGate, RyGate, RzGate]
-            f(θ) = 2*real(sum(Δ .* Qaintessent.matrix(g(θ[]))))
+            f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(g(θ[]))))
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(g(θ), conj(Δ))
@@ -46,7 +46,7 @@ end
         end
 
         begin
-            f(ϕ) = 2*real(sum(Δ .* Qaintessent.matrix(PhaseShiftGate(ϕ[]))))
+            f(ϕ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(PhaseShiftGate(ϕ[]))))
             ϕ = 2π*rand()
             ngrad = ngradient(f, [ϕ])
             dg = Qaintessent.backward(PhaseShiftGate(ϕ), conj(Δ))
@@ -54,7 +54,7 @@ end
         end
 
         begin
-            f(nθ) = 2*real(sum(Δ .* Qaintessent.matrix(RotationGate(nθ))))
+            f(nθ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(RotationGate(nθ))))
             nθ = randn(3)
             ngrad = ngradient(f, nθ)
             dg = Qaintessent.backward(RotationGate(nθ), conj(Δ))
@@ -62,7 +62,7 @@ end
         end
 
         begin
-            f(nθ) = 2*real(sum(Δ .* Qaintessent.matrix(RotationGate(nθ))))
+            f(nθ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(RotationGate(nθ))))
             # special case: zero vector
             nθ = zeros(3)
             ngrad = ngradient(f, nθ)
@@ -76,7 +76,7 @@ end
         Δ = randn(ComplexF64, 4, 4)
 
         for g in [EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
-            f(θ) = 2*real(sum(Δ .* Qaintessent.matrix(g(θ[]))))
+            f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(g(θ[]))))
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(g(θ), conj(Δ))
@@ -140,7 +140,7 @@ end
          dc.moments[4][2].gate.θ,
          dc.moments[5][1].gate.θ,
          dc.moments[4][1].gate.nθ,
-         matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
+         sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
 end
 
 
@@ -194,5 +194,5 @@ end
         dc.moments[3][1].gate.ϕ,
         dc.moments[4][2].gate.θ,
         dc.moments[4][1].gate.nθ,
-        matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
+        sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
 end

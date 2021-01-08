@@ -162,7 +162,7 @@ end
     c1 = qreg(3)
     cgc_ref = Circuit(d1, a1, c1)
 
-    N = size(cgc_ref)
+    N = num_wires(cgc_ref)
 
     gates_ref = [
         circuit_gate(4, X, 1),
@@ -219,7 +219,7 @@ end
     c1 = qreg(3)
     cgc_ref = Circuit(d1, a1, c1)
 
-    N = size(cgc_ref)
+    N = num_wires(cgc_ref)
 
     gates_ref = [
         circuit_gate(4, X, 1),
