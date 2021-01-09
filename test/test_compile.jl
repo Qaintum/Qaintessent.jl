@@ -5,6 +5,7 @@ using Random
 using RandomMatrices
 using Qaintessent
 
+
 @testset ExtendedTestSet "compilediagonal unitaries helper functions" begin
     @testset "greyencode" begin
         g = Qaintessent.greyencode.(collect(0:15))

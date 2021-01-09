@@ -1,27 +1,27 @@
-using LinearAlgebra
 
 """
 AbstractCircuitGate
 
-Abstract unitary quantum circuit gate. `N` is the overall number of quantum "wires" of the circuit.
+Abstract unitary quantum circuit gate.
 """
 abstract type AbstractCircuitGate end
+
 
 """
 CircuitGate{M,G} <: AbstractCircuitGate
 
-Unitary quantum circuit gate. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+Unitary quantum circuit gate. `M` is the number of wires affected by the CircuitGate, and `G` is the basic gate used to construct the CircuitGate.
 """
 struct CircuitGate{M,G} <: AbstractCircuitGate
     "ordered wire indices which this gate acts on"
     iwire::NTuple{M,Int64}
-    "abstract gate"
+    "actual gate"
     gate::G
 
     @doc """
         CircuitGate{M,G}(iwire::NTuple{M,<:Integer}, gate::G) where {M,G}
 
-    Creates a `CircuitGate{M,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+    Creates a `CircuitGate{M,G}` object. `M` is the number of wires affected by the CircuitGate, and `G` is the basic gate used to construct the CircuitGate.
     """
     function CircuitGate{M,G}(iwire::NTuple{M,<:Integer}, gate::G) where {M,G <: AbstractGate}
         M == num_wires(gate) || error("$G affects $(num_wires(gate)) wires but $M wires, $iwire, were passed.")
@@ -34,19 +34,20 @@ struct CircuitGate{M,G} <: AbstractCircuitGate
 end
 
 """
-    CircuitGate(iwire::NTuple{M,<:Integer}, gate::AbstractGate, N) where {M}
+    CircuitGate(iwire::NTuple{M,<:Integer}, gate::G)
 
-Creates a `CircuitGate{M,N,G}` object. `M` is the number of wires affected by the CircuitGate, `N` is the overall number of quantum "wires" of the circuit, `G` is the basic gate used to construct the CircuitGate.
+Create a `CircuitGate{M,G}`.
 """
 function CircuitGate(iwire::NTuple{M,<:Integer}, gate::G) where {M,G <: AbstractGate}
     CircuitGate{M,G}(iwire, gate)
 end
 
-data(cg::CircuitGate) = data(cg.gate)
+"""
+    req_wires(cg::CircuitGate{M,G})
 
-function num_wires(cg::CircuitGate{M,G}) where {M,G}
-    return maximum([cg.iwire... M])
-end
+Minimum number of required qubit wires in a circuit to host the circuit gate `cg`.
+"""
+req_wires(cg::CircuitGate{M,G}) where {M,G} = maximum(cg.iwire)
 
 
 """
@@ -68,7 +69,7 @@ LinearAlgebra.ishermitian(cg::CircuitGate) = LinearAlgebra.ishermitian(cg.gate)
 
 
 """
-sparse_matrix(cg::CircuitGate{M,G}) where {M,G<:AbstractGate}
+    sparse_matrix(cg::CircuitGate{M,G}) where {M,G<:AbstractGate}
 
 returns matrix representation of a `CircuitGate{M,G}` object that can applied to a state vector of `N` qubits.
 """
@@ -77,36 +78,35 @@ function sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: Abstrac
     iwire = collect(cg.iwire)
 
     if N == 0
-        N = num_wires(cg)
+        N = req_wires(cg)
     else
-        N >= maximum(iwire) || error("CircuitGate applied to iwires, $iwire. Input circuit size `N` is $N")
+        N >= maximum(iwire) || error("Circuit size `$N` too small for CircuitGate applied to wires `$iwire`.")
     end
 
     # TODO: handle sparse matrices efficiently
     gmat = sparse_matrix(cg.gate)
     
-    _matrix(gmat, iwire, N, M)
+    distribute_to_wires(gmat, iwire, N, M)
 end
 
-function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
-    Nmin = maximum(num_wires.(cgs))
+function sparse_matrix(cgs::Vector{CircuitGate}, N::Integer=0)
+    Nmin = maximum(req_wires.(cgs))
     if N == 0
-        N = maximum(num_wires.(cgs))
+        N = Nmin
     else
-        N >= Nmin || error("Vector of CircuitGate applied to $Nmin wires. Input circuit size `N` is $N")
+        N >= Nmin || error("Circuit size `$N` too small; vector of CircuitGate requires $Nmin wires.")
     end
 
-    # TODO: handle sparse matrices efficiently
-    gmat = sparse((1.0 + 0.0im)*I, 2^N, 2^N)
+    gmat = sparse(one(ComplexF64)*I, 2^N, 2^N)
     for cg in cgs
         iwire = collect(cg.iwire)
-        gmat = _matrix(sparse_matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat
+        gmat = distribute_to_wires(sparse_matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat
     end
     
     return gmat
 end
 
-function _matrix(gmat::SparseMatrixCSC{Complex{Float64},Int}, iwire::Vector{Int}, N::Int, M::Int)
+function distribute_to_wires(gmat::SparseMatrixCSC{Complex{Float64},Int}, iwire::Vector{Int}, N::Int, M::Int)
     # TODO: support general "qudits"
     d = 2
 
@@ -152,6 +152,7 @@ function _matrix(gmat::SparseMatrixCSC{Complex{Float64},Int}, iwire::Vector{Int}
     return sparse(rowind, colind, values, d^N, d^N)
 end
 
+
 """
 Base.adjoint(cg::CircuitGate{M,G})
 
@@ -165,6 +166,7 @@ end
 function Base.adjoint(cg::Vector{<:CircuitGate})
     reverse(adjoint.(cg))
 end
+
 
 """
     circuit_gate
@@ -210,17 +212,14 @@ function circuit_gate(iwire::Integer, gate::AbstractGate, control::NTuple{M,Inte
 end
 
 """
-two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate{2}, N::Integer)
+    two_qubit_circuit_gate(iwire1, iwire2, gate)
 
 Construct a `CircuitGate{2,G}` object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
 """
-two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate) =
-CircuitGate((iwire1, iwire2), gate)
+two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate) = CircuitGate((iwire1, iwire2), gate)
 
 
-function circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::Integer...)
-    circuit_gate(iwire1, iwire2, gate, control)
-end
+circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::Integer...) = circuit_gate(iwire1, iwire2, gate, control)
 
 # single control and target wire
 """
@@ -228,8 +227,7 @@ controlled_circuit_gate(itarget::Integer, icntrl::Union{Integer, Expr}, U::Abstr
 
 Construct a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire or Expr `icntrl` and affecting wire `itarget`.
 """
-controlled_circuit_gate(itarget::Integer, icntrl::Integer, U::AbstractGate) =
-controlled_circuit_gate((itarget,), (icntrl,), U)
+controlled_circuit_gate(itarget::Integer, icntrl::Integer, U::AbstractGate) = controlled_circuit_gate((itarget,), (icntrl,), U)
 
 # single control wire
 """
@@ -237,8 +235,7 @@ controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::Integer, U::Abstra
 
 Construct a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire or Expr `icntrl` and affecting wires in tuple `itarget`.
 """
-controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::Integer, U::AbstractGate) where {M} =
-controlled_circuit_gate(itarget, (icntrl,), U)
+controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::Integer, U::AbstractGate) where {M} = controlled_circuit_gate(itarget, (icntrl,), U)
 
 # single target wire
 """
@@ -246,8 +243,7 @@ controlled_circuit_gate(itarget::Integer, icntrl::NTuple{K, Union{Int, Expr}}, U
 
 Construct a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires or Expr in tuple `icntrl` and affecting wire `itarget`.
 """
-controlled_circuit_gate(itarget::Integer, icntrl::NTuple{K,Integer}, U::AbstractGate)  where {K} =
-controlled_circuit_gate((itarget,), icntrl, U)
+controlled_circuit_gate(itarget::Integer, icntrl::NTuple{K,Integer}, U::AbstractGate)  where {K} = controlled_circuit_gate((itarget,), icntrl, U)
 
 """
 controlled_circuit_gate(itarget::NTuple{M, <:Integer}, icntrl::NTuple{K, <:Union{Integer, Expr}}, U::AbstractGate{M}, N::Integer) where {K,M}

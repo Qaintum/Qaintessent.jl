@@ -71,7 +71,7 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
 
         N = 3
         d = 2
-        @test_throws ErrorException("Quantum operators must be unitary") MatrixGate(randn(ComplexF64, d^N, d^N))
+        @test_throws ErrorException("Quantum gate must be unitary") MatrixGate(randn(ComplexF64, d^N, d^N))
     end
 
 

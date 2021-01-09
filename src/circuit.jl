@@ -1,5 +1,3 @@
-using Memoize
-using LinearAlgebra
 
 """
     Moment
@@ -23,15 +21,13 @@ mutable struct Moment
 
     Create a `Moment` object consisting of multiple `CircuitGate` objects.
     """
-    function Moment(gs::Vector{<:AbstractCircuitGate})
-        iwire = Integer[]
-        Nmin = 0
-        for gate in gs
-            length(intersect(iwire, gate.iwire)) == 0 || error("Only gates on different wires are allowed in a Moment")
-            Nmin = maximum((Nmin, num_wires(gate.gate)))
-            append!(iwire, collect(gate.iwire))
+    function Moment(cgs::Vector{<:AbstractCircuitGate})
+        iwire = Int[]
+        for cg in cgs
+            length(intersect(iwire, cg.iwire)) == 0 || error("Only gates on different wires are allowed in a Moment")
+            append!(iwire, collect(cg.iwire))
         end
-        new(gs)
+        new(cgs)
     end
 end
 
@@ -51,7 +47,7 @@ returns matrix representation of a `Moment{M}` object that can applied to a stat
 """
 function sparse_matrix(m::Moment, N::Int=0)
     if N == 0
-        N = num_wires(m)
+        N = req_wires(m)
     end
     mat = sparse_matrix(m[1], N)
     for i in 2:length(m)
@@ -62,7 +58,7 @@ end
 
 function sparse_matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{Float64},Int}
     if N == 0
-        N = maximum(num_wires.(m))
+        N = maximum(req_wires.(m))
     end
     mat = sparse_matrix(m[1], N)
     for i in 2:length(m)
@@ -113,12 +109,12 @@ function Base.reverse(m::Moment)
     Moment(reverse(m.gates))
 end
 
-@memoize function num_wires(m::Moment)
-    Nmin = 0
-    for circuit_gate in m
-        Nmin = maximum((Nmin, maximum(num_wires(circuit_gate))))
+@memoize function req_wires(m::Moment)
+    N = 0
+    for cg in m
+        N = maximum((N, req_wires(cg)))
     end
-    Nmin
+    return N
 end
 
 
@@ -154,11 +150,11 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
 
     # TODO: optimize memory access pattern
     for kw in (N - M > 0 ? cartesian_tuples(d, N - M) : [Int[]])
-        koffset = dot(collect(kw), strides[iwcompl])
+        koffset = dot(collect(kw), cstrides)
         for (i, iw) in enumerate(cartesian_tuples(d, M))
             for (j, jw) in enumerate(cartesian_tuples(d, M))
-                rowind = koffset + dot(collect(iw), strides[iwire]) + 1
-                colind = koffset + dot(collect(jw), strides[iwire]) + 1
+                rowind = koffset + dot(collect(iw), wstrides) + 1
+                colind = koffset + dot(collect(jw), wstrides) + 1
                 ρ[i, j] += ψ[rowind] * conj(χ[colind])
             end
         end
@@ -169,20 +165,20 @@ end
 
 
 """
-    MeasurementOperator{M,G} <: AbstractCircuitGate
+    MeasurementOperator{M,G}
 
-General complex operator. `M` is the number of wires affected by the CircuitGate, `G` is the basic gate used to construct the Operator.
+General measurement operator. `M` is the number of wires affected by the measurement operator, `G` is the actual operator type (gate or sparse matrix).
 """
 struct MeasurementOperator{M,G}
     operator::G
     iwire::NTuple{M,Int}
-    function MeasurementOperator(cg::G, iwire::NTuple{M,Integer}) where {M,G <:AbstractGate}
-        M == num_wires(cg) || error("CircuitGate affecting $(num_wires(cg)) wires given, `iwire` of length $(length(iwire)) provided")
-        cg == adjoint(cg) || error("Measurement operator must be Hermitian.")
-        new{M,G}(cg, iwire)
+    function MeasurementOperator(g::G, iwire::NTuple{M,Integer}) where {M,G <: AbstractGate}
+        M == num_wires(g) || error("CircuitGate affecting $(num_wires(g)) wires given, `iwire` of length $(length(iwire)) provided")
+        g == adjoint(g) || error("Measurement operator must be Hermitian.")
+        new{M,G}(g, iwire)
     end
 
-    function MeasurementOperator(m::G, iwire::NTuple{M,Integer}) where {M,G <:AbstractMatrix}
+    function MeasurementOperator(m::G, iwire::NTuple{M,Integer}) where {M,G <: AbstractMatrix}
         d = 2
         size(m) == (d^M, d^M) || error("Measurement operator must be a $(d^M) × $(d^M) matrix.")
         m ≈ Base.adjoint(m) || error("Measurement operator must be Hermitian.")
@@ -231,8 +227,12 @@ function sparse_matrix(m::MeasurementOperator{M,G}, N::Integer=0) where {M,G}
 
     gmat = sparse_matrix(m.operator)
 
-    _matrix(gmat, iwire, N, M)
+    distribute_to_wires(gmat, iwire, N, M)
 end
+
+
+sparse_matrix(g::SparseMatrixCSC{Complex{Float64},Int}) = g
+
 
 """
     Circuit
@@ -252,7 +252,7 @@ struct Circuit{N}
         if isnothing(mops)
             return new{N}(Moment[])
         end
-        meas_N = maximum(num_wires.(mops))
+        meas_N = maximum(req_wires.(mops))
         meas_N <= N || error("Measurement operators affecting $meas_N wires provided for Circuit of size $N")
         check_commute(mops) || error("Measurement operators do not commute") 
         return new{N}(Moment[], mops)
@@ -316,9 +316,9 @@ end
 sparse_matrix(c::Circuit{N}) where {N} = sparse_matrix(c.moments, N)
 
 function add_measurement!(c::Circuit{N}, mops::Vector{<:MeasurementOperator}) where {N}
-    meas_N = maximum(size.(mops))
-    meas_N <= N || error("Measurement operators affecting $meas_N wires provided for Circuit of size $N")
-    check_commute(mops) || error("Measurement Operators do not commute") 
+    meas_N = maximum(req_wires.(mops))
+    meas_N <= N || error("Measurement operators affecting $meas_N wires provided for circuit of size $N")
+    check_commute(mops) || error("Measurement operators do not commute") 
     c.meas = mops
 end
 

@@ -1,6 +1,3 @@
-using LinearAlgebra
-using StaticArrays
-using SparseArrays
 
 """
     AbstractGate
@@ -30,13 +27,13 @@ Pauli Z gate
 """
 struct ZGate <: AbstractGate end
 
-sparse_matrix(::XGate) = sparse([1,2],[2,1], ComplexF64[1,1])
-sparse_matrix(::YGate) = sparse([1,2],[2,1], ComplexF64[-im,im])
-sparse_matrix(::ZGate) = sparse([1,2],[1,2], ComplexF64[1,-1])
-
-matrix(::XGate) = ComplexF64[0 1; 1 0]
+matrix(::XGate) = ComplexF64[0  1 ; 1  0]
 matrix(::YGate) = ComplexF64[0 -im; im 0]
-matrix(::ZGate) = ComplexF64[1 0; 0 -1]
+matrix(::ZGate) = ComplexF64[1  0 ; 0 -1]
+
+sparse_matrix(::XGate) = sparse(matrix(XGate()))
+sparse_matrix(::YGate) = sparse(matrix(YGate()))
+sparse_matrix(::ZGate) = sparse(matrix(ZGate()))
 
 LinearAlgebra.ishermitian(::XGate) = true
 LinearAlgebra.ishermitian(::YGate) = true
@@ -83,14 +80,12 @@ S gate
 """
 struct SGate <: AbstractGate end
 
-
 """
 T gate
 
 ``T = \\frac{\\sqrt} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
 """
 struct TGate <: AbstractGate end
-
 
 """
 S† gate
@@ -106,15 +101,15 @@ T† gate
 """
 struct TdagGate <: AbstractGate end
 
-sparse_matrix(::SGate) = sparse([1,2],[1,2], ComplexF64[1,im])
-sparse_matrix(::TGate) = sparse([1,2],[1,2], ComplexF64[1,Base.exp(im * π / 4)])
-matrix(::SGate) = ComplexF64[1 0; 0 im]
-matrix(::TGate) = ComplexF64[1 0; 0 Base.exp(im * π / 4)]
-
-sparse_matrix(::SdagGate) = sparse([1,2],[1,2], ComplexF64[1,-im])
-sparse_matrix(::TdagGate) = sparse([1,2],[1,2], ComplexF64[1,Base.exp(-im * π / 4)])
+matrix(::SGate)    = ComplexF64[1 0; 0 im]
 matrix(::SdagGate) = ComplexF64[1 0; 0 -im]
+matrix(::TGate)    = ComplexF64[1 0; 0 Base.exp(im * π / 4)]
 matrix(::TdagGate) = ComplexF64[1 0; 0 Base.exp(-im * π / 4)]
+
+sparse_matrix(::SGate)    = sparse(matrix(SGate()))
+sparse_matrix(::TGate)    = sparse(matrix(TGate()))
+sparse_matrix(::SdagGate) = sparse(matrix(SdagGate()))
+sparse_matrix(::TdagGate) = sparse(matrix(TdagGate()))
 
 LinearAlgebra.ishermitian(::SGate) = false
 LinearAlgebra.ishermitian(::TGate) = false
@@ -465,10 +460,10 @@ isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 MatrixGate: general gate constructed from an unitary matrix
 """
 struct MatrixGate <: AbstractGate
-    matrix::SparseMatrixCSC{Complex{Float64},Int}
-    function MatrixGate(m)
+    matrix::SparseMatrixCSC{ComplexF64,Int}
+    function MatrixGate(m::AbstractMatrix)
         @assert size(m, 1) == size(m, 2)
-        isunitary(m) || error("Quantum operators must be unitary")
+        isunitary(m) || error("Quantum gate must be unitary")
         return new(sparse(m))
     end
 end
@@ -479,8 +474,6 @@ num_wires(g::MatrixGate)::Int = Int(log(2, size(g.matrix, 1)))
 matrix(g::MatrixGate) = Matrix(g.matrix)
 
 sparse_matrix(g::MatrixGate) = g.matrix
-
-sparse_matrix(g::SparseMatrixCSC{Complex{Float64},Int}) = g
 
 Base.adjoint(g::MatrixGate) = MatrixGate(Base.adjoint(g.matrix))
 

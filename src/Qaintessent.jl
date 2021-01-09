@@ -2,6 +2,8 @@ module Qaintessent
 
 using LinearAlgebra
 using SparseArrays
+using StaticArrays
+using Memoize
 
 
 include("util.jl")
@@ -65,6 +67,7 @@ include("commute.jl")
         iscommuting
 
 include("apply.jl")
+include("apply_density.jl")
 export
     apply
 

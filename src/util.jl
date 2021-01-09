@@ -40,12 +40,12 @@ Assemble the "Pauli vector" matrix.
 """
 pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
 
+
 """
     binary_rep(x::Integer, M::Integer)
 
 Return binary representation of Integer `x` for `M` bits with least significant bit first.
 """
-
 function binary_rep(x::Integer, M::Integer)
     m = BitArray(undef, M)
     for i in 1:M
@@ -68,6 +68,7 @@ function binary_rep!(m::BitArray{1}, x::Integer, M::Integer)
     m
 end
 
+
 """
     intlog2(x::Integer)
 
@@ -82,4 +83,19 @@ function intlog2(x::Integer)
         ret += 1
     end
     ret
+end
+
+
+"""
+    sliced_index(idx::Tuple, targetwires::Tuple, N::Int)
+
+Construct sliced index via target map (utility function)
+"""
+function sliced_index(idx::Tuple, targetwires::Tuple, N::Int)
+    islice = Vector{Any}(fill(Colon(), N))
+    M = length(targetwires)
+    for k in 1:M
+        islice[targetwires[k]] = idx[k] + 1
+    end
+    return islice
 end

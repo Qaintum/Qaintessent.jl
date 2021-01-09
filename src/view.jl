@@ -135,7 +135,7 @@ function Base.show(io::IO, m::AbstractVector{Moment})
     if length(m) == 0
         return
     end
-    N = maximum(num_wires.(m))
+    N = maximum(req_wires.(m))
     for moment in m
         momentdiagram(io, moment, N)
     end
@@ -147,26 +147,26 @@ function Base.show(io::IO, m::Moment)
     end
 end
 
-function Base.show(io::IO, c::Vector{<:AbstractCircuitGate}, N::Union{Nothing,Int}=nothing)
+function Base.show(io::IO, cgs::Vector{<:CircuitGate}, N::Union{Nothing,Int}=nothing)
     if isnothing(N)
-        N = maximum(num_wires.(c))
+        N = maximum(req_wires.(cgs))
     end
     w, g = wire_enum(N)
     i = Int[]
     nw = fill("——————", N)
     ng = fill("      ", N-1)
-    for gate in c
-        r = min(gate.iwire...):max(gate.iwire...)
+    for cg in cgs
+        r = min(cg.iwire...):max(cg.iwire...)
         if length(intersect(i, r)) == 0
             i = union(i, r)
-            nw, ng = updatecol(gate, nw, ng)
+            nw, ng = updatecol(cg, nw, ng)
         else
             i = r
             w = w .* nw
             g = g .* ng
             nw = fill("——————", N)
             ng = fill("      ", N-1)
-            nw, ng = updatecol(gate, nw, ng)
+            nw, ng = updatecol(cg, nw, ng)
         end
     end
     w = w .* nw
