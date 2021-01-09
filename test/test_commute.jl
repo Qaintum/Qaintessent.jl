@@ -12,7 +12,7 @@ using Qaintessent
              SwapGate(), EntanglementXXGate(2π*rand()), EntanglementYYGate(2π*rand()), EntanglementZZGate(2π*rand()), controlled_not()]
     for g1 in gates
         for g2 in gates
-            @test iscommuting(g1, g2) == iscommuting(Qaintessent.matrix(g1), Qaintessent.matrix(g2))
+            @test iscommuting(g1, g2) == iscommuting(sparse_matrix(g1), sparse_matrix(g2))
         end
     end
 
@@ -23,25 +23,25 @@ using Qaintessent
         # number of target and control wires
         nt = 1
         nc = rand(1:3)
-        controlled_circuit_gate(iwperm[1:nt], iwperm[nt+1:nt+nc], HadamardGate(), N)
+        circuit_gate(iwperm[1:nt], HadamardGate(), iwperm[nt+1:nt+nc])
     end
     ccg2 = begin
         iwperm = Tuple(randperm(N))
         # number of target and control wires
         nt = 2
         nc = rand(1:3)
-        controlled_circuit_gate(iwperm[1:nt], iwperm[nt+1:nt+nc], MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), N)
+        circuit_gate(iwperm[1:nt], MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), iwperm[nt+1:nt+nc],)
     end
     cgates = [
-        single_qubit_circuit_gate(rand(1:N), X, N),
-        single_qubit_circuit_gate(rand(1:N), RzGate(2π*rand()), N),
-        CircuitGate((2, 4), SwapGate(), N),
+        circuit_gate(rand(1:N), X),
+        circuit_gate(rand(1:N), RzGate(2π*rand())),
+        CircuitGate((2, 4), SwapGate()),
         ccg1,
         ccg2,
     ]
     for cg1 in cgates
         for cg2 in cgates
-            @test iscommuting(cg1, cg2) == iscommuting(Qaintessent.matrix(cg1), Qaintessent.matrix(cg2))
+            @test iscommuting(cg1, cg2) == iscommuting(Qaintessent.sparse_matrix(cg1, N), Qaintessent.sparse_matrix(cg2, N))
         end
     end
 end

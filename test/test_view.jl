@@ -6,16 +6,16 @@ using Qaintessent
 @testset ExtendedTestSet "test view" begin
 
     N = 5
-    cgc = CircuitGateChain{N}([
-        single_qubit_circuit_gate(3, HadamardGate(), N),
-        controlled_circuit_gate(2, (1, 4), RxGate(√0.2), N),
-        controlled_circuit_gate((1,5), (2,4), SwapGate(), N),
-        single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        two_qubit_circuit_gate(1,2, SwapGate(), N),
-        controlled_circuit_gate((3,5), 4, SwapGate(), N),
-    ])
+    cgc = [
+        circuit_gate(3, HadamardGate()),
+        circuit_gate(2, RxGate(√0.2), (1, 4)),
+        circuit_gate((1,5), SwapGate(), (2,4)),
+        circuit_gate(2, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(1, RyGate(1.4π)),
+        circuit_gate(1,2, SwapGate()),
+        circuit_gate((3,5), SwapGate(), 4),
+    ]
 
     cgc_refstring =
         "\n" *
@@ -36,20 +36,20 @@ using Qaintessent
 end
 
 
-@testset ExtendedTestSet "test view with moments" begin
+@testset ExtendedTestSet "test view with circuits" begin
 
     N = 5
-    cgc = CircuitGateChain{N}([
-        Moment{N}(
-        [single_qubit_circuit_gate(3, HadamardGate(), N),
-        controlled_circuit_gate(2, (1, 4), RxGate(√0.2), N)]
+    cgc = Circuit{N}([
+        Moment(
+        [circuit_gate(3, HadamardGate()),
+        circuit_gate(2, RxGate(√0.2), (1, 4))]
         ),
-        Moment{N}(controlled_circuit_gate((1,5), (2,4), SwapGate(), N)),
-        Moment{N}([single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N)]),
-        Moment{N}([two_qubit_circuit_gate(1,2, SwapGate(), N),
-        controlled_circuit_gate((3,5), 4, SwapGate(), N)]),
+        Moment(circuit_gate((1,5), SwapGate(), (2,4))),
+        Moment([circuit_gate(2, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(1, RyGate(1.4π))]),
+        Moment([circuit_gate(1,2, SwapGate()),
+        circuit_gate((3,5), SwapGate(), 4)]),
     ])
 
     cgc_refstring =
@@ -73,16 +73,12 @@ end
 @testset ExtendedTestSet "test view moments" begin
 
     N = 5
-    m = Moment{N}([single_qubit_circuit_gate(2, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N)])
+    m = Moment([circuit_gate(2, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(1, RyGate(1.4π))])
 
     m_refstring =
         "\n" *
-        "    5 ...|——————|...\n" *
-        "         |      |   \n" *
-        "    4 ...|——————|...\n" *
-        "         |      |   \n" *
         "    3 ...|—[Rθ]—|...\n" *
         "         |      |   \n" *
         "    2 ...|—[Pϕ]—|...\n" *
@@ -93,10 +89,10 @@ end
     show(io, [m])
     @test String(take!(io)) == m_refstring
 
-    m = Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        controlled_circuit_gate((4), (2), HadamardGate(), N)])
+    m = Moment([circuit_gate(5, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(1, RyGate(1.4π)),
+        circuit_gate((4), HadamardGate(), (2))])
 
     m_refstring =
         "\n" *
@@ -115,18 +111,18 @@ end
     show(io, [m])
     @test String(take!(io)) == m_refstring
 
-    m = [Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        controlled_circuit_gate((4), (2), HadamardGate(), N)]),
-        Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N),
-        controlled_circuit_gate((4), (2), HadamardGate(), N)]),
+    m = [Moment([circuit_gate(5, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(1, RyGate(1.4π)),
+        circuit_gate((4), HadamardGate(), (2))]),
+        Moment([circuit_gate(5, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(1, RyGate(1.4π)),
+        circuit_gate((4), HadamardGate(), (2))]),
         ]
 
     m_refstring =
-        "Array{Moment{5},1}[\n" *
+        "Array{Moment,1}[\n" *
         "    5 ...|—[Pϕ]———————|...\n" *
         "         |            |   \n" *
         "    4 ...|———————[H ]—|...\n" *
@@ -153,15 +149,15 @@ end
     show(io, [m])
     @test String(take!(io)) == m_refstring
 
-    m = Moment{N}([single_qubit_circuit_gate(5, PhaseShiftGate(0.2π), N),
-        single_qubit_circuit_gate(3, RotationGate(0.1π, [1, 0, 0]), N),
-        controlled_circuit_gate((2), (4), HadamardGate(), N),
-        single_qubit_circuit_gate(1, RyGate(1.4π), N)])
+    m = Moment([circuit_gate(5, PhaseShiftGate(0.2π)),
+        circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate((2), HadamardGate(), 4),
+        circuit_gate(1, RyGate(1.4π))])
     m_refstring =
-    "CircuitGate{1,5,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]), Int64[])\n" *
-    "CircuitGate{1,5,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]), Int64[])\n" *
-    "CircuitGate{2,5,ControlledGate{1,2}}((2, 4), ControlledGate{1,2}(HadamardGate()), Union{Int64, Expr}[])\n" *
-    "CircuitGate{1,5,RyGate}((1,), RyGate([4.39822971502571]), Int64[])\n"
+    "CircuitGate{1,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
+    "CircuitGate{1,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
+    "CircuitGate{2,ControlledGate{HadamardGate}}((2, 4), ControlledGate{HadamardGate}(HadamardGate(), 1))\n" *
+    "CircuitGate{1,RyGate}((1,), RyGate([4.39822971502571]))\n"
 
     io = IOBuffer()
     show(io, m)

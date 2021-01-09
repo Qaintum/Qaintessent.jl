@@ -8,9 +8,9 @@ using Qaintessent
 
     pauli = [
         Matrix{Float64}(I, 2, 2),
-        Qaintessent.matrix(X),
-        Qaintessent.matrix(Y),
-        Qaintessent.matrix(Z),
+        Qaintessent.sparse_matrix(X),
+        Qaintessent.sparse_matrix(Y),
+        Qaintessent.sparse_matrix(Z),
     ]
 
     @test Qaintessent.matrix(pauli_group_matrix("XIZY")) ≈

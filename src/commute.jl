@@ -1,8 +1,9 @@
+using LinearAlgebra
 
 """
     iscommuting(A, B)
 
-Test whether two matrices commute.
+Test whether two AbstractMatix commute.
 """
 function iscommuting(A::AbstractMatrix, B::AbstractMatrix)
     # require compatible dimensions
@@ -16,61 +17,54 @@ end
 
 # gates of same type do not necessarily commute, see, e.g., MatrixGate
 
-iscommuting(A::XGate, B::XGate) = true
-iscommuting(A::YGate, B::YGate) = true
-iscommuting(A::ZGate, B::ZGate) = true
+iscommuting(::XGate, ::XGate) = true
+iscommuting(::YGate, ::YGate) = true
+iscommuting(::ZGate, ::ZGate) = true
 
-iscommuting(A::XGate, B::YGate) = false
-iscommuting(A::YGate, B::XGate) = false
-iscommuting(A::XGate, B::ZGate) = false
-iscommuting(A::ZGate, B::XGate) = false
-iscommuting(A::YGate, B::ZGate) = false
-iscommuting(A::ZGate, B::YGate) = false
+iscommuting(::XGate, ::YGate) = false
+iscommuting(::YGate, ::XGate) = false
+iscommuting(::XGate, ::ZGate) = false
+iscommuting(::ZGate, ::XGate) = false
+iscommuting(::YGate, ::ZGate) = false
+iscommuting(::ZGate, ::YGate) = false
 
-iscommuting(A::RxGate, B::RxGate) = true
-iscommuting(A::RyGate, B::RyGate) = true
-iscommuting(A::RzGate, B::RzGate) = true
+iscommuting(::RxGate, ::RxGate) = true
+iscommuting(::RyGate, ::RyGate) = true
+iscommuting(::RzGate, ::RzGate) = true
 
-iscommuting(A::XGate,  B::RxGate) = true
-iscommuting(A::RxGate, B::XGate)  = true
+iscommuting(::XGate,  ::RxGate) = true
+iscommuting(::RxGate, ::XGate)  = true
 
-iscommuting(A::RyGate, B::YGate) = true
-iscommuting(A::YGate, B::RyGate) = true
+iscommuting(::RyGate, ::YGate) = true
+iscommuting(::YGate, ::RyGate) = true
 
-iscommuting(A::RzGate, B::ZGate) = true
-iscommuting(A::ZGate, B::RzGate) = true
+iscommuting(::RzGate, ::ZGate) = true
+iscommuting(::ZGate, ::RzGate) = true
 
 # entanglement gates commute with each other
-iscommuting(A::EntanglementXXGate, B::EntanglementXXGate) = true
-iscommuting(A::EntanglementXXGate, B::EntanglementYYGate) = true
-iscommuting(A::EntanglementXXGate, B::EntanglementZZGate) = true
-iscommuting(A::EntanglementYYGate, B::EntanglementXXGate) = true
-iscommuting(A::EntanglementYYGate, B::EntanglementYYGate) = true
-iscommuting(A::EntanglementYYGate, B::EntanglementZZGate) = true
-iscommuting(A::EntanglementZZGate, B::EntanglementXXGate) = true
-iscommuting(A::EntanglementZZGate, B::EntanglementYYGate) = true
-iscommuting(A::EntanglementZZGate, B::EntanglementZZGate) = true
-
-# same number of control and target wires
-iscommuting(A::ControlledGate{M,N}, B::ControlledGate{M,N}) where {M,N} = iscommuting(A.U, B.U)
+iscommuting(::EntanglementXXGate, ::EntanglementXXGate) = true
+iscommuting(::EntanglementXXGate, ::EntanglementYYGate) = true
+iscommuting(::EntanglementXXGate, ::EntanglementZZGate) = true
+iscommuting(::EntanglementYYGate, ::EntanglementXXGate) = true
+iscommuting(::EntanglementYYGate, ::EntanglementYYGate) = true
+iscommuting(::EntanglementYYGate, ::EntanglementZZGate) = true
+iscommuting(::EntanglementZZGate, ::EntanglementXXGate) = true
+iscommuting(::EntanglementZZGate, ::EntanglementYYGate) = true
+iscommuting(::EntanglementZZGate, ::EntanglementZZGate) = true
 
 # cover MatrixGate, too
-iscommuting(A::AbstractGate{N}, B::AbstractGate{N}) where {N} = iscommuting(Qaintessent.matrix(A), Qaintessent.matrix(B))
-
-# catch case of incompatible dimensions
-iscommuting(A::AbstractGate{M}, B::AbstractGate{N}) where {M,N} = false
-
+iscommuting(A::AbstractGate, B::AbstractGate) = iscommuting(Qaintessent.sparse_matrix(A), Qaintessent.sparse_matrix(B))
 
 """
     iscommuting(A, B)
 
-Test whether two controlled circuit gates commute.
+Test whether two controlled CircuitGate commute.
 """
-function iscommuting(A::CircuitGate{L,N,ControlledGate{S,L}}, B::CircuitGate{M,N,ControlledGate{T,M}}) where {L,M,N,S,T}
-
+function iscommuting(A::CircuitGate{L,ControlledGate{G}}, B::CircuitGate{M,ControlledGate{G}}) where {L,M,G<:AbstractGate}
+    N = maximum((maximum(B.iwire), maximum(A.iwire)))
     # check whether only control wires overlap, if at all
-    if (length(intersect(A.iwire[end-S+1:end], B.iwire)) == 0 &&
-        length(intersect(B.iwire[end-T+1:end], A.iwire)) == 0)
+    if (length(intersect(A.iwire[end - L + 1:end], B.iwire)) == 0 &&
+        length(intersect(B.iwire[end - M + 1:end], A.iwire)) == 0)
         return true
     end
 
@@ -79,18 +73,17 @@ function iscommuting(A::CircuitGate{L,N,ControlledGate{S,L}}, B::CircuitGate{M,N
     end
 
     # TODO: more fine-grained case switches for partially overlapping 'iwire'
-
-    iscommuting(Qaintessent.matrix(A), Qaintessent.matrix(B))
+    iscommuting(Qaintessent.sparse_matrix(A, N), Qaintessent.sparse_matrix(B, N))
 end
 
 
 """
     iscommuting(A, B)
 
-Test whether two general circuit gates commute.
+Test whether two general CircuitGate commute.
 """
-function iscommuting(A::CircuitGate{L,N,G}, B::CircuitGate{M,N,H}) where {L,M,N,G,H}
-
+function iscommuting(A::CircuitGate{L,G}, B::CircuitGate{M,H}) where {L,M,G,H}
+    N = maximum((maximum(B.iwire), maximum(A.iwire)))
     if length(intersect(A.iwire, B.iwire)) == 0
         return true
     end
@@ -100,10 +93,30 @@ function iscommuting(A::CircuitGate{L,N,G}, B::CircuitGate{M,N,H}) where {L,M,N,
     end
 
     # TODO: more fine-grained case switches for partially overlapping 'iwire'
+    iscommuting(Qaintessent.sparse_matrix(A,N), Qaintessent.sparse_matrix(B,N))
+end
 
-    iscommuting(Qaintessent.matrix(A), Qaintessent.matrix(B))
+function iscommuting(A::MeasurementOperator{L,G}, B::MeasurementOperator{M,H}) where {L,M,G,H}
+    N = maximum((maximum(A.iwire), maximum(B.iwire)))
+    if length(intersect(A.iwire, B.iwire)) == 0
+        return true
+    end
+
+    if A.iwire == B.iwire
+        return iscommuting(A.operator, B.operator)
+    end
+    
+    iscommuting(sparse_matrix(A, N), sparse_matrix(B, N))
 end
 
 
-# catch case of different number of wires
-iscommuting(A::CircuitGate{K,L,G}, B::CircuitGate{M,N,H}) where {K,L,M,N,G,H} = false
+function iscommuting(A::MeasurementOperator{M,G}, B::MeasurementOperator{L,H}) where {L,M,G<:AbstractGate,H<:AbstractMatrix}
+    if length(intersect(A.iwire, B.iwire)) == 0
+        return true
+    end
+
+    N = maximum((maximum(A.iwire), maximum(B.iwire)))
+    iscommuting(sparse_matrix(A, N), sparse_matrix(B, N))
+end
+
+iscommuting(A::MeasurementOperator{M,G}, B::MeasurementOperator{L,H}) where {L,M,G<:AbstractMatrix,H<:AbstractGate} = iscommuting(B, A)

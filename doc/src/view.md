@@ -8,6 +8,5 @@ CurrentModule = Qaintessent
 ## Show
 
 ```@docs
-Base.show(io::IO, c::Circuit)
+Base.show(io::IO, c::Circuit{N}) where {N}
 ```
-

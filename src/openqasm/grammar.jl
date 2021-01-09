@@ -55,7 +55,7 @@ RBNF.@parser QASMLang begin
     rx         := ["rx",  '(', in=nnexp, ')', out=argument, ';']
     ry         := ["ry",  '(', in=nnexp, ')', out=argument, ';']
     rz         := ["rz",  '(', in=nnexp, ')', out=argument, ';']
-    crz        := ["crz",  '(', in=nnexp, ')', out1=argument, out2=argument, ';']
+    crz        := ["crz",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
 
     iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
 

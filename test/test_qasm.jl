@@ -97,7 +97,6 @@ end
     """
 
     qasmtokens = Qaintessent.lex(src2)
-    # println(tokens)
     rbnf_tokens = Qaintessent.parse_qasm(qasmtokens)
     rbnf_tokens_ref = Qaintessent.Struct_mainprogram(
             RBNF.Token{:nnreal}(1, 10, 10, "2.0", 3),
@@ -138,7 +137,6 @@ end
     qreg d[3];
     qreg a[2];
     qreg c[3];
-    creg syn[4];
     gate syndrome(alpha) d1,d2,d3,a1,a2
     {
       cx d1,a1; cx d2,a1;
@@ -149,46 +147,47 @@ end
         syndrome(theta) d1,d2,d3,a1,a2;
         syndrome(theta) d2,d3,a1,d1,a2;
         rx(theta) d2;
+        cx d3,a1;
+        cx a1,d3;
+        cx d3,a1;
     }
     syn2drome(0.1*pi) d[0],d[1],d[2],a[0],a[1];
-    if(syn==0) cx d[2],d[1];
     t d[1];
     s a[0];
     h d[0];
     """
 
-    syn1 = creg(4)
     d1 = qreg(3)
     a1 = qreg(2)
     c1 = qreg(3)
-    cgc_ref = CircuitGateChain([d1, a1, c1], [syn1])
+    cgc_ref = Circuit(d1, a1, c1)
 
-    N = size(cgc_ref)
+    N = num_wires(cgc_ref)
 
     gates_ref = [
-        controlled_circuit_gate(4, 1, X, N),
-        controlled_circuit_gate(4, 2, X, N),
-        controlled_circuit_gate(5, 2, X, N),
-        controlled_circuit_gate(5, 3, X, N),
-        single_qubit_circuit_gate(4, RyGate(0.1π), N),
-        controlled_circuit_gate(1, 2, X, N),
-        controlled_circuit_gate(1, 3, X, N),
-        controlled_circuit_gate(5, 3, X, N),
-        controlled_circuit_gate(5, 4, X, N),
-        single_qubit_circuit_gate(1, RyGate(0.1π), N),
-        single_qubit_circuit_gate(2, RxGate(0.1π), N),
-        controlled_circuit_gate(2, 3, X, N),
-        single_qubit_circuit_gate(2, TGate(), N),
-        single_qubit_circuit_gate(4, SGate(), N),
-        single_qubit_circuit_gate(1, HadamardGate(), N),
+        circuit_gate(4, X, 1),
+        circuit_gate(4, X, 2),
+        circuit_gate(5, X, 2),
+        circuit_gate(5, X, 3),
+        circuit_gate(4, RyGate(0.1π)),
+        circuit_gate(1, X, 2),
+        circuit_gate(1, X, 3),
+        circuit_gate(5, X, 3),
+        circuit_gate(5, X, 4),
+        circuit_gate(1, RyGate(0.1π)),
+        circuit_gate(2, RxGate(0.1π)),        
+        circuit_gate(4, 3, SwapGate()),
+        circuit_gate(2, TGate()),
+        circuit_gate(4, SGate()),
+        circuit_gate(1, HadamardGate()),
     ]
+
     append!(cgc_ref, gates_ref)
 
     cgc = qasm2cgc(src1)
-
     ψ = randn(ComplexF64, 2^N)
-
-    @test apply(cgc_ref, ψ) ≈ apply(cgc, ψ)
+    
+    @test apply(cgc_ref.moments, ψ) ≈ apply(cgc.moments, ψ)
 end
 
 
@@ -199,49 +198,51 @@ end
     include "qelib1.inc";
 
     qreg qregister[8];
-    creg creg1[4];
+    cx qregister[0],qregister[3];
+    cx qregister[1],qregister[3];
     cx qregister[1],qregister[4];
     cx qregister[2],qregister[4];
-    cx qregister[2],qregister[5];
-    cx qregister[3],qregister[5];
-    ry(0.3141592653589793) qregister[4];
+    ry(0.3141592653589793) qregister[3];
+    cx qregister[1],qregister[0];
+    cx qregister[2],qregister[0];
+    cx qregister[2],qregister[4];
+    cx qregister[3],qregister[4];
+    ry(0.3141592653589793) qregister[0];
+    rx(0.3141592653589793) qregister[1];
     cx qregister[2],qregister[1];
-    cx qregister[3],qregister[1];
-    cx qregister[3],qregister[5];
-    cx qregister[4],qregister[5];
-    ry(0.3141592653589793) qregister[1];
-    rx(0.3141592653589793) qregister[2];
-    cx qregister[3],qregister[2];
-    t qregister[2];
-    s qregister[4];
-    h qregister[1];"""
+    t qregister[1];
+    s qregister[3];
+    h qregister[0];"""
 
-    syn1 = creg(4)
     d1 = qreg(3)
     a1 = qreg(2)
     c1 = qreg(3)
-    cgc_ref = CircuitGateChain([d1, a1, c1], [syn1])
+    cgc_ref = Circuit(d1, a1, c1)
 
-    N = size(cgc_ref)
+    N = num_wires(cgc_ref)
 
     gates_ref = [
-        controlled_circuit_gate(4, 1, X, N),
-        controlled_circuit_gate(4, 2, X, N),
-        controlled_circuit_gate(5, 2, X, N),
-        controlled_circuit_gate(5, 3, X, N),
-        single_qubit_circuit_gate(4, RyGate(0.1π), N),
-        controlled_circuit_gate(1, 2, X, N),
-        controlled_circuit_gate(1, 3, X, N),
-        controlled_circuit_gate(5, 3, X, N),
-        controlled_circuit_gate(5, 4, X, N),
-        single_qubit_circuit_gate(1, RyGate(0.1π), N),
-        single_qubit_circuit_gate(2, RxGate(0.1π), N),
-        controlled_circuit_gate(2, 3, X, N),
-        single_qubit_circuit_gate(2, TGate(), N),
-        single_qubit_circuit_gate(4, SGate(), N),
-        single_qubit_circuit_gate(1, HadamardGate(), N),
+        circuit_gate(4, X, 1),
+        circuit_gate(4, X, 2),
+        circuit_gate(5, X, 2),
+        circuit_gate(5, X, 3),
+        circuit_gate(4, RyGate(0.1π)),
+        circuit_gate(1, X, 2),
+        circuit_gate(1, X, 3),
+        circuit_gate(5, X, 3),
+        circuit_gate(5, X, 4),
+        circuit_gate(1, RyGate(0.1π)),
+        circuit_gate(2, RxGate(0.1π)),
+        circuit_gate(2, X, 3),
+        circuit_gate(2, TGate()),
+        circuit_gate(4, SGate()),
+        circuit_gate(1, HadamardGate()),
     ]
     append!(cgc_ref, gates_ref)
 
+    ψ = randn(ComplexF64, 2^N)
+    cgc = qasm2cgc(src_ref)
+
+    @test apply(cgc.moments, ψ) ≈ apply(cgc_ref.moments, ψ)
     @test src_ref == cgc2qasm(cgc_ref)
 end

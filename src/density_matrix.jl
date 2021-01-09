@@ -7,7 +7,7 @@ Density matrix, represented with respect to identity and Pauli basis (σ_j/2) by
 """
 struct DensityMatrix{N}
     "coefficients with respect to identity and Pauli basis"
-    v::AbstractVector{<:Real}
+    v::Vector{Float64}
 
     function DensityMatrix{N}(v::AbstractVector{<:Real}) where {N}
         length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N`.")
@@ -20,30 +20,31 @@ function matrix(ρ::DensityMatrix{N}) where {N}
     # Pauli matrix basis (including identity matrix)
     halfpauli = [
         Matrix{Float64}(0.5I, 2, 2),
-        0.5 * matrix(X),
-        0.5 * matrix(Y),
-        0.5 * matrix(Z),
+        0.5 * sparse_matrix(X),
+        0.5 * sparse_matrix(Y),
+        0.5 * sparse_matrix(Z),
     ]
     mat = zeros(Complex{eltype(ρ.v)}, 2^N, 2^N)
     for (i, pt) in enumerate(cartesian_tuples(4, N))
-        mat += ρ.v[i] * kron([halfpauli[p+1] for p in reverse(pt)]...)
+        mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(pt)]...)
     end
     return mat
 end
 
 
-function density_from_statevector(ψ::AbstractVector)
+function density_from_statevector(ψ::Vector{G}) where {G}
     N = convert(Int, log2(length(ψ)))
     @assert 2^N == length(ψ)
-    pauli = [
-        sparse(I, 2, 2),
-        sparse(matrix(X)),
-        sparse(matrix(Y)),
-        sparse(matrix(Z)),
+    mX = sparse_matrix(XGate())
+    mY = sparse_matrix(YGate())
+    mZ = sparse_matrix(ZGate())
+    Id = ComplexF64[1 0; 0 1]
+    pauli = Matrix{ComplexF64}[
+        Id, mX, mY, mZ
     ]
     v = zeros(4^N)
-    for (i, pt) in enumerate((cartesian_tuples(4, N)))
-        v[i] = real(dot(ψ, kron([pauli[p+1] for p in reverse(pt)]...) * ψ))
+    for (i, pt) in enumerate((cartesian_tuples(4, Val(N))))
+        v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(pt)]...) * ψ))
     end
     return DensityMatrix{N}(v)
 end
@@ -57,7 +58,7 @@ encoded as `DensityMatrix{N}`. `ipauli[j]` specifies the j-th matrix as integer 
 """
 function pauli_group_matrix(ipauli::AbstractVector{<:Integer})
     i4 = Matrix{Int}(I, 4, 4)
-    DensityMatrix{length(ipauli)}(kron([2 * i4[i+1, :] for i in reverse(ipauli)]...))
+    DensityMatrix{length(ipauli)}(kron([2 * i4[i + 1, :] for i in reverse(ipauli)]...))
 end
 
 function pauli_group_matrix(paulistring::String)

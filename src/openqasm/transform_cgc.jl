@@ -1,7 +1,6 @@
 using MLStyle
 
 
-@as_record CircuitGateChain
 @as_record Moment
 @as_record CircuitGate
 @as_record ControlledGate
@@ -9,6 +8,7 @@ using MLStyle
 @as_record XGate
 @as_record YGate
 @as_record ZGate
+@as_record SwapGate
 @as_record RxGate
 @as_record RyGate
 @as_record RzGate
@@ -19,7 +19,7 @@ using MLStyle
 
 
 function trans_circuit(c::Circuit)
-    trans_circuit(c.cgc)
+    trans_circuit(c.moments)
 end
 
 function trans_bitarray(ba::BitArray{1})
@@ -38,6 +38,7 @@ function trans_g(g::AbstractGate)
         SdagGate() => "sdg"
         TGate() => "t"
         TdagGate() => "tdg"
+        SwapGate() => "swap"
         RxGate(θ=θ) => "rx(" * string(θ[1]) * ")"
         RyGate(θ=θ) => "ry(" * string(θ[1]) * ")"
         RzGate(θ=θ) => "rz(" * string(θ[1]) * ")"
@@ -49,45 +50,39 @@ function trans_g(g::AbstractGate)
 end
 
 integer_pattern = r"[0-9]+$"
-function trans_cg(cg::CircuitGate{M,N,G}) where {M,N,G}
+function trans_cg(cg::CircuitGate{M,G}) where {M,G}
     @match cg begin
         CircuitGate(iwire=iwire,
-            gate=gate,
-            ccntrl=ccntrl
+            gate=gate
             ) => let id = trans_g(gate)
-                    if !all(isinteger.(ccntrl))
-                        nnint = parse(Int64, match(integer_pattern, string(ccntrl[1])).match[1]) - 1
-                        return "//if(creg1==" * string(nnint) * ") " * string(id) * join( "qreg" .* string.(iwire) ,",") * "; // If clauses are not yet supported."
-                    end
-                    return string(id) * " " * join( "qregister[" .* string.(reverse(iwire)) .* "]" ,",") * ";"
+                    return string(id) * " " * join( "qregister[" .* string.(reverse(iwire.-1)) .* "]" ,",") * ";"
                 end
     end
 end
 
 
-function trans_moment(m::Moment{N}) where {N}
+function trans_moment(m::Moment)
     @match m begin
         Moment(
             gates=gates
         ) => let gates=gates
-                return reduce(vcat, trans_cg.(gates))
+                expr = join(trans_cg.(gates), "\n")
+                return expr
             end
     end
 end
 
-function cgc2qasm(cgc::CircuitGateChain{N}) where {N}
+"""
+    cgc2qasm(c::Circuit{N}) where {N}
+
+converts Circuit{N} object to OpenQASM 2.0 representation
+"""
+function cgc2qasm(c::Circuit{N}) where {N}
     global classical_register_count = 1
-    @match cgc begin
-        CircuitGateChain(moments=moments,
-            creg=creg) => let moments=moments,
-                              creg=creg
-                                header = """OPENQASM 2.0;\n
-                                    include "qelib1.inc";\n
-                                    """
-                                header *= "qreg qregister[" * string(N) * "];\n"
-                                header = header .* trans_bitarray.(creg)
-                                header = header .* join(trans_moment.(moments), "\n")
-                                return header[1]
-                            end
-    end
+    header = """OPENQASM 2.0;\n
+    include "qelib1.inc";\n
+    """
+    header *= "qreg qregister[" * string(N) * "];\n"
+    header = header .* join(trans_moment.(c.moments), "\n")    
+    return header
 end

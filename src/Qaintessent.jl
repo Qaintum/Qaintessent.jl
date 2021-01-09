@@ -2,6 +2,8 @@ module Qaintessent
 
 using LinearAlgebra
 using SparseArrays
+using StaticArrays
+using Memoize
 
 
 include("util.jl")
@@ -31,30 +33,28 @@ export
     EntanglementZZGate,
     ControlledGate,
     controlled_not,
-    MatrixGate
+    MatrixGate,
+    matrix,
+    sparse_matrix,
+    num_wires
 
-include("register.jl")
-export
-    qreg,
-    creg,
-    reg_check,
-    set_creg!,
-    add_creg!
-
-include("circuit.jl")
+include("circuitgate.jl")
 export
     AbstractCircuitGate,
     CircuitGate,
-    AbstractMoment,
+    circuit_gate
+
+include("circuit.jl")
+export
     Moment,
     single_qubit_circuit_gate,
     two_qubit_circuit_gate,
     controlled_circuit_gate,
-    rdm,
-    CircuitGateChain,
-    MeasurementOps,
+    circuit_gate,
+    MeasurementOperator,
     Circuit,
-    distribution
+    distribution,
+    rdm
 
 include("density_matrix.jl")
 export
@@ -67,24 +67,21 @@ include("commute.jl")
         iscommuting
 
 include("apply.jl")
+include("apply_density.jl")
 export
     apply
-
-include("models.jl")
-export
-    qft_circuit,
-    toffoli_circuit,
-    vbe_adder_circuit,
-    qcla_out_adder_circuit,
-    qcla_inplace_adder_circuit
 
 include("gradients.jl")
 include("view.jl")
 
-include("graphs.jl")
+include("openqasm/register.jl")
 export
-    Dag,
-    optimize!
+    qreg,
+    creg,
+    reg_check,
+    set_creg!,
+    add!,
+    add_control!
 
 include("openqasm/grammar.jl")
 include("openqasm/gate_transformers.jl")
@@ -97,6 +94,7 @@ include("openqasm/transform_cgc.jl")
 export
     cgc2qasm
 
-include("compile.jl")
+include("unitary2circuit.jl")
+export unitary2circuit
 
 end

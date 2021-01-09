@@ -1,71 +1,69 @@
 
-function view(g::HadamardGate, i::Vector{Int64})
+function view(::HadamardGate, i::Vector{Int64})
     ["—[H ]—"], i
 end
 
-function view(g::XGate, i::Vector{Int64})
+function view(::XGate, i::Vector{Int64})
     ["—[X ]—"], i
 end
 
-function view(g::YGate, i::Vector{Int64})
+function view(::YGate, i::Vector{Int64})
     ["—[Y ]—"], i
 end
 
-function view(g::ZGate, i::Vector{Int64})
+function view(::ZGate, i::Vector{Int64})
     ["—[Z ]—"], i
 end
 
-function view(g::RxGate, i::Vector{Int64})
+function view(::RxGate, i::Vector{Int64})
     ["—[Rx]—"], i
 end
 
-function view(g::RyGate, i::Vector{Int64})
+function view(::RyGate, i::Vector{Int64})
     ["—[Ry]—"], i
 end
 
-function view(g::RzGate, i::Vector{Int64})
+function view(::RzGate, i::Vector{Int64})
     ["—[Rz]—"], i
 end
 
-function view(g::RotationGate, i::Vector{Int64})
+function view(::RotationGate, i::Vector{Int64})
     ["—[Rθ]—"], i
 end
 
-function view(g::PhaseShiftGate, i::Vector{Int64})
+function view(::PhaseShiftGate, i::Vector{Int64})
     ["—[Pϕ]—"], i
 end
 
-function view(g::SGate, i::Vector{Int64})
+function view(::SGate, i::Vector{Int64})
     ["—[S ]—"], i
 end
 
-function view(g::TGate, i::Vector{Int64})
+function view(::TGate, i::Vector{Int64})
     ["—[T ]—"], i
 end
 
-function view(g::SdagGate, i::Vector{Int64})
+function view(::SdagGate, i::Vector{Int64})
     ["—[S†]—"], i
 end
 
-function view(g::TdagGate, i::Vector{Int64})
+function view(::TdagGate, i::Vector{Int64})
     ["—[T†]—"], i
 end
 
-function view(g::SwapGate, i::Vector{Int64})
+function view(::SwapGate, i::Vector{Int64})
     ["——x———", "——x———"], i
 end
 
 view(g) = view(g, [1])
 
-Base.size(g::AbstractGate{N}) where {N} = N
-
 function view(g::ControlledGate, i::Vector{Int64})
     gate = fill("——•———", length(i))
-    gate[1:Base.size(g.U)] = view(g.U)[1]
+    gate[1:num_wires(g.U)] = view(g.U)[1]
     return gate, i
 end
 
-function view(g::AbstractGate, i::Vector{Int64})
+function view(::AbstractGate, i::Vector{Int64})
     fill("——□———", length(i)), i
 end
 
@@ -81,7 +79,7 @@ function interleave(a::Vector{T}, b::Vector{T}) where {T}
     return c
 end
 
-function updatecol(g::CircuitGate{M,N,G}, nw::AbstractVector{String}, ng::AbstractVector{String}) where {M,N,G}
+function updatecol(g::CircuitGate{M,G}, nw::AbstractVector{String}, ng::AbstractVector{String}) where {M,G}
     iwire = [x for x in g.iwire]
     if length(g.iwire) > 1
         index = min(iwire...):max(iwire...)-1
@@ -99,7 +97,10 @@ function wire_enum(N::Int)
     return wires, gaps
 end
 
-function momentdiagram(io::IO, m::Moment{N}) where {N}
+function momentdiagram(io::IO, m::Moment, N::Union{Nothing,Int}=nothing)
+    if isnothing(N)
+        N = size(m)
+    end
     w, g = wire_enum(N)
     i = Int[]
     w = w .* "...|"
@@ -130,37 +131,42 @@ function momentdiagram(io::IO, m::Moment{N}) where {N}
     println(io, "")
 end
 
-function Base.show(io::IO, m::AbstractVector{Moment{N}}) where {N}
+function Base.show(io::IO, m::AbstractVector{Moment})
+    if length(m) == 0
+        return
+    end
+    N = maximum(req_wires.(m))
     for moment in m
-        momentdiagram(io, moment)
+        momentdiagram(io, moment, N)
     end
 end
 
-function Base.show(io::IO, m::Moment{N}) where {N}
+function Base.show(io::IO, m::Moment)
     for gate in m
         println(io, gate)
     end
 end
 
-function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
+function Base.show(io::IO, cgs::Vector{<:CircuitGate}, N::Union{Nothing,Int}=nothing)
+    if isnothing(N)
+        N = maximum(req_wires.(cgs))
+    end
     w, g = wire_enum(N)
     i = Int[]
     nw = fill("——————", N)
     ng = fill("      ", N-1)
-    for moment in c
-        for gate in moment
-            r = min(gate.iwire...):max(gate.iwire...)
-            if length(intersect(i, r)) == 0
-                i = union(i, r)
-                nw, ng = updatecol(gate, nw, ng)
-            else
-                i = r
-                w = w .* nw
-                g = g .* ng
-                nw = fill("——————", N)
-                ng = fill("      ", N-1)
-                nw, ng = updatecol(gate, nw, ng)
-            end
+    for cg in cgs
+        r = min(cg.iwire...):max(cg.iwire...)
+        if length(intersect(i, r)) == 0
+            i = union(i, r)
+            nw, ng = updatecol(cg, nw, ng)
+        else
+            i = r
+            w = w .* nw
+            g = g .* ng
+            nw = fill("——————", N)
+            ng = fill("      ", N-1)
+            nw, ng = updatecol(cg, nw, ng)
         end
     end
     w = w .* nw
@@ -172,9 +178,18 @@ function Base.show(io::IO, c::CircuitGateChain{N}) where {N}
     end
 end
 
+function _show(io::IO, c::Vector{Moment}, N::Union{Nothing,Int}=nothing)
+    if isnothing(N)
+        N = maximum(size.(c))
+    end
+    cg = getproperty.(c, :gates)
+    cg = collect(Base.Iterators.flatten(cg))
+    Base.show(io::IO, cg, N)
+end
+
 """
     Base.show(io::IO, c::Circuit) = Base.show(io, c.cgc)
 
 extends base `show` method to draw visual representation of a `Circuit{N}` object.
 """
-Base.show(io::IO, c::Circuit) = Base.show(io, c.cgc)
+Base.show(io::IO, c::Circuit{N}) where {N} = _show(io, c.moments, N)

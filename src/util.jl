@@ -1,3 +1,4 @@
+using LinearAlgebra
 
 """
     cartesian_tuples(d, N)
@@ -18,7 +19,10 @@ julia> cartesian_tuples(2, 3)
 ```
 """
 cartesian_tuples(d::Integer, N::Integer) =
-    Tuple.(CartesianIndices(Tuple(fill(0:d-1, N))))
+    cartesian_tuples(d, Val(N))
+
+cartesian_tuples(d::Integer, ::Val{N}) where {N} =
+    Tuple.(CartesianIndices(NTuple{N, UnitRange{Int64}}(fill(0:d - 1, N))))
 
 
 """
@@ -34,4 +38,64 @@ comm(A::AbstractMatrix, B::AbstractMatrix) = A * B - B * A
 
 Assemble the "Pauli vector" matrix.
 """
-pauli_vector(x, y, z) = [z x - im*y; x + im*y -z]
+pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
+
+
+"""
+    binary_rep(x::Integer, M::Integer)
+
+Return binary representation of Integer `x` for `M` bits with least significant bit first.
+"""
+function binary_rep(x::Integer, M::Integer)
+    m = BitArray(undef, M)
+    for i in 1:M
+        m[i] = x & 1
+        x = x >> 1
+    end
+    m
+end
+
+"""
+    binary_rep!(x::Integer, M::Integer)
+
+Return binary representation of Integer `x` for `M` bits with least significant bit first.
+"""
+function binary_rep!(m::BitArray{1}, x::Integer, M::Integer)
+    for i in 1:M
+        m[i] = x & 1
+        x = x >> 1
+    end
+    m
+end
+
+
+"""
+    intlog2(x::Integer)
+
+returns log 2 with integer inputs
+"""
+function intlog2(x::Integer)
+    x == 0 && error("Logarithm of 0 is undefined")
+    x < 0 && error("Logarithm of negative number is undefined")
+    ret::Int = 0
+    while x > 1
+        x = x >> 1
+        ret += 1
+    end
+    ret
+end
+
+
+"""
+    sliced_index(idx::Tuple, targetwires::Tuple, N::Int)
+
+Construct sliced index via target map (utility function)
+"""
+function sliced_index(idx::Tuple, targetwires::Tuple, N::Int)
+    islice = Vector{Any}(fill(Colon(), N))
+    M = length(targetwires)
+    for k in 1:M
+        islice[targetwires[k]] = idx[k] + 1
+    end
+    return islice
+end

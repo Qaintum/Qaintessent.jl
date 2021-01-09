@@ -27,7 +27,7 @@ const RefDagGate = Ref{Union{DagGate,Nothing}}
 Base.Ref(d::DagGate) = Base.Ref{Union{DagGate,Nothing}}(d)
 Base.Ref(d::Nothing) = Base.Ref{Union{DagGate,Nothing}}(d)
 
-#copy constructor
+# copy constructor
 DagGate(dg::DagGate) = DagGate(dg.cg::Union{CircuitGate,Nothing}, dg.prev::Union{DagGate,Nothing}, dg.next::Union{DagGate,Nothing}, dg.connected::AbstractArray{RefDagGate})
 
 DagGate(cg::CircuitGate) = DagGate(cg::Union{CircuitGate,Nothing}, nothing, nothing, nothing)
@@ -41,7 +41,7 @@ function DagGate(dg::DagGate, cg::CircuitGate, con::Union{AbstractVector{RefDagG
         end
         dg = dg.next
     end
-    d = DagGate(cg,dg,nothing,con)
+    d = DagGate(cg, dg, nothing, con)
     dg.next = d
     return d
 end
@@ -68,7 +68,7 @@ mutable struct Dag
     function Dag(size::Integer)
         dgs = DagGate[]
         for i in 1:size
-            push!(dgs,DagGate())
+            push!(dgs, DagGate())
         end
         new(dgs)
     end
@@ -81,15 +81,15 @@ mutable struct Dag
     function Dag(cgc::CircuitGateChain{N}) where {N}
         dgs = DagGate[]
         for i in 1:N
-            push!(dgs,DagGate())
+            push!(dgs, DagGate())
         end
 
         for moment in cgc
             for gate in moment
                 con = RefDagGate[]
                 for wire in gate.iwire
-                    d = DagGate(dgs[wire],gate,con)
-                    push!(con,Ref(d))
+                    d = DagGate(dgs[wire], gate, con)
+                    push!(con, Ref(d))
                 end
             end
         end
@@ -108,7 +108,7 @@ function Base.size(d::Dag)
     count = 0
     for i in 1:length(d.iwire)
         wire = d.iwire[i]
-        while wire.next != nothing
+        while wire.next !== nothing
             count += 1
             wire = wire.next
         end
@@ -161,7 +161,7 @@ inserts `RefDagGate` object `d` before `RefDagGate` located at `loc`
 """
 function firstinsert!(loc::RefDagGate, d::RefDagGate)
     copy = DagGate(loc[].cg)
-    insert!(loc::RefDagGate,Ref(copy))
+    insert!(loc::RefDagGate, Ref(copy))
     loc[].cg = d[].cg
     return loc
 end
@@ -172,11 +172,11 @@ end
 
 returns control wires and target wires of `ControlledGate` object
 """
-function get_controls(cg::CircuitGate{N,M,G}) where {N,M,G<:ControlledGate{O,P}} where {O,P}
+function get_controls(cg::CircuitGate{N,M,G}) where {N,M,G <: ControlledGate{O,P}} where {O,P}
     num_gate_wires = O
     num_total_wires = P
     targt = cg.iwire[1:O]
-    cntrl = cg.iwire[O+1:end]
+    cntrl = cg.iwire[O + 1:end]
     (cntrl, targt)
 end
 
@@ -365,7 +365,7 @@ end
 
 function hxh_opt(d::RefDagGate)
     _, wires = get_controls(d[].cg)
-    cg = single_qubit_circuit_gate(wires[1],Z,length(wires))
+    cg = single_qubit_circuit_gate(wires[1], Z, length(wires))
     d[].cg = cg
     remove!(remove!(Ref(d[].next)))
     return d
@@ -478,7 +478,7 @@ end
 
 custom `Base.show` function to print `DagGate` objects
 """
-function Base.show(io::IO,daggate::DagGate)
+function Base.show(io::IO, daggate::DagGate)
 
     print("[")
 
@@ -505,7 +505,7 @@ end
 custom `Base.show` function to print `AbstractVector{DagGate}` objCircuitGateChain
         dag::Dagects
 """
-function Base.show(io::IO,wires::AbstractVector{DagGate})
+function Base.show(io::IO, wires::AbstractVector{DagGate})
     for daggate in wires
         println(daggate)
     end
@@ -531,11 +531,11 @@ appends `DagGate` object to `AbstractVector`
 function append_gate!(cgs::AbstractVector{AbstractCircuitGate{N}}, dag::Dag, dg::DagGate) where {N}
     for j in dg.cg.iwire
         while !(dag.iwire[j].cg === dg.cg)
-            dag = append_gate!(cgs,dag,dag.iwire[j])
+            dag = append_gate!(cgs, dag, dag.iwire[j])
         end
         dag.iwire[j] = dag.iwire[j].next
     end
-    push!(cgs,dg.cg)
+    push!(cgs, dg.cg)
     return dag
 end
 

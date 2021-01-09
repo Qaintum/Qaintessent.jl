@@ -7,52 +7,40 @@ CurrentModule = Qaintessent
 ```
 
 ```@docs
-    import_qasm(filename::String)
+    qasm2cgc(txt::String)
 ```
 
 ```@docs
-    import_file(filename::String; type="QASM")
-```
-
-```@docs
-    export_qasm(circuit::Circuit{N}, filename::String) where {N}
-```
-
-```@docs
-    export_file(circuit::Circuit{N}, filename::String; type="QASM") where {N}
+    cgc2qasm(c::Circuit{N}) where {N}
 ```
 
 #### Example
 ```jldoctest
-using Qaintessent 
+using Qaintessent
+using LinearAlgebra
 
 N = 3
-filename = "reference_circuit.qasm"
+cgc_ref = CircuitGate[
+    circuit_gate(3, XGate()),
+    circuit_gate(1, RyGate(0.3π)),
+    circuit_gate(2, RzGate(2.4)),
+    circuit_gate(2, TGate()),
+    circuit_gate(1, XGate(), 2),
+    circuit_gate(3, RzGate(0.3), 1)
+    ]
 
-cgc_ref = CircuitGateChain{N}([
-    single_qubit_circuit_gate(3, XGate(), N),
-    two_qubit_circuit_gate(3, 2, SwapGate(), N),
-    single_qubit_circuit_gate(1, RyGate(0.3π), N),
-    single_qubit_circuit_gate(2, RzGate(2.4), N),
-    single_qubit_circuit_gate(2, TGate(), N),
-    controlled_circuit_gate(1,2, XGate(), N),
-    controlled_circuit_gate(3,1, RzGate(0.3), N)
-    ])
+meas = MeasurementOperator(Matrix{Float64}(I, 2^N, 2^N), (1,2,3))
+c_ref = Circuit{N}(cgc_ref, [meas])
+qasm_rep = cgc2qasm(c_ref)
 
-meas = MeasurementOps{N}(AbstractMatrix[])
-c_ref = Circuit{N}(cgc_ref, meas)
-export_file(c_ref, filename)
+cgc_from_qasm = qasm2cgc(qasm_rep)
 
-c = import_file(filename)
-rm(filename)
-
-c
+cgc_from_qasm
 # output
-
     
-    1 ————————————————————•———
+    3 —[X ]——————————————[Rz]—
                           |
-    2 ————————x————[T ]——[X ]—
-              |
-    3 —[X ]———x———————————————
+    2 —[Rz]——[T ]———•—————————
+                    |     |
+    1 —[Ry]————————[X ]———•———
 ```
