@@ -19,41 +19,27 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
             gdag = adjoint(g)
 
             @test Qaintessent.matrix(gdag) == adjoint(Qaintessent.matrix(g))
-            @test Qaintessent.sparse_matrix(gdag) == adjoint(Qaintessent.sparse_matrix(g))
-            @test Qaintessent.matrix(g) == Qaintessent.sparse_matrix(g)
             @test LinearAlgebra.ishermitian(g) == (Qaintessent.matrix(gdag) == Qaintessent.matrix(g))
-            @test LinearAlgebra.ishermitian(g) == (Qaintessent.sparse_matrix(gdag) == Qaintessent.sparse_matrix(g))
+            @test Qaintessent.sparse_matrix(g) == Qaintessent.matrix(g)
         end
     end
 
 
     @testset "general rotation gate" begin
-        @test Qaintessent.sparse_matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.sparse_matrix(RxGate(θ))
-        @test Qaintessent.sparse_matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.sparse_matrix(RyGate(θ))
-        @test Qaintessent.sparse_matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.sparse_matrix(RzGate(θ))
-
         @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
         @test Qaintessent.matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.matrix(RyGate(θ))
         @test Qaintessent.matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.matrix(RzGate(θ))
 
-        @test Qaintessent.sparse_matrix(RotationGate([θ, 0, 0])) ≈ Qaintessent.sparse_matrix(RxGate(θ))
-        @test Qaintessent.sparse_matrix(RotationGate([0, θ, 0])) ≈ Qaintessent.sparse_matrix(RyGate(θ))
-        @test Qaintessent.sparse_matrix(RotationGate([0, 0, θ])) ≈ Qaintessent.sparse_matrix(RzGate(θ))
-
-        @test Qaintessent.matrix(RotationGate([θ, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
-        @test Qaintessent.matrix(RotationGate([0, θ, 0])) ≈ Qaintessent.matrix(RyGate(θ))
-        @test Qaintessent.matrix(RotationGate([0, 0, θ])) ≈ Qaintessent.matrix(RzGate(θ))
+        @test RotationGate(θ * n) ≈ RotationGate(θ, n)
+        @test Qaintessent.matrix(RotationGate(0.3*θ, n)) * Qaintessent.matrix(RotationGate(0.7*θ, n)) ≈ Qaintessent.matrix(RotationGate(θ, n))
+        @test Qaintessent.sparse_matrix(RotationGate(θ, n)) ≈ Qaintessent.matrix(RotationGate(θ, n))
     end
 
 
     @testset "general rotation gate exceptions" begin
-        @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate(θ, [1, 0, 0, 0]))
-        @test_throws ErrorException("Norm of rotation axis vector must be 1.") Qaintessent.matrix(RotationGate(θ, [1, 2, 0]))
-        @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.matrix(RotationGate([0, θ, 0, 1]))
-
-        @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.sparse_matrix(RotationGate(θ, [1, 0, 0, 0]))
-        @test_throws ErrorException("Norm of rotation axis vector must be 1.") Qaintessent.sparse_matrix(RotationGate(θ, [1, 2, 0]))
-        @test_throws ErrorException("Rotation axis vector must have length 3.") Qaintessent.sparse_matrix(RotationGate([0, θ, 0, 1]))
+        @test_throws ErrorException("Rotation axis vector must have length 3.") RotationGate(θ, [1, 0, 0, 0])
+        @test_throws ErrorException("Norm of rotation axis vector must be 1.")  RotationGate(θ, [1, 2, 0])
+        @test_throws ErrorException("Rotation axis vector must have length 3.") RotationGate([0, θ, 0, 1])
     end
 
 

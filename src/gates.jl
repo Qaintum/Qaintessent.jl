@@ -149,19 +149,13 @@ struct RxGate <: AbstractGate
     end
 end
 
-
-function sparse_matrix(g::RxGate)
-    c = cos(g.θ[] / 2.0)
-    s = sin(g.θ[] / 2.0)
-    sparse([1,2,1,2],[1,1,2,2], ComplexF64[c, -im * s, -im * s, c])
-end
 function matrix(g::RxGate)
     c = cos(g.θ[] / 2.0)
     s = sin(g.θ[] / 2.0)
     ComplexF64[c -im * s; -im * s c]
 end
 
-
+sparse_matrix(g::RxGate) = sparse(matrix(g))
 
 LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
@@ -183,22 +177,19 @@ struct RyGate <: AbstractGate
     end
 end
 
-function sparse_matrix(g::RyGate)
-    c = cos(g.θ[] / 2.0)
-    s = sin(g.θ[] / 2.0)
-    sparse([1,2,1,2],[1,1,2,2], ComplexF64[c, s, -s, c])
-end
-
 function matrix(g::RyGate)
     c = cos(g.θ[] / 2.0)
     s = sin(g.θ[] / 2.0)
     ComplexF64[c -s; s c]
 end
 
+sparse_matrix(g::RyGate) = sparse(matrix(g))
+
 LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
 num_wires(::RyGate)::Int = 1
+
 
 """
 Rotation-Z gate
@@ -213,15 +204,12 @@ struct RzGate <: AbstractGate
     end
 end
 
-function sparse_matrix(g::RzGate)
-    eθ = exp(im * g.θ[] / 2)
-    sparse([1,2],[1,2], ComplexF64[conj(eθ), eθ])
-end
-
 function matrix(g::RzGate)
     eθ = exp(im * g.θ[] / 2)
     ComplexF64[conj(eθ) 0; 0 eθ]
 end
+
+sparse_matrix(g::RzGate) = sparse(matrix(g))
 
 LinearAlgebra.ishermitian(g::RzGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
@@ -232,6 +220,7 @@ Base.adjoint(g::RzGate) = RzGate(-g.θ[])
 
 # wires
 num_wires(::RzGate)::Int = 1
+
 
 """
 General rotation operator gate: rotation by angle `θ` around unit vector `n`.
@@ -253,30 +242,16 @@ struct RotationGate <: AbstractGate
     end
 end
 
-function sparse_matrix(g::RotationGate)
-    θ = norm(g.nθ)
-    if θ == 0
-        return sparse([1,2],[1,2], ComplexF64[1, 1])
-    end
-    n = g.nθ / θ
-    s = im * sin(θ / 2)
-    c = cos(θ / 2)
-    v = ComplexF64[c - s*n[3], - s*n[1] - im * s*n[2], - s*n[1] + im * s*n[2], cos(θ / 2) + s*n[3]]
-    sparse([1,2,1,2],[1,1,2,2], v)
-end
-
-
 function matrix(g::RotationGate)
     θ = norm(g.nθ)
     if θ == 0
-        return sparse([1,2],[1,2], ComplexF64[1, 1])
+        return Matrix{ComplexF64}(I, 2, 2)
     end
     n = g.nθ / θ
-    s = im * sin(θ / 2)
-    c = cos(θ / 2)
-    ComplexF64[(c - s*n[3]) (- s*n[1] + im * s*n[2]); (- s*n[1] - im * s*n[2]) (cos(θ / 2) + s*n[3])]
+    return cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
+sparse_matrix(g::RotationGate) = sparse(matrix(g))
 
 LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ) / 2)) < 8 * eps()
 
@@ -300,20 +275,17 @@ struct PhaseShiftGate <: AbstractGate
     end
 end
 
-sparse_matrix(g::PhaseShiftGate) = sparse([1,2],[1,2], ComplexF64[1, Base.exp(im * g.ϕ[])])
 matrix(g::PhaseShiftGate) = ComplexF64[1 0; 0 Base.exp(im * g.ϕ[])]
 
-function LinearAlgebra.ishermitian(g::PhaseShiftGate)
-    if abs(g.ϕ[]) < eps()
-        return true
-    end
-    return false
-end
+sparse_matrix(g::PhaseShiftGate) = sparse(matrix(g))
+
+LinearAlgebra.ishermitian(g::PhaseShiftGate) = abs(sin(g.ϕ[])) < 4 * eps()
 
 Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
 
 # wires
 num_wires(::PhaseShiftGate)::Int = 1
+
 
 """
 Swap gate
@@ -322,15 +294,18 @@ Swap gate
 """
 struct SwapGate <: AbstractGate end
 
-sparse_matrix(::SwapGate,) = sparse([1,3,2,4],[1,2,3,4], ComplexF64[1,1,1,1])
 matrix(::SwapGate,) = ComplexF64[1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1]
+
+sparse_matrix(::SwapGate,) = sparse([1, 3, 2, 4], [1, 2, 3, 4], ComplexF64[1, 1, 1, 1])
 
 # swap gate is Hermitian
 LinearAlgebra.ishermitian(::SwapGate) = true
+
 Base.adjoint(s::SwapGate) = s
 
 # wires
 num_wires(::SwapGate)::Int = 2
+
 
 """
 Entanglement-XX gate
@@ -350,22 +325,23 @@ struct EntanglementXXGate <: AbstractGate
     end
 end
 
-function sparse_matrix(g::EntanglementXXGate)
-    c = cos(g.θ[] / 2)
-    s = sin(g.θ[] / 2)
-    sparse([1,4,2,3,2,3,1,4],[1,1,2,2,3,3,4,4], ComplexF64[c,-im*s,c,-im*s,-im*s,c,-im*s,c])
-end
-
 function matrix(g::EntanglementXXGate)
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
     ComplexF64[c  0  0  -im*s; 0  c  -im*s  0; 0  -im*s  c  0; -im*s  0  0  c]
 end
 
+function sparse_matrix(g::EntanglementXXGate)
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
+    sparse([1, 4, 2, 3, 2, 3, 1, 4], [1, 1, 2, 2, 3, 3, 4, 4], ComplexF64[c, -im*s, c, -im*s, -im*s, c, -im*s, c])
+end
+
 LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
 num_wires(::EntanglementXXGate)::Int = 2
+
 
 """
 Entanglement-YY gate
@@ -385,22 +361,23 @@ struct EntanglementYYGate <: AbstractGate
     end
 end
 
-function sparse_matrix(g::EntanglementYYGate)
-    c = cos(g.θ[] / 2)
-    s = sin(g.θ[] / 2)
-    sparse([1,4,2,3,2,3,1,4],[1,1,2,2,3,3,4,4], ComplexF64[c,im*s,c,-im*s,-im*s,c,im*s,c])
-end
-
 function matrix(g::EntanglementYYGate)
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
     ComplexF64[c  0  0  im*s; 0  c  -im*s  0; 0  -im*s  c  0; im*s  0  0  c]
 end
 
+function sparse_matrix(g::EntanglementYYGate)
+    c = cos(g.θ[] / 2)
+    s = sin(g.θ[] / 2)
+    sparse([1, 4, 2, 3, 2, 3, 1, 4], [1, 1, 2, 2, 3, 3, 4, 4], ComplexF64[c, im*s, c, -im*s, -im*s, c, im*s, c])
+end
+
 LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
 num_wires(::EntanglementYYGate)::Int = 2
+
 
 """
 Entanglement-ZZ gate
@@ -420,21 +397,21 @@ struct EntanglementZZGate <: AbstractGate
     end
 end
 
-function sparse_matrix(g::EntanglementZZGate)
-    eθ = exp(im * g.θ[] / 2)
-    sparse([1,2,3,4],[1,2,3,4], ComplexF64[conj(eθ), eθ, eθ, conj(eθ)])
-end
-
 function matrix(g::EntanglementZZGate)
     eθ = exp(im * g.θ[] / 2)
     ComplexF64[conj(eθ) 0 0 0; 0 eθ 0 0; 0 0 eθ 0; 0 0 0 conj(eθ)]
 end
 
+function sparse_matrix(g::EntanglementZZGate)
+    eθ = exp(im * g.θ[] / 2)
+    sparse([1, 2, 3, 4], [1, 2, 3, 4], ComplexF64[conj(eθ), eθ, eθ, conj(eθ)])
+end
 
 LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
 num_wires(::EntanglementZZGate)::Int = 2
+
 
 Base.adjoint(g::EntanglementXXGate) = EntanglementXXGate(-g.θ[])
 Base.adjoint(g::EntanglementYYGate) = EntanglementYYGate(-g.θ[])
@@ -442,15 +419,13 @@ Base.adjoint(g::EntanglementZZGate) = EntanglementZZGate(-g.θ[])
 
 
 """
-General controlled gate: the `M` wires corresponding to the fastest running indices are the target and the remaining `N - M` wires the control
+General controlled gate
 """
 struct ControlledGate{G} <: AbstractGate
+    "target gate"
     U::G
+    "number of control wires"
     M::Int
-
-    function ControlledGate(U::AbstractGate, M::Int)
-        new{typeof(U)}(U, M)
-    end
 end
 
 # wires
@@ -458,31 +433,30 @@ num_wires(g::ControlledGate)::Int = g.M + num_wires(g.U)
 target_wires(g::ControlledGate) = num_wires(g.U)
 control_wires(g::ControlledGate) = g.M
 
-function sparse_matrix(g::ControlledGate{G}) where {G <:AbstractGate}
-    N = num_wires(g)
-    Umat = sparse_matrix(g.U)
-    CU = sparse(1:2^N, 1:2^N, ones(ComplexF64, 2^N))
-    # Note: target qubit(s) corresponds to fastest varying index
-    CU[end - size(Umat, 1) + 1:end, end - size(Umat, 2) + 1:end] = Umat
-    return dropzeros!(CU)
-end
-
 function matrix(g::ControlledGate{G}) where {G <:AbstractGate}
     N = num_wires(g)
-    Umat = sparse_matrix(g.U)
-    CU = Matrix((1.0+0.0im)I, 2^N, 2^N)
+    Umat = matrix(g.U)
+    CU = Matrix{ComplexF64}(I, 2^N, 2^N)
     # Note: target qubit(s) corresponds to fastest varying index
-    CU[end - size(Umat, 1) + 1:end, end - size(Umat, 2) + 1:end] = Umat
+    CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
     return CU
 end
 
-LinearAlgebra.ishermitian(g::ControlledGate) =
-    LinearAlgebra.ishermitian(g.U)
+function sparse_matrix(g::ControlledGate{G}) where {G <:AbstractGate}
+    N = num_wires(g)
+    Umat = sparse_matrix(g.U)
+    CU = sparse(one(ComplexF64)*I, 2^N, 2^N)
+    # Note: target qubit(s) corresponds to fastest varying index
+    CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
+    return dropzeros!(CU)
+end
 
-Base.adjoint(g::ControlledGate) =
-    ControlledGate(Base.adjoint(g.U), g.M)
+LinearAlgebra.ishermitian(g::ControlledGate) = LinearAlgebra.ishermitian(g.U)
+
+Base.adjoint(g::ControlledGate) = ControlledGate(Base.adjoint(g.U), g.M)
 
 controlled_not() = ControlledGate(X, 1)
+
 
 isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 
@@ -502,15 +476,16 @@ end
 # wires
 num_wires(g::MatrixGate)::Int = Int(log(2, size(g.matrix, 1)))
 
-sparse_matrix(g::MatrixGate) = g.matrix
 matrix(g::MatrixGate) = Matrix(g.matrix)
+
+sparse_matrix(g::MatrixGate) = g.matrix
 
 sparse_matrix(g::SparseMatrixCSC{Complex{Float64},Int}) = g
 
 Base.adjoint(g::MatrixGate) = MatrixGate(Base.adjoint(g.matrix))
 
-LinearAlgebra.ishermitian(g::MatrixGate) =
-    LinearAlgebra.ishermitian(g.matrix)
+LinearAlgebra.ishermitian(g::MatrixGate) = LinearAlgebra.ishermitian(g.matrix)
+
 
 function Base.isapprox(g1::G, g2::G) where {G <: AbstractGate} 
     for name in fieldnames(G)
@@ -523,24 +498,3 @@ end
 
 # handle different gate types or dimensions
 Base.isapprox(::AbstractGate, ::AbstractGate) = false
-
-data(g::AbstractGate)::Union{Vector{Float64},Nothing} = get_data(g)
-get_data(::XGate) = nothing
-get_data(::YGate) = nothing
-get_data(::ZGate) = nothing
-get_data(::HadamardGate) = nothing
-get_data(::SGate) = nothing
-get_data(::SdagGate) = nothing
-get_data(::TGate) = nothing
-get_data(::TdagGate) = nothing
-get_data(::SwapGate) = nothing
-get_data(g::RxGate) = g.θ
-get_data(g::RyGate) = g.θ
-get_data(g::RzGate) = g.θ
-get_data(g::RotationGate) = g.nθ
-get_data(::MatrixGate) = nothing
-get_data(g::PhaseShiftGate) = g.ϕ
-get_data(g::ControlledGate) = data(g.U)
-get_data(g::EntanglementXXGate) = g.θ
-get_data(g::EntanglementYYGate) = g.θ
-get_data(g::EntanglementZZGate) = g.θ

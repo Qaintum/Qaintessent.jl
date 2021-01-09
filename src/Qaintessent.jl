@@ -34,8 +34,7 @@ export
     MatrixGate,
     matrix,
     sparse_matrix,
-    num_wires,
-    get_data
+    num_wires
 
 include("circuitgate.jl")
 export
