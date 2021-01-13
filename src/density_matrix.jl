@@ -1,52 +1,91 @@
 
 """
-    DensityMatrix{N}
+    DensityMatrix
 
 Density matrix, represented with respect to identity and Pauli basis (σ_j/2) by storing
 4 real coefficients for each qubit, i.e., a real vector of length `4^N` for `N` qubits.
 """
-struct DensityMatrix{N}
+struct DensityMatrix
     "coefficients with respect to identity and Pauli basis"
     v::Vector{Float64}
+    "number of qubits"
+    N::Int
 
-    function DensityMatrix{N}(v::AbstractVector{<:Real}) where {N}
+    function DensityMatrix(v::AbstractVector{<:Real}, N::Integer)
         length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N`.")
-        new{N}(v)
+        new(v, N)
+    end
+
+    function DensityMatrix(v::AbstractVector{<:Real})
+        N = intlog2(length(v)) ÷ 2
+        length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N` for some integer `N`.")
+        new(v, N)
     end
 end
 
 
-function matrix(ρ::DensityMatrix{N}) where {N}
+"""
+    matrix(ρ::DensityMatrix)
+
+Matrix representation of density matrix `ρ`.
+"""
+function matrix(ρ::DensityMatrix)
     # Pauli matrix basis (including identity matrix)
     halfpauli = [
-        Matrix{Float64}(0.5I, 2, 2),
+        0.5 * sparse(one(ComplexF64)*I, 2, 2),
         0.5 * sparse_matrix(X),
         0.5 * sparse_matrix(Y),
         0.5 * sparse_matrix(Z),
     ]
-    mat = zeros(Complex{eltype(ρ.v)}, 2^N, 2^N)
-    for (i, pt) in enumerate(cartesian_tuples(4, N))
+    mat = zeros(ComplexF64, 2^ρ.N, 2^ρ.N)
+    for (i, pt) in enumerate(cartesian_tuples(4, Val(ρ.N)))
         mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(pt)]...)
     end
     return mat
 end
 
 
-function density_from_statevector(ψ::Vector{G}) where {G}
-    N = convert(Int, log2(length(ψ)))
-    @assert 2^N == length(ψ)
-    mX = sparse_matrix(XGate())
-    mY = sparse_matrix(YGate())
-    mZ = sparse_matrix(ZGate())
-    Id = ComplexF64[1 0; 0 1]
-    pauli = Matrix{ComplexF64}[
-        Id, mX, mY, mZ
+"""
+    density_from_statevector(ψ::Vector)
+
+Construct density matrix |ψ⟩⟨ψ| (Pauli representation) corresponding to quantum state `ψ`.
+"""
+function density_from_statevector(ψ::Vector)
+    N = intlog2(length(ψ))
+    2^N == length(ψ) || error("Length of input vector must be a power to 2.")
+    pauli = [
+        sparse(one(ComplexF64)*I, 2, 2),
+        sparse_matrix(X),
+        sparse_matrix(Y),
+        sparse_matrix(Z),
     ]
     v = zeros(4^N)
     for (i, pt) in enumerate((cartesian_tuples(4, Val(N))))
         v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(pt)]...) * ψ))
     end
-    return DensityMatrix{N}(v)
+    return DensityMatrix(v, N)
+end
+
+
+"""
+    density_from_matrix(ρmat::AbstractMatrix)
+
+Construct density matrix in Pauli representation from matrix `ρmat`.
+"""
+function density_from_matrix(ρmat::AbstractMatrix)
+    N = intlog2(size(ρmat, 1))
+    (2^N == size(ρmat, 1) && 2^N == size(ρmat, 2)) || error("Input must be a square `2^N × 2^N` matrix.")
+    pauli = [
+        sparse(one(ComplexF64)*I, 2, 2),
+        sparse_matrix(X),
+        sparse_matrix(Y),
+        sparse_matrix(Z),
+    ]
+    v = zeros(4^N)
+    for (i, pt) in enumerate((cartesian_tuples(4, Val(N))))
+        v[i] = real(tr(kron([pauli[p + 1] for p in reverse(pt)]...) * ρmat))
+    end
+    return DensityMatrix(v, N)
 end
 
 
@@ -54,11 +93,11 @@ end
     pauli_group_matrix(ipauli)
 
 Construct a Pauli group matrix (N-fold tensor products of identity and Pauli matrices)
-encoded as `DensityMatrix{N}`. `ipauli[j]` specifies the j-th matrix as integer 0,...,3.
+encoded as `DensityMatrix`. `ipauli[j]` specifies the j-th matrix as integer 0,...,3.
 """
 function pauli_group_matrix(ipauli::AbstractVector{<:Integer})
     i4 = Matrix{Int}(I, 4, 4)
-    DensityMatrix{length(ipauli)}(kron([2 * i4[i + 1, :] for i in reverse(ipauli)]...))
+    DensityMatrix(kron([2 * i4[i + 1, :] for i in reverse(ipauli)]...), length(ipauli))
 end
 
 function pauli_group_matrix(paulistring::String)

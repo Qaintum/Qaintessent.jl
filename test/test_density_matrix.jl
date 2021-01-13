@@ -8,9 +8,9 @@ using Qaintessent
 
     pauli = [
         Matrix{Float64}(I, 2, 2),
-        Qaintessent.sparse_matrix(X),
-        Qaintessent.sparse_matrix(Y),
-        Qaintessent.sparse_matrix(Z),
+        Qaintessent.matrix(X),
+        Qaintessent.matrix(Y),
+        Qaintessent.matrix(Z),
     ]
 
     @test Qaintessent.matrix(pauli_group_matrix("XIZY")) ≈
@@ -23,4 +23,7 @@ using Qaintessent
     # density matrix represented with respect to Pauli basis
     ρ = density_from_statevector(ψ)
     @test Qaintessent.matrix(ρ) ≈ ρmat
+    # compute Pauli representation from matrix form
+    ρalt = density_from_matrix(ρmat)
+    @test ρalt.v ≈ ρ.v
 end

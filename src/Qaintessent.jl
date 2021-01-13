@@ -60,7 +60,8 @@ include("density_matrix.jl")
 export
     DensityMatrix,
     pauli_group_matrix,
-    density_from_statevector
+    density_from_statevector,
+    density_from_matrix
 
 include("commute.jl")
     export
@@ -72,6 +73,7 @@ export
     apply
 
 include("gradients.jl")
+
 include("view.jl")
 
 include("openqasm/register.jl")
