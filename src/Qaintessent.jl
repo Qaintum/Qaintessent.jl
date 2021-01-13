@@ -73,6 +73,7 @@ export
     apply
 
 include("gradients.jl")
+include("gradients_density.jl")
 
 include("view.jl")
 

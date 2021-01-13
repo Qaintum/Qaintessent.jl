@@ -119,17 +119,19 @@ end
 
 
 """
-    rdm(N, iwire, ψ, χ)
+    rdm(N, iwire, ψ, χ, d=2)
 
 Compute the reduced density matrix ``tr_B[|ψ⟩⟨χ|]``, where the trace runs over
 the subsystem complementary to the qubits specified by `iwire`.
 """
-function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::AbstractVector) where {M}
+function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::AbstractVector, d::Int=2) where {M}
     M ≥ 1 || error("Need at least one wire to act on.")
     M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
     length(unique(iwire)) == M || error("Wire indices must be unique.")
     minimum(iwire) ≥ 1 || error("Wire index cannot be smaller than 1.")
     maximum(iwire) ≤ N || error("Wire index cannot be larger than total number of wires.")
+    length(ψ) == d^N || error("Input vector 'ψ' has wrong length.")
+    length(χ) == d^N || error("Input vector 'χ' has wrong length.")
 
     # convert to array
     iwire = collect(iwire)
@@ -137,19 +139,16 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
     iwcompl = setdiff(1:N, iwire)
     @assert length(iwire) + length(iwcompl) == N
 
-    # TODO: support general "qudits"
-    d = 2
-
     ρ = zeros(eltype(ψ), d^M, d^M)
 
     # Note: following the ordering convention of `kron` here, i.e.,
     # last qubit corresponds to fastest varying index
-    strides = [d^(j - 1) for j in 1:N]
+    strides = [d^(j-1) for j in 1:N]
     wstrides = strides[iwire]
     cstrides = strides[iwcompl]
 
     # TODO: optimize memory access pattern
-    for kw in (N - M > 0 ? cartesian_tuples(d, N - M) : [Int[]])
+    for kw in (N-M > 0 ? cartesian_tuples(d, N-M) : [Int[]])
         koffset = dot(collect(kw), cstrides)
         for (i, iw) in enumerate(cartesian_tuples(d, M))
             for (j, jw) in enumerate(cartesian_tuples(d, M))
