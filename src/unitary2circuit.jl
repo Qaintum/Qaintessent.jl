@@ -53,15 +53,19 @@ function stateprep(u, N, n=1)
 end
 
 """
-    compile!(m::Matrix{Complex64,2}) where {N}
+    unitary2circuit!(m::Matrix{Complex64,2}) where {N}
 
 compiles quantum circuit from given unitary matrix. usage of algorithms from
 ff10.1016/j.cpc.2019.107001f, 10.1103/PhysRevA.69.032315, arxiv.org:1003.5760, arxiv:quant-ph/0404089
 """
-function unitary2circuit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
+function unitary2circuit(m::AbstractMatrix{ComplexF64}, N::Union{Int, Nothing}=nothing, wires=nothing)
     m * m' ≈ I || error("Only unitary matrices can be compiled into a quantum circuit")
     s = size(m)
     s[1] == s[2] || error("Only square matrices can be compiled into a quantum circuit")
+
+    if isnothing(N)
+        N = intlog2(s[1])
+    end
     
     if Diagonal(diag(m)) ≈ m
         return compilediag(diag(m), N, wires)
@@ -206,16 +210,31 @@ compiles a U(2) matrix into quantum gates
 """
 function compile1qubit(m::AbstractMatrix{ComplexF64}, wires=nothing)
     phase = sqrt(m[1,1] * m[2,2] / norm(m[1,1] * m[2,2]))
+    if isnan(phase)
+        phase = sqrt(m[1,2] * m[2,1] / norm(m[1,2] * m[2,1]))
+    end
     b = m / phase
     ϕ = real(acos(sqrt(b[1,1] * b[2,2])) * 2)
     θ1 = imag(log(2im * b[2,1] * b[2,2] / sin(ϕ)))
-    
     θ2 = imag(-log(2 * im * b[1,1] * b[2,1] / sin(ϕ)))
     if isnothing(wires)
         wires = [1]
     end
     cg = CircuitGate[]
-    append!(cg, circuit_gate.((wires[1],), [RzGate(θ2), RxGate(ϕ), RzGate(θ1)]))
+    if ϕ ≈ 0
+        append!(cg, circuit_gate.((wires[1], [RzGate(θ1+θ2)])))
+        return cg, phase
+    end
+
+    if !(θ2 ≈ 0)
+        append!(cg, circuit_gate.((wires[1],), [RzGate(θ2), RxGate(ϕ)]))
+    else
+        append!(cg, circuit_gate.((wires[1],), [RxGate(ϕ)]))
+    end
+
+    if !(θ1 ≈ 0)
+        append!(cg, circuit_gate.((wires[1],), [RzGate(θ1)]))
+    end
     return cg, phase
 end
 
@@ -325,7 +344,7 @@ end
 fills empty vector `ψ`, such that  ψ = −im*[logχ1(d) log χ2(d) ··· logχl−1(U)],
 where χn(d) = d[2n-1]*d[2n+2]/(d[2n]*d[2n+1]) per arxiv:quant-ph/0303039
 """
-function fillψ!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
+function fillψ!(d::AbstractVector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
     for i in StepRange(1, 1, l - 1)
         ψ[i] = imag(log(d[2i - 1] * d[2i + 2] / (d[2i] * d[2i + 1])))
     end
@@ -414,7 +433,7 @@ end
 recursively compiles an arbitrary diagonal unitary matrix D_{2^N} ∈ C^(2^N×2^N) into a quantum circuit. algorithm taken from arxiv:quant-ph/0303039
 D_{2^N} can be decomposed into D_{2^(N-1)} ∈ C^(2^(N-1)×2^(N-1)) ⊗ exp(i*ϕ)*RzGate(θ)
 """
-function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
+function compilediag(d::AbstractVector{ComplexF64}, N, cg=nothing, j=0)
     cgs = CircuitGate[]
     # single qubit diagonal matrix can be split into a phase shift + RzGate
     if length(d) == 2
@@ -423,7 +442,9 @@ function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
         if isnothing(cg)
             cg = CircuitGate[]
         end
-        push!(cg, circuit_gate((j + 1,), RzGate(-β)))
+        if !(β ≈ 0)
+            push!(cg, circuit_gate((j + 1,), RzGate(-β)))
+        end
         return cg
     end
     l = 2^(N - j - 1)
@@ -456,8 +477,9 @@ function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
         end
         oldwires = gatewires
         gatewires = svalue(greyencode(i))
-        push!(cgs, circuit_gate((j + 1,), RzGate(α[i])))
-
+        if !(α[i]≈0)
+            push!(cgs, circuit_gate((j + 1,), RzGate(α[i])))
+        end
         rz[s] .= 1 ./ rz[s]
         d = d ./ rz
     end
@@ -469,7 +491,9 @@ function compilediag(d::Vector{ComplexF64}, N, cg=nothing, j=0)
     if !(d[1] ≈ d[2])
         logd = imag.(log.(d))
         α[1] = logd[1] - logd[2]
-        pushfirst!(cgs, circuit_gate((j + 1,), RzGate(-α[1])))
+        if !(α[1] ≈ 0)
+            pushfirst!(cgs, circuit_gate((j + 1,), RzGate(-α[1])))
+        end
         d[1:2:end] = d[1:2:end] ./ exp(im * α[1] / 2)
     end
     if isnothing(cg)
