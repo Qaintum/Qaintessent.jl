@@ -2,6 +2,7 @@ using Test
 using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
+using SparseArrays
 
 
 isunitary(cg::CircuitGate) = (sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)) ≈ I)
@@ -20,6 +21,14 @@ isunitary(cg::CircuitGate) = (sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)
             Qaintessent.sparse_matrix(cgadj.gate) == adjoint(Qaintessent.sparse_matrix(cg.gate))
             @test LinearAlgebra.ishermitian(cg) == (Qaintessent.sparse_matrix(cg) == Qaintessent.sparse_matrix(adjoint(cg)))
         end
+    end
+
+    # test sparse_matrix 
+    @testset "single qubit circuit gates" begin
+        cgs = [circuit_gate(1, X), circuit_gate(2, X), circuit_gate(3, X)]
+        m = sparse_matrix(cgs)
+
+        @test m ≈ sparse([8, 7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7, 8], Float64[1, 1, 1, 1, 1, 1, 1, 1])
     end
 
     # two qubit gates
