@@ -158,7 +158,24 @@ end
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
     end
 
-    @testset "compile 1 qubit" begin
+    @testset "compile 1 qubit standard unitary" begin
+        N = 1
+        M = Stewart(ComplexF64, 2)
+        for gate in [X, Y, Z, HadamardGate(), TGate(), SGate()]
+            U = matrix(gate)
+
+            cgc = unitary2circuit(U)
+
+            ψ = rand(ComplexF64, 2^N)
+
+            ψ_ref = U*ψ
+            ψ_compiled = apply(cgc, ψ)
+
+            @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
+        end
+    end
+
+    @testset "compile 1 qubit random unitary" begin
         N = 1
         U, _ = qr(Stewart(ComplexF64, 2^N))
         U = Matrix(U)

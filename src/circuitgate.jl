@@ -89,7 +89,7 @@ function sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: Abstrac
     distribute_to_wires(gmat, iwire, N, M)
 end
 
-function sparse_matrix(cgs::Vector{CircuitGate}, N::Integer=0)
+function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
     Nmin = maximum(req_wires.(cgs))
     if N == 0
         N = Nmin
