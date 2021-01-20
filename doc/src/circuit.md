@@ -28,7 +28,7 @@ The `Qaintessent.matrix` function can be used to convert `CircuitGate` objects t
     N = 2
     cnot = circuit_gate(1, XGate(), 2)
 
-    Qaintessent.matrix(cnot)
+    Qaintessent.sparse_matrix(cnot)
 ```
 The `CircuitGate` can then be applied to a quantum state in state vector form.
 
