@@ -214,7 +214,7 @@ function compile1qubit(m::AbstractMatrix{ComplexF64}, wires=nothing)
     end
     cg = CircuitGate[]
     if ϕ ≈ 0
-        append!(cg, circuit_gate.((wires[1], [RzGate(θ1+θ2)])))
+        append!(cg, circuit_gate.(wires[1], [RzGate(θ1+θ2)]))
         return cg, phase
     end
 
