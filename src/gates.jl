@@ -58,7 +58,7 @@ num_wires(::ZGate)::Int = 1
 """
 Hadamard gate
 
-``H = \\frac{\\sqrt} \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}``
+``H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}``
 """
 struct HadamardGate <: AbstractGate end
 
@@ -76,14 +76,14 @@ num_wires(::HadamardGate)::Int = 1
 """
 S gate
 
-``S = \\frac{\\sqrt} \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
+``S = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
 """
 struct SGate <: AbstractGate end
 
 """
 T gate
 
-``T = \\frac{\\sqrt} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
+``T = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
 """
 struct TGate <: AbstractGate end
 
