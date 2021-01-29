@@ -76,14 +76,14 @@ num_wires(::HadamardGate)::Int = 1
 """
 S gate
 
-``S = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
+``S = \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
 """
 struct SGate <: AbstractGate end
 
 """
 T gate
 
-``T = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
+``T = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
 """
 struct TGate <: AbstractGate end
 
