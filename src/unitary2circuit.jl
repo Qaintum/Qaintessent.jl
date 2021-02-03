@@ -201,33 +201,96 @@ end
 compiles a U(2) matrix into quantum gates
 """
 function compile1qubit(m::AbstractMatrix{ComplexF64}, wires=nothing)
-    phase = sqrt(m[1,1] * m[2,2] / norm(m[1,1] * m[2,2]))
-    if isnan(phase)
-        phase = sqrt(m[1,2] * m[2,1] / norm(m[1,2] * m[2,1]))
-    end
-    b = m / phase
-    ϕ = real(acos(sqrt(b[1,1] * b[2,2])) * 2)
-    θ1 = imag(log(2im * b[2,1] * b[2,2] / sin(ϕ)))
-    θ2 = imag(-log(2 * im * b[1,1] * b[2,1] / sin(ϕ)))
     if isnothing(wires)
         wires = [1]
     end
     cg = CircuitGate[]
-    if ϕ ≈ 0
-        append!(cg, circuit_gate.(wires[1], [RzGate(θ1+θ2)]))
-        return cg, phase
+    phase = sqrt(m[1,1]*m[2,2] - m[2,1]*m[1,2])
+    m  = m / phase
+    b = norm.(m)
+    if (norm(b[1,1]) + norm(b[2,2])) < 1e-3
+        θ2 = -imag(log(m[2,1]/m[1,2]))
+        θ1 = 0
+        ϕ = (real(m[1,2]/exp(-θ1/2*im)) < 0 ? 3π/2 : π/2) * 2
+    elseif (norm(b[1,2]) + norm(b[2,1])) < 1e-3
+        θ2 = -imag(log(m[1,1]/m[2,2]))
+        θ1 = 0
+        ϕ = (real(m[1,1]/exp(-θ1/2*im)) < 0 ? π : 0) * 2
+    else
+        ϕ = real(acos(sqrt(m[1,1] * m[2,2])) * 2)
+        θ1 = imag(log(2im * m[2,1] * m[2,2] / sin(ϕ)))
+        θ2 = imag(-log(2im * m[1,1] * m[2,1] / sin(ϕ)))
     end
 
-    if !(θ2 ≈ 0)
+    if !(norm(θ2) < 1e-5)
         append!(cg, circuit_gate.((wires[1],), [RzGate(θ2), RxGate(ϕ)]))
     else
         append!(cg, circuit_gate.((wires[1],), [RxGate(ϕ)]))
     end
 
-    if !(θ1 ≈ 0)
+    if !(norm(θ1) < 1e-5)
         append!(cg, circuit_gate.((wires[1],), [RzGate(θ1)]))
     end
     return cg, phase
+end
+
+iso_permutations = [
+                    [[1,1], [2,2], [3,3], [4,4]],
+                    [[2,1], [1,2], [4,3], [3,4]],
+                    [[3,1], [4,2], [1,3], [2,4]],
+                    [[4,1], [3,2], [2,3], [1,4]],
+                    [[2,1], [1,2], [4,3], [3,4]],
+                    [[1,1], [2,2], [3,3], [4,4]],
+                    [[4,1], [3,2], [2,3], [1,4]],
+                    [[3,1], [4,2], [1,3], [2,4]],
+                    [[3,1], [4,2], [1,3], [2,4]],
+                    [[4,1], [3,2], [2,3], [1,4]],
+                    [[1,1], [2,2], [3,3], [4,4]],
+                    [[2,1], [1,2], [4,3], [3,4]],
+                    [[4,1], [3,2], [2,3], [1,4]],
+                    [[3,1], [4,2], [1,3], [2,4]],
+                    [[2,1], [1,2], [4,3], [3,4]],
+                    [[1,1], [2,2], [3,3], [4,4]],
+                    ]
+
+iso_signs = [
+            [ 1, 1, 1, 1],
+            [ 1,-1, 1,-1],
+            [ 1,-1,-1, 1],
+            [ 1, 1,-1,-1],
+            [ 1,-1,-1, 1],
+            [-1,-1, 1, 1],
+            [-1,-1,-1,-1],
+            [ 1,-1, 1,-1],
+            [ 1, 1,-1,-1],
+            [ 1,-1,-1, 1],
+            [-1, 1,-1, 1],
+            [-1,-1,-1,-1],
+            [ 1,-1, 1,-1],
+            [-1,-1,-1,-1],
+            [ 1, 1,-1,-1],
+            [-1, 1, 1,-1]
+            ]
+            
+
+function _get_permutation(m::AbstractMatrix{Float64}, ::Type{Val{I}}, ::Type{Val{J}}) where {I,J}
+    val = 0    
+    for i in 1:4
+        val += m[iso_permutations[4*(J-1)+I][i]...] * iso_signs[4*(J-1)+I][i]
+    end
+    val/4
+end
+
+function _get_col!(m::AbstractMatrix{Float64}, col::Vector{Float64}, col_id::Int)
+    for i in 1:4
+        col[i] = _get_permutation(m, Val{i}, Val{col_id})
+    end
+end
+
+function _get_row!(m::AbstractMatrix{Float64}, row::Vector{Float64}, row_id::Int)
+    for i in 1:4
+        row[i] = _get_permutation(m, Val{row_id}, Val{i})
+    end
 end
 
 """
@@ -235,53 +298,55 @@ end
 decomposes a SO(4) matrix into 2 SU(2) matrices, such that `m`∈SO(4), A,B ∈ SU(2)
 via isoclinic decomposition. m ≊ A ⊗ B under the magic basis homomorphism.
 """
-function decomposeSO4(m::AbstractMatrix{ComplexF64})
+function decomposeSO4(m::AbstractMatrix{Float64})
     size(m)[1] == size(m)[2] || error("decomposeSO4 only works on square matrices")
     size(m)[1] == 4 || error("decomposeSO4 only works on 4x4 matrices")
+    det(m) ≈ 1 || error("matrix `m` is not in SO(4), determinant is not 1")
 
-    ap = (m[1,1] + m[2,2] + m[3,3] + m[4,4]) / 4
-    bp = (m[2,1] - m[1,2] + m[4,3] - m[3,4]) / 4
-    cp = (m[3,1] - m[4,2] - m[1,3] + m[2,4]) / 4
-    dp = (m[4,1] + m[3,2] - m[2,3] - m[1,4]) / 4
+    col = zeros(Float64, 4)
+    row = zeros(Float64, 4)
 
-    aq = (m[2,1] - m[1,2] - m[4,3] + m[3,4]) / 4
-    ar = (m[3,1] + m[4,2] - m[1,3] - m[2,4]) / 4
-    as = (m[4,1] - m[3,2] + m[2,3] - m[1,4]) / 4
+    col_id = 0
+    row_id = 0
 
-    p = real(sqrt(ap^2 + bp^2 + cp^2 + dp^2))
-
-    a = real(ap / p)
-    b = real(bp / p)
-    c = real(cp / p)
-    d = real(dp / p)
-
-    q = real(aq / a)
-    r = real(ar / a)
-    s = real(as / a)
-
-    if (p^2 + q^2 + r^2 + s^2) ≈ 1
-        A = [p + q * im s + r * im; -s + r * im p - q * im]
-        B = [a + b * im -d + c * im; d + c * im a - b * im]
-        return A, B
+    for i in 4:-1:1
+        _get_col!(m, col, i)
+        if sum(norm.(col)) > 0.5
+            col_id = i
+            break
+        end
     end
 
-    p = -p
+    for i in 4:-1:1
+        _get_row!(m, row, i)
+        if sum(norm.(row)) > 0.5    
+            row_id = i
+            break
+        end
+    end
 
-    a = real(ap / p)
-    b = real(bp / p)
-    c = real(cp / p)
-    d = real(dp / p)
+    col_val = sqrt(sum(col.^2))
+    row_val = sqrt(sum(row.^2))
 
-    q = real(aq / a)
-    r = real(ar / a)
-    s = real(as / a)
+    for i in 0:3
+        
+        col_val = col_val * (-1)^(i)
+        row_val = row_val * (-1)^(i÷2)
 
-    @assert  (p^2 + q^2 + r^2 + s^2) ≈ 1
+        a, b, c, d = col./col_val
+        p, q, r, s = row./row_val
 
-    A = [p + q * im s + r * im; -s + r * im p - q * im]
-    B = [a + b * im -d + c * im; d + c * im a - b * im]
+        if col[row_id]/col_val ≈ row_val && row[col_id]/row_val ≈ col_val
+            A = [p + q * im s + r * im; -s + r * im p - q * im]
+            B = [a + b * im -d + c * im; d + c * im a - b * im]
+            return A, B    
+        end
+    end
+    error("Algorithm does not work")
+end
 
-    return A, B
+function decomposeSO4(m::AbstractMatrix{ComplexF64})
+    decomposeSO4(real.(m))
 end
 
 """
@@ -292,11 +357,24 @@ arxiv:quant-ph/0308006, arxiv:quant-ph/0211002
 function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     cg = CircuitGate[]
     E = 1 / sqrt(2) .* [1 im 0 0; 0 0 im 1; 0 0 im -1; 1 -im 0 0]
-
     U = E' * m * E
+
     P2 = U * transpose(U)
 
     Diag, K_2 = eigen(P2)
+    K_2 = real.(K_2)
+ 
+    # ensure that eigenvectors for degenerate eigenvalues are orthogonal
+    if !(det(K_2) ≈ 1) || !(det(K_2) ≈ -1)
+        for i in 1:4
+            for j in i+1:4
+                if norm(dot(K_2[:,j], K_2[:, i])) > 1e-12
+                    K_2[:, [i,j]] .= gramm_schmidt!(K_2[:, [i,j]])
+                end
+            end
+        end
+    end
+
     Diag[1] = Diag[1] / det(K_2)^2
     K_2[:,1] = K_2[:,1] * det(K_2)
 
@@ -305,6 +383,7 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 
     P = K_2 * Diag * inv(K_2)
     K_1 = inv(P) * U
+
     C, D = decomposeSO4(inv(K_2) * K_1)
 
     append!(cg, compile1qubit(C, [2])[1])
