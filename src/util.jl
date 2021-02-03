@@ -99,3 +99,38 @@ function sliced_index(idx::Tuple, targetwires::Tuple, N::Int)
     end
     return islice
 end
+
+
+"""
+    gramm_schmidt(a::Array{ComplexF64})
+
+returns orthogonalized complex vectors
+"""
+function gramm_schmidt!(a::Array{ComplexF64})
+    num_vectors = size(a,2)
+    a[:,end] = a[:,end] ./ norm(a[:,end])
+    for i in num_vectors-1:-1:1
+        while !(norm(dot(a[:,i+1],a[:,i])) < 1e-16)
+            a[:, i] -= conj(dot(a[:, i],a[:, i+1]) / dot(a[:, i], a[:, i])) * a[:, i+1]
+            a[:, i] = a[:, i] ./ norm(a[:, i])
+        end
+    end
+    a
+end
+
+"""
+    gramm_schmidt(a::Array{Float64})
+
+returns orthogonalized real vectors
+"""
+function gramm_schmidt!(a::Array{Float64})
+    num_vectors = size(a,2)
+    a[:,end] = a[:,end] ./ norm(a[:,end])
+    for i in num_vectors-1:-1:1
+        while !(norm(dot(a[:,i+1],a[:,i])) < 1e-16)
+            a[:, i] -= dot(a[:, i],a[:, i+1] / dot(a[:, i], a[:, i])) * a[:, i+1]
+            a[:, i] = a[:, i] ./ norm(a[:, i])
+        end
+    end
+    a
+end
