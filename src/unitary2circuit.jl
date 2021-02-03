@@ -208,11 +208,11 @@ function compile1qubit(m::AbstractMatrix{ComplexF64}, wires=nothing)
     phase = sqrt(m[1,1]*m[2,2] - m[2,1]*m[1,2])
     m  = m / phase
     b = norm.(m)
-    if (norm(b[1,1]) + norm(b[2,2])) < 1e-3
+    if (norm(b[1,1]) + norm(b[2,2])) < 1e-5
         θ2 = -imag(log(m[2,1]/m[1,2]))
         θ1 = 0
         ϕ = (real(m[1,2]/exp(-θ1/2*im)) < 0 ? 3π/2 : π/2) * 2
-    elseif (norm(b[1,2]) + norm(b[2,1])) < 1e-3
+    elseif (norm(b[1,2]) + norm(b[2,1])) < 1e-5
         θ2 = -imag(log(m[1,1]/m[2,2]))
         θ1 = 0
         ϕ = (real(m[1,1]/exp(-θ1/2*im)) < 0 ? π : 0) * 2
@@ -337,6 +337,8 @@ function decomposeSO4(m::AbstractMatrix{Float64})
         p, q, r, s = row./row_val
 
         if col[row_id]/col_val ≈ row_val && row[col_id]/row_val ≈ col_val
+            @assert p^2 + q^2 + r^2 + s^2 ≈ 1
+            @assert a^2 + b^2 + c^2 + d^2 ≈ 1
             A = [p + q * im s + r * im; -s + r * im p - q * im]
             B = [a + b * im -d + c * im; d + c * im a - b * im]
             return A, B    
@@ -363,7 +365,7 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 
     Diag, K_2 = eigen(P2)
     K_2 = real.(K_2)
- 
+    
     # ensure that eigenvectors for degenerate eigenvalues are orthogonal
     if !(det(K_2) ≈ 1) || !(det(K_2) ≈ -1)
         for i in 1:4
@@ -383,9 +385,11 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 
     P = K_2 * Diag * inv(K_2)
     K_1 = inv(P) * U
+    K = inv(K_2) * K_1
 
     C, D = decomposeSO4(inv(K_2) * K_1)
 
+    # println(norm(E'*kron(C,D)*E - inv(K_2) * K_1))
     append!(cg, compile1qubit(C, [2])[1])
     append!(cg, compile1qubit(D, [1])[1])
 
@@ -397,10 +401,11 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     append!(cg, [circuit_gate((1,), SGate()),
                     circuit_gate((2,), SGate()),
                     circuit_gate((1,), HadamardGate()),
-                    circuit_gate((2), X, 1)])
+                    circuit_gate(2, X, 1)])
 
     A, B = decomposeSO4(K_2)
 
+    # println(norm(E'*kron(A,B)*E - K_2))
     append!(cg, compile1qubit(A, [2])[1])
     append!(cg, compile1qubit(B, [1])[1])
 
