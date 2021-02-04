@@ -709,7 +709,6 @@ function apply_mixed_add(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
     return DensityMatrix(reshape(vs, :), ρ.N)
 end
 
-
 """Tailored implementation of i/2 (SWAP ρ - ρ SWAP)"""
 function apply_mixed_sub(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
     # qubit indices the gate acts on
@@ -741,6 +740,267 @@ function apply_mixed_sub(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
 
     vs[:, 3, :, 4, :] .= 0.5 .* (ρv[:, 1, :, 2, :] .- ρv[:, 2, :, 1, :])
     vs[:, 4, :, 3, :] .= -vs[:, 3, :, 4, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+
+"""Tailored conjugation of density matrix by EntanglementXXGate"""
+function apply(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    cosθ = cos(cg.gate.θ[])
+    sinθ = sin(cg.gate.θ[])
+
+    vs = similar(ρv)
+
+    vs[:, 1, :, 1, :] .= ρv[:, 1, :, 1, :]
+    vs[:, 2, :, 2, :] .= ρv[:, 2, :, 2, :]
+    vs[:, 3, :, 3, :] .= ρv[:, 3, :, 3, :]
+    vs[:, 4, :, 4, :] .= ρv[:, 4, :, 4, :]
+
+    vs[:, 1, :, 2, :] .= ρv[:, 1, :, 2, :]
+    vs[:, 2, :, 1, :] .= ρv[:, 2, :, 1, :]
+    vs[:, 3, :, 4, :] .= ρv[:, 3, :, 4, :]
+    vs[:, 4, :, 3, :] .= ρv[:, 4, :, 3, :]
+
+    vs[:, 1, :, 4, :] .= cosθ .* ρv[:, 1, :, 4, :] .+ sinθ .* ρv[:, 2, :, 3, :]
+    vs[:, 2, :, 3, :] .= cosθ .* ρv[:, 2, :, 3, :] .- sinθ .* ρv[:, 1, :, 4, :]
+
+    vs[:, 2, :, 4, :] .= cosθ .* ρv[:, 2, :, 4, :] .+ sinθ .* ρv[:, 1, :, 3, :]
+    vs[:, 1, :, 3, :] .= cosθ .* ρv[:, 1, :, 3, :] .- sinθ .* ρv[:, 2, :, 4, :]
+
+    vs[:, 4, :, 2, :] .= cosθ .* ρv[:, 4, :, 2, :] .+ sinθ .* ρv[:, 3, :, 1, :]
+    vs[:, 3, :, 1, :] .= cosθ .* ρv[:, 3, :, 1, :] .- sinθ .* ρv[:, 4, :, 2, :]
+
+    vs[:, 4, :, 1, :] .= cosθ .* ρv[:, 4, :, 1, :] .+ sinθ .* ρv[:, 3, :, 2, :]
+    vs[:, 3, :, 2, :] .= cosθ .* ρv[:, 3, :, 2, :] .- sinθ .* ρv[:, 4, :, 1, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+"""Tailored implementation of 1/2 (Rxx(θ) ρ + ρ Rxx(-θ))"""
+function apply_mixed_add(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    cosθ2 = cos(0.5*cg.gate.θ[])
+    sinθ2 = sin(0.5*cg.gate.θ[])
+
+    vs = cosθ2 .* ρv
+
+    vs[:, 1, :, 4, :] .+= sinθ2 .* ρv[:, 2, :, 3, :]
+    vs[:, 4, :, 1, :] .+= sinθ2 .* ρv[:, 3, :, 2, :]
+    vs[:, 2, :, 3, :] .-= sinθ2 .* ρv[:, 1, :, 4, :]
+    vs[:, 3, :, 2, :] .-= sinθ2 .* ρv[:, 4, :, 1, :]
+
+    vs[:, 2, :, 4, :] .+= sinθ2 .* ρv[:, 1, :, 3, :]
+    vs[:, 4, :, 2, :] .+= sinθ2 .* ρv[:, 3, :, 1, :]
+    vs[:, 1, :, 3, :] .-= sinθ2 .* ρv[:, 2, :, 4, :]
+    vs[:, 3, :, 1, :] .-= sinθ2 .* ρv[:, 4, :, 2, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+"""Tailored implementation of i/2 (Rxx(θ) ρ - ρ Rxx(-θ))"""
+function apply_mixed_sub(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    sinθ2 = sin(0.5*cg.gate.θ[])
+
+    vs = zero(ρv)
+
+    vs[:, 1, :, 1, :] .=  sinθ2 .* ρv[:, 2, :, 2, :]
+    vs[:, 1, :, 2, :] .=  sinθ2 .* ρv[:, 2, :, 1, :]
+    vs[:, 2, :, 1, :] .=  sinθ2 .* ρv[:, 1, :, 2, :]
+    vs[:, 2, :, 2, :] .=  sinθ2 .* ρv[:, 1, :, 1, :]
+
+    vs[:, 3, :, 3, :] .= -sinθ2 .* ρv[:, 4, :, 4, :]
+    vs[:, 3, :, 4, :] .=  sinθ2 .* ρv[:, 4, :, 3, :]
+    vs[:, 4, :, 3, :] .=  sinθ2 .* ρv[:, 3, :, 4, :]
+    vs[:, 4, :, 4, :] .= -sinθ2 .* ρv[:, 3, :, 3, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+
+"""Tailored conjugation of density matrix by EntanglementYYGate"""
+function apply(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    cosθ = cos(cg.gate.θ[])
+    sinθ = sin(cg.gate.θ[])
+
+    vs = similar(ρv)
+
+    vs[:, 1, :, 1, :] .= ρv[:, 1, :, 1, :]
+    vs[:, 2, :, 2, :] .= ρv[:, 2, :, 2, :]
+    vs[:, 3, :, 3, :] .= ρv[:, 3, :, 3, :]
+    vs[:, 4, :, 4, :] .= ρv[:, 4, :, 4, :]
+
+    vs[:, 1, :, 3, :] .= ρv[:, 1, :, 3, :]
+    vs[:, 3, :, 1, :] .= ρv[:, 3, :, 1, :]
+    vs[:, 2, :, 4, :] .= ρv[:, 2, :, 4, :]
+    vs[:, 4, :, 2, :] .= ρv[:, 4, :, 2, :]
+
+    vs[:, 1, :, 2, :] .= cosθ .* ρv[:, 1, :, 2, :] .+ sinθ .* ρv[:, 3, :, 4, :]
+    vs[:, 3, :, 4, :] .= cosθ .* ρv[:, 3, :, 4, :] .- sinθ .* ρv[:, 1, :, 2, :]
+
+    vs[:, 2, :, 1, :] .= cosθ .* ρv[:, 2, :, 1, :] .+ sinθ .* ρv[:, 4, :, 3, :]
+    vs[:, 4, :, 3, :] .= cosθ .* ρv[:, 4, :, 3, :] .- sinθ .* ρv[:, 2, :, 1, :]
+
+    vs[:, 2, :, 3, :] .= cosθ .* ρv[:, 2, :, 3, :] .+ sinθ .* ρv[:, 4, :, 1, :]
+    vs[:, 4, :, 1, :] .= cosθ .* ρv[:, 4, :, 1, :] .- sinθ .* ρv[:, 2, :, 3, :]
+
+    vs[:, 3, :, 2, :] .= cosθ .* ρv[:, 3, :, 2, :] .+ sinθ .* ρv[:, 1, :, 4, :]
+    vs[:, 1, :, 4, :] .= cosθ .* ρv[:, 1, :, 4, :] .- sinθ .* ρv[:, 3, :, 2, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+"""Tailored implementation of 1/2 (Ryy(θ) ρ + ρ Ryy(-θ))"""
+function apply_mixed_add(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    cosθ2 = cos(0.5*cg.gate.θ[])
+    sinθ2 = sin(0.5*cg.gate.θ[])
+
+    vs = cosθ2 .* ρv
+
+    vs[:, 1, :, 2, :] .+= sinθ2 .* ρv[:, 3, :, 4, :]
+    vs[:, 2, :, 1, :] .+= sinθ2 .* ρv[:, 4, :, 3, :]
+    vs[:, 3, :, 4, :] .-= sinθ2 .* ρv[:, 1, :, 2, :]
+    vs[:, 4, :, 3, :] .-= sinθ2 .* ρv[:, 2, :, 1, :]
+
+    vs[:, 1, :, 4, :] .-= sinθ2 .* ρv[:, 3, :, 2, :]
+    vs[:, 4, :, 1, :] .-= sinθ2 .* ρv[:, 2, :, 3, :]
+    vs[:, 3, :, 2, :] .+= sinθ2 .* ρv[:, 1, :, 4, :]
+    vs[:, 2, :, 3, :] .+= sinθ2 .* ρv[:, 4, :, 1, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+"""Tailored implementation of i/2 (Ryy(θ) ρ - ρ Ryy(-θ))"""
+function apply_mixed_sub(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    sinθ2 = sin(0.5*cg.gate.θ[])
+
+    vs = zero(ρv)
+
+    vs[:, 1, :, 1, :] .=  sinθ2 .* ρv[:, 3, :, 3, :]
+    vs[:, 1, :, 3, :] .=  sinθ2 .* ρv[:, 3, :, 1, :]
+    vs[:, 3, :, 1, :] .=  sinθ2 .* ρv[:, 1, :, 3, :]
+    vs[:, 3, :, 3, :] .=  sinθ2 .* ρv[:, 1, :, 1, :]
+
+    vs[:, 2, :, 2, :] .= -sinθ2 .* ρv[:, 4, :, 4, :]
+    vs[:, 2, :, 4, :] .=  sinθ2 .* ρv[:, 4, :, 2, :]
+    vs[:, 4, :, 2, :] .=  sinθ2 .* ρv[:, 2, :, 4, :]
+    vs[:, 4, :, 4, :] .= -sinθ2 .* ρv[:, 2, :, 2, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+
+"""Tailored conjugation of density matrix by EntanglementZZGate"""
+function apply(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    cosθ = cos(cg.gate.θ[])
+    sinθ = sin(cg.gate.θ[])
+
+    vs = similar(ρv)
+
+    vs[:, 1, :, 1, :] .= ρv[:, 1, :, 1, :]
+    vs[:, 2, :, 2, :] .= ρv[:, 2, :, 2, :]
+    vs[:, 3, :, 3, :] .= ρv[:, 3, :, 3, :]
+    vs[:, 4, :, 4, :] .= ρv[:, 4, :, 4, :]
+
+    vs[:, 1, :, 4, :] .= ρv[:, 1, :, 4, :]
+    vs[:, 4, :, 1, :] .= ρv[:, 4, :, 1, :]
+    vs[:, 3, :, 2, :] .= ρv[:, 3, :, 2, :]
+    vs[:, 2, :, 3, :] .= ρv[:, 2, :, 3, :]
+
+    vs[:, 1, :, 3, :] .= cosθ .* ρv[:, 1, :, 3, :] .+ sinθ .* ρv[:, 4, :, 2, :]
+    vs[:, 4, :, 2, :] .= cosθ .* ρv[:, 4, :, 2, :] .- sinθ .* ρv[:, 1, :, 3, :]
+
+    vs[:, 3, :, 1, :] .= cosθ .* ρv[:, 3, :, 1, :] .+ sinθ .* ρv[:, 2, :, 4, :]
+    vs[:, 2, :, 4, :] .= cosθ .* ρv[:, 2, :, 4, :] .- sinθ .* ρv[:, 3, :, 1, :]
+
+    vs[:, 3, :, 4, :] .= cosθ .* ρv[:, 3, :, 4, :] .+ sinθ .* ρv[:, 2, :, 1, :]
+    vs[:, 2, :, 1, :] .= cosθ .* ρv[:, 2, :, 1, :] .- sinθ .* ρv[:, 3, :, 4, :]
+
+    vs[:, 4, :, 3, :] .= cosθ .* ρv[:, 4, :, 3, :] .+ sinθ .* ρv[:, 1, :, 2, :]
+    vs[:, 1, :, 2, :] .= cosθ .* ρv[:, 1, :, 2, :] .- sinθ .* ρv[:, 4, :, 3, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+"""Tailored implementation of 1/2 (Rzz(θ) ρ + ρ Rzz(-θ))"""
+function apply_mixed_add(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    cosθ2 = cos(0.5*cg.gate.θ[])
+    sinθ2 = sin(0.5*cg.gate.θ[])
+
+    vs = cosθ2 .* ρv
+
+    vs[:, 1, :, 3, :] .+= sinθ2 .* ρv[:, 4, :, 2, :]
+    vs[:, 3, :, 1, :] .+= sinθ2 .* ρv[:, 2, :, 4, :]
+    vs[:, 4, :, 2, :] .-= sinθ2 .* ρv[:, 1, :, 3, :]
+    vs[:, 2, :, 4, :] .-= sinθ2 .* ρv[:, 3, :, 1, :]
+
+    vs[:, 4, :, 3, :] .+= sinθ2 .* ρv[:, 1, :, 2, :]
+    vs[:, 3, :, 4, :] .+= sinθ2 .* ρv[:, 2, :, 1, :]
+    vs[:, 1, :, 2, :] .-= sinθ2 .* ρv[:, 4, :, 3, :]
+    vs[:, 2, :, 1, :] .-= sinθ2 .* ρv[:, 3, :, 4, :]
+
+    return DensityMatrix(reshape(vs, :), ρ.N)
+end
+
+"""Tailored implementation of i/2 (Rzz(θ) ρ - ρ Rzz(-θ))"""
+function apply_mixed_sub(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
+    # qubit indices the gate acts on
+    i, j = cg.iwire
+    i, j = i < j ? (i, j) : (j, i)  # sort them
+    ρv = reshape(ρ.v, 4^(i-1), 4, 4^(j-i-1), 4, 4^(ρ.N-j))
+
+    sinθ2 = sin(0.5*cg.gate.θ[])
+
+    vs = zero(ρv)
+
+    vs[:, 1, :, 1, :] .=  sinθ2 .* ρv[:, 4, :, 4, :]
+    vs[:, 1, :, 4, :] .=  sinθ2 .* ρv[:, 4, :, 1, :]
+    vs[:, 4, :, 1, :] .=  sinθ2 .* ρv[:, 1, :, 4, :]
+    vs[:, 4, :, 4, :] .=  sinθ2 .* ρv[:, 1, :, 1, :]
+
+    vs[:, 3, :, 3, :] .= -sinθ2 .* ρv[:, 2, :, 2, :]
+    vs[:, 3, :, 2, :] .=  sinθ2 .* ρv[:, 2, :, 3, :]
+    vs[:, 2, :, 3, :] .=  sinθ2 .* ρv[:, 3, :, 2, :]
+    vs[:, 2, :, 2, :] .= -sinθ2 .* ρv[:, 3, :, 3, :]
 
     return DensityMatrix(reshape(vs, :), ρ.N)
 end
@@ -860,8 +1120,8 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
 end
 
 
-"""Conjugate density matrix by a general multiple qubit gate (in particular covering MatrixGate)"""
-@views function apply(cg::CircuitGate{M,<:AbstractGate}, ρ::DensityMatrix) where {M}
+"""Conjugate density matrix by a general MatrixGate"""
+@views function apply(cg::CircuitGate{M,MatrixGate}, ρ::DensityMatrix) where {M}
 
     # Pauli matrix basis (including identity matrix)
     pauli = Matrix{ComplexF64}[Matrix{ComplexF64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]

@@ -22,11 +22,28 @@ using Qaintessent
             # @code_warntype(apply(cg, ρ))
             @test ρs.v ≈ ρsref.v
 
-            # generate same gate with type AbstractGate
-            cga = CircuitGate{1,AbstractGate}(cg.iwire, cg.gate)
-            ρsa = apply(cga, ρ)
-            # @code_warntype(apply(cga, ρ))
-            @test ρs.v ≈ ρsa.v
+            ρsref = density_from_matrix(reshape(0.5 * (kron(conj(ψ), ψs) + kron(conj(ψs), ψ)), 2^N, 2^N))
+            ρs = Qaintessent.apply_mixed_add(cg, ρ)
+            # @code_warntype(Qaintessent.apply_mixed_add(cg, ρ))
+            @test ρs.v ≈ ρsref.v
+
+            ρsref = density_from_matrix(reshape(0.5im * (kron(conj(ψ), ψs) - kron(conj(ψs), ψ)), 2^N, 2^N))
+            ρs = Qaintessent.apply_mixed_sub(cg, ρ)
+            # @code_warntype(Qaintessent.apply_mixed_sub(cg, ρ))
+            @test ρs.v ≈ ρsref.v
+        end
+    end
+
+    @testset "density matrix apply two qubit gates" begin
+        for g in [SwapGate(), EntanglementXXGate(-0.7), EntanglementYYGate(0.2*π), EntanglementZZGate(0.4)]
+            i, j = randperm(N)[1:2]
+            cg = CircuitGate((i, j), g)
+            ψs = apply(cg, ψ)
+
+            ρsref = density_from_statevector(ψs)
+            ρs = apply(cg, ρ)
+            #@code_warntype(apply(cg, ρ))
+            @test ρs.v ≈ ρsref.v
 
             ρsref = density_from_matrix(reshape(0.5 * (kron(conj(ψ), ψs) + kron(conj(ψs), ψ)), 2^N, 2^N))
             ρs = Qaintessent.apply_mixed_add(cg, ρ)
@@ -40,35 +57,10 @@ using Qaintessent
         end
     end
 
-    @testset "density matrix apply swap gate" begin
-        # swap gate
-        i, j = randperm(N)[1:2]
-        cg = CircuitGate((i, j), SwapGate())
-        ψs = apply(cg, ψ)
-
-        ρsref = density_from_statevector(ψs)
-        ρs = apply(cg, ρ)
-        # @code_warntype(apply(cg, ρ))
-        @test ρs.v ≈ ρsref.v
-
-        ρsref = density_from_matrix(reshape(0.5 * (kron(conj(ψ), ψs) + kron(conj(ψs), ψ)), 2^N, 2^N))
-        ρs = Qaintessent.apply_mixed_add(cg, ρ)
-        # @code_warntype(Qaintessent.apply_mixed_add(cg, ρ))
-        @test ρs.v ≈ ρsref.v
-
-        ρsref = density_from_matrix(reshape(0.5im * (kron(conj(ψ), ψs) - kron(conj(ψs), ψ)), 2^N, 2^N))
-        ρs = Qaintessent.apply_mixed_sub(cg, ρ)
-        # @code_warntype(Qaintessent.apply_mixed_sub(cg, ρ))
-        @test ρs.v ≈ ρsref.v
-    end
-
     @testset "density matrix apply controlled gate" begin
-        # controlled gate
-        iwperm = Tuple(randperm(N))
-        # number of control and target wires
-        nt = rand(1:2)
-        nc = rand(1:3)
-        cg = circuit_gate(iwperm[1:nt], nt == 1 ? RotationGate(rand(3) .- 0.5) : MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), iwperm[nt+1:nt+nc])
+        # one target qubit
+        iwperm = randperm(N)
+        cg = circuit_gate(iwperm[1], RotationGate(rand(3) .- 0.5), (iwperm[2], iwperm[3], iwperm[4]))
 
         ψs = apply(cg, ψ)
         ρsref = density_from_statevector(ψs)
@@ -76,6 +68,18 @@ using Qaintessent
         ρs = apply(cg, ρ)
         # @code_warntype(apply(cg, ρ))
         @test ρs.v ≈ ρsref.v
+
+        # two target qubits
+        iwperm = randperm(N)
+        cg = circuit_gate((iwperm[1], iwperm[2]), EntanglementYYGate(2π*rand()), (iwperm[3], iwperm[4]))
+
+        ψs = apply(cg, ψ)
+        ρsref = density_from_statevector(ψs)
+
+        ρs = apply(cg, ρ)
+        # @code_warntype(apply(cg, ρ))
+        @test ρs.v ≈ ρsref.v
+    
     end
 
     @testset "density matrix apply general unitary gate" begin
@@ -84,6 +88,7 @@ using Qaintessent
         ψs = apply(cg, ψ)
         ρsref = density_from_statevector(ψs)
         ρs = apply(cg, ρ)
+        # @code_warntype(apply(cg, ρ))
         @test ρs.v ≈ ρsref.v
     end
 end
