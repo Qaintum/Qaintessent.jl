@@ -225,18 +225,19 @@ end
 
     @testset "compile standard 2 qubit unitaries" begin
         N = 2
-        random_θ = rand(Float64, 3)
-        for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
-            U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
-            M = Stewart(ComplexF64, 2^N)
-
-            cgc = unitary2circuit(U, N)
-            ψ = rand(ComplexF64, 2^N)
-
-            ψ_ref = U*ψ
-            ψ_compiled = apply(cgc, ψ)
-
-            @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
+        M = Stewart(ComplexF64, 2^N)
+        l = deepcopy(M)
+        for _ in 1:100
+            random_θ = rand(Float64, 3)
+            for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
+                U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
+                cgc = unitary2circuit(U, N)
+                ψ = rand(ComplexF64, 2^N)
+                ψ_ref = U*ψ
+                ψ_compiled = apply(cgc, ψ)
+                
+                @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), rtol=1e-5, atol=1e-5)
+            end
         end
     end
 end
