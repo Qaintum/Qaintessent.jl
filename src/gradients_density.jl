@@ -4,19 +4,19 @@
 # when interpreting the coefficient vector of DensityMatrix as statevector.
 
 
-backward_density(g::XGate, Δ::AbstractMatrix) = g
-backward_density(g::YGate, Δ::AbstractMatrix) = g
-backward_density(g::ZGate, Δ::AbstractMatrix) = g
+backward_density(g::XGate, ::AbstractMatrix) = g
+backward_density(g::YGate, ::AbstractMatrix) = g
+backward_density(g::ZGate, ::AbstractMatrix) = g
 
 
-backward_density(g::HadamardGate, Δ::AbstractMatrix) = g
+backward_density(g::HadamardGate, ::AbstractMatrix) = g
 
 
-backward_density(g::SGate, Δ::AbstractMatrix) = g
-backward_density(g::TGate, Δ::AbstractMatrix) = g
+backward_density(g::SGate, ::AbstractMatrix) = g
+backward_density(g::TGate, ::AbstractMatrix) = g
 
-backward_density(g::SdagGate, Δ::AbstractMatrix) = g
-backward_density(g::TdagGate, Δ::AbstractMatrix) = g
+backward_density(g::SdagGate, ::AbstractMatrix) = g
+backward_density(g::TdagGate, ::AbstractMatrix) = g
 
 
 function backward_density(g::RxGate, Δ::AbstractMatrix)
@@ -203,6 +203,75 @@ function backward_density_mixed_sub(g::EntanglementZZGate, Δ::AbstractMatrix)
     c = cos(0.5*g.θ[])
     s = sin(0.5*g.θ[])
     EntanglementZZGate(0.5*c*(Δ[16, 1] + Δ[1, 16] + Δ[13, 4] + Δ[4, 13] + Δ[10, 7] + Δ[7, 10] - Δ[6, 11] - Δ[11, 6]))
+end
+
+
+# shortcuts for non-parametric gates
+
+backward_density(g::ControlledGate{XGate}, ::AbstractMatrix) = g
+backward_density(g::ControlledGate{YGate}, ::AbstractMatrix) = g
+backward_density(g::ControlledGate{ZGate}, ::AbstractMatrix) = g
+
+backward_density(g::ControlledGate{HadamardGate}, ::AbstractMatrix) = g
+
+backward_density(g::ControlledGate{SGate}, ::AbstractMatrix) = g
+backward_density(g::ControlledGate{TGate}, ::AbstractMatrix) = g
+backward_density(g::ControlledGate{SdagGate}, ::AbstractMatrix) = g
+backward_density(g::ControlledGate{TdagGate}, ::AbstractMatrix) = g
+
+backward_density(g::ControlledGate{SwapGate}, ::AbstractMatrix) = g
+
+
+function backward_density(g::ControlledGate{G}, Δ::AbstractMatrix) where {G}
+
+    # number of target wires
+    T = target_wires(g)
+
+    # number of control wires
+    C = control_wires(g)
+
+    # for a single control qubit:
+    # controlled-U = |0><0| x I + |1><1| x U = I + |1><1| x (U - I)
+    # (generalizes to several control qubits)
+
+    # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
+    Δadd = zeros(eltype(Δ), 4^T, 4^T)
+    Δsub = zeros(eltype(Δ), 4^T, 4^T)
+    for eo in reshape(cartesian_tuples(2, C), :)
+        Δr = reshape(Δ, 4^T, 4^C, 4^T, 4^C)
+        for j in 1:C
+            # use another variable for type stability
+            Δt = reshape(Δr, 4^T, 4, 4^(C-j), 4^T, 4, 4^(C-j))
+            if eo[j] == 0
+                Δr = 0.5 * (Base.view(Δt, :, 1, :, :, 1, :) + Base.view(Δt, :, 2, :, :, 2, :) + Base.view(Δt, :, 3, :, :, 3, :) + Base.view(Δt, :, 4, :, :, 4, :) - Base.view(Δt, :, 1, :, :, 4, :) - Base.view(Δt, :, 4, :, :, 1, :))
+            else
+                Δr = 0.5 * (Base.view(Δt, :, 3, :, :, 2, :) - Base.view(Δt, :, 2, :, :, 3, :))
+            end
+        end
+        nodd::Int = sum(eo)
+        # sign factor from even powers of i
+        signfac = 1 - 2*(((nodd + 1) ÷ 2) % 2)
+        if iseven(nodd)
+            Δadd += (2*signfac) * reshape(Δr, 4^T, 4^T)
+        else
+            Δsub += (2*signfac) * reshape(Δr, 4^T, 4^T)
+        end
+    end
+    # backward_density_mixed_add(g.U, Δadd) delayed until later
+    dU = backward_density_mixed_sub(g.U, Δsub)
+
+    # conjugation by |1><1| x (U - I)
+    Δr = reshape(Δ, 4^T, 4^C, 4^T, 4^C)
+    for j in 1:C
+        # use another variable for type stability
+        Δt = reshape(Δr, 4^T, 4, 4^(C-j), 4^T, 4, 4^(C-j))
+        Δr = 0.5 * (Base.view(Δt, :, 1, :, :, 1, :) + Base.view(Δt, :, 4, :, :, 4, :) - Base.view(Δt, :, 1, :, :, 4, :) - Base.view(Δt, :, 4, :, :, 1, :))
+    end
+    dU += backward_density(g.U, reshape(Δr, 4^T, 4^T))
+    Δadd -= 2 * reshape(Δr, 4^T, 4^T)
+    dU += backward_density_mixed_add(g.U, Δadd)
+
+    return ControlledGate{G}(dU, g.M)
 end
 
 

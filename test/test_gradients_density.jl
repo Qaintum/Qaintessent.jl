@@ -131,4 +131,45 @@ end
         end
     end
 
+    @testset "controlled gates 1" begin
+
+        # fictitious density matrix
+        ρ = DensityMatrix(randn(Float64, 64), 3)
+
+        # fictitious gradients of cost function with respect to output density matrix
+        Δ = DensityMatrix(randn(Float64, 64), 3)
+
+        θval = 2π*rand()
+
+        f1(θ) = dot(Δ.v, apply(CircuitGate((1, 2, 3), ControlledGate{RyGate}(RyGate(θ[]), 2)), ρ).v)
+        ngrad = ngradient(f1, [θval])
+        dg = Qaintessent.backward_density(ControlledGate{RyGate}(RyGate(θval), 2), reshape(kron(ρ.v, Δ.v), 64, 64))
+        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-6)
+
+        f2(θ) = dot(Δ.v, apply(CircuitGate((1, 2, 3), ControlledGate{EntanglementXXGate}(EntanglementXXGate(θ[]), 1)), ρ).v)
+        ngrad = ngradient(f2, [θval])
+        dg = Qaintessent.backward_density(ControlledGate{EntanglementXXGate}(EntanglementXXGate(θval), 1), reshape(kron(ρ.v, Δ.v), 64, 64))
+        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-6)
+    end
+
+    @testset "controlled gates 2" begin
+
+        # fictitious density matrix
+        ρ = DensityMatrix(randn(Float64, 256), 4)
+
+        # fictitious gradients of cost function with respect to output density matrix
+        Δ = DensityMatrix(randn(Float64, 256), 4)
+
+        θval = 2π*rand()
+
+        f1(θ) = dot(Δ.v, apply(CircuitGate((1, 2, 3, 4), ControlledGate{PhaseShiftGate}(PhaseShiftGate(θ[]), 3)), ρ).v)
+        ngrad = ngradient(f1, [θval])
+        dg = Qaintessent.backward_density(ControlledGate{PhaseShiftGate}(PhaseShiftGate(θval), 3), reshape(kron(ρ.v, Δ.v), 256, 256))
+        @test isapprox(dg.U.ϕ, ngrad[1], rtol=1e-6)
+
+        f2(θ) = dot(Δ.v, apply(CircuitGate((1, 2, 3, 4), ControlledGate{EntanglementYYGate}(EntanglementYYGate(θ[]), 2)), ρ).v)
+        ngrad = ngradient(f2, [θval])
+        dg = Qaintessent.backward_density(ControlledGate{EntanglementYYGate}(EntanglementYYGate(θval), 2), reshape(kron(ρ.v, Δ.v), 256, 256))
+        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-6)
+    end
 end

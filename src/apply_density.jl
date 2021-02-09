@@ -1035,10 +1035,10 @@ num_wires(::Proj1Gate)::Int = 1
     # |1><1| I |1><1| =  |1><1| =  1/2 (I - Z)
     # |1><1| Z |1><1| = -|1><1| = -1/2 (I - Z)
     vs = similar(ρv)
-    vs[:, 1, :] .=  0.5 .* (ρv[:, 1, :] .- ρv[:, 4, :])
-    vs[:, 2, :] .=  0
-    vs[:, 3, :] .=  0
-    vs[:, 4, :] .= -0.5 .* (ρv[:, 1, :] .- ρv[:, 4, :])
+    vs[:, 1, :] .= 0.5 .* (ρv[:, 1, :] .- ρv[:, 4, :])
+    vs[:, 2, :] .= 0
+    vs[:, 3, :] .= 0
+    vs[:, 4, :] .= 0.5 .* (ρv[:, 4, :] .- ρv[:, 1, :])
 
     return DensityMatrix(reshape(vs, :), ρ.N)
 end
@@ -1090,7 +1090,7 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
 
     # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
     for eo in reshape(Qaintessent.cartesian_tuples(2, C), :)
-        τ = deepcopy(ρ)
+        τ = ρ
         for j in 1:C
             if eo[j] == 0
                 τ = apply_mixed_add(CircuitGate((cg.iwire[T + j],), Proj1Gate()), τ)
@@ -1110,7 +1110,7 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
     end
 
     # conjugate by |1><1| x (U - I)
-    τ = deepcopy(ρ)
+    τ = ρ
     for j in 1:C
         τ = apply(CircuitGate((cg.iwire[T + j],), Proj1Gate()), τ)
     end
