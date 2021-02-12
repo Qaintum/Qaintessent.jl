@@ -148,6 +148,10 @@ function Base.show(io::IO, m::Moment)
 end
 
 function Base.show(io::IO, cgs::Vector{<:CircuitGate}, N::Union{Nothing,Int}=nothing)
+    if isempty(cgs)
+        println(io, "[]")
+        return
+    end
     if isnothing(N)
         N = maximum(req_wires.(cgs))
     end
