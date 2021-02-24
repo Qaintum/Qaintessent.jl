@@ -275,10 +275,72 @@ function backward_density(g::ControlledGate{G}, Δ::AbstractMatrix) where {G}
 end
 
 
-backward_density(g::MatrixGate, Δ::AbstractMatrix) = g
+backward_density(g::MatrixGate, ::AbstractMatrix) = g
 
+
+# shortcuts for non-parametric gates
+
+backward_density(cg::CircuitGate{M,XGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+backward_density(cg::CircuitGate{M,YGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+backward_density(cg::CircuitGate{M,ZGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+
+backward_density(cg::CircuitGate{M,HadamardGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+
+backward_density(cg::CircuitGate{M,SGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+backward_density(cg::CircuitGate{M,TGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+backward_density(cg::CircuitGate{M,SdagGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+backward_density(cg::CircuitGate{M,TdagGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
+
+backward_density(cg::CircuitGate{M,SwapGate}, ::DensityMatrix, ::DensityMatrix) where {M} = cg
 
 function backward_density(cg::CircuitGate{M,G}, ρ::DensityMatrix, Δ::DensityMatrix) where {M,G}
     @assert ρ.N == Δ.N
     CircuitGate{M,G}(cg.iwire, backward_density(cg.gate, rdm(ρ.N, cg.iwire, Δ.v, ρ.v, 4)))
+end
+
+
+function backward_density(m::Moment, ρ::DensityMatrix, Δ::DensityMatrix)
+    dgates = CircuitGate[]
+    for cg in reverse(m.gates)
+        Udag = Base.adjoint(cg)
+        ρ = apply(Udag, ρ)
+        # backward step of quantum state
+        pushfirst!(dgates, backward_density(cg, ρ, Δ))
+        Δ = apply(Udag, Δ)
+    end
+    return Moment(dgates), ρ, Δ
+end
+
+function backward_density(moments::Vector{Moment}, ρ::DensityMatrix, Δ::DensityMatrix)
+    dmoments = Moment[]
+    for moment in reverse(moments)
+        # backward step of quantum state
+        (m, ρ, Δ) = backward_density(moment, ρ, Δ)
+        pushfirst!(dmoments, m)
+    end
+    return dmoments, Δ
+end
+
+
+"""
+    gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
+
+Perform a backward pass to compute gradients of a (fictitious) cost function with
+respect to the circuit parameters of `c` and input density matrix `ρ`. `Δ` contains
+the cost function gradients with respect to the circuit outputs (measurement operator averages).
+The gradients with respect to the circuit parameters are returned in a duplicate circuit;
+the overall return value is the tuple (dc::Circuit{N}, dρ::DensityMatrix).
+"""
+function gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
+    @assert(ρ.N == N)
+    # length of circuit output vector must match gradient vector
+    @assert(length(Δ) == length(c.meas))
+    # forward pass through unitary gates
+    ρ = apply(c.moments, ρ)
+    # gradient of cost function with respect to ρ
+    ρbar = density_from_matrix(0.5^N * sum([Δ[i] * sparse_matrix(c.meas[i], N) for i in 1:length(Δ)]))
+    # backward pass through unitary gates
+    dcgc, ρbar = backward_density(c.moments, ρ, ρbar)
+    dmeas = MeasurementOperator.([Δ[i] * matrix(ρ) for i in 1:length(Δ)], (Tuple(1:N),))
+    return Circuit{N}(dcgc, dmeas), ρbar
 end

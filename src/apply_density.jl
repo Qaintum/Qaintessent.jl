@@ -1146,3 +1146,31 @@ end
 
     return DensityMatrix(reshape(vs, :), ρ.N)
 end
+
+
+function apply(moment::Moment, ρ::DensityMatrix) 
+    for cg in moment
+        ρ = apply(cg, ρ)
+    end
+    return ρ
+end
+
+function apply(moments::Vector{Moment}, ρ::DensityMatrix)
+    for m in moments
+        ρ = apply(m, ρ)
+    end
+    return ρ
+end
+
+
+"""
+    apply(c::Circuit{N}, ρ::DensityMatrix) where {N}
+
+Compute list of expectation values from measurement operators in `c.meas`, after applying circuit gates in `c.cgc` on the N-qubit density matrix `ρ`
+"""
+function apply(c::Circuit{N}, ρ::DensityMatrix) where {N}
+    ρ.N == N || error("Qubit number $N of circuit not equal to qubit number $(ρ.N) of density matrix")
+    ρ = apply(c.moments, ρ)
+    ρmat = matrix(ρ)
+    return [real(tr(sparse_matrix(m, N) * ρmat)) for m in c.meas]
+end
