@@ -491,3 +491,30 @@ end
 
 # handle different gate types or dimensions
 Base.isapprox(::AbstractGate, ::AbstractGate) = false
+
+
+# Define "addition" and "scaling" of parametric gates (required for gradient accumulation)
+
+Base.:+(g1::RxGate, g2::RxGate) = RxGate(g1.θ[] + g2.θ[])
+Base.:+(g1::RyGate, g2::RyGate) = RyGate(g1.θ[] + g2.θ[])
+Base.:+(g1::RzGate, g2::RzGate) = RzGate(g1.θ[] + g2.θ[])
+
+Base.:+(g1::RotationGate, g2::RotationGate) = RotationGate(g1.nθ + g2.nθ)
+
+Base.:+(g1::PhaseShiftGate, g2::PhaseShiftGate) = PhaseShiftGate(g1.ϕ[] + g2.ϕ[])
+
+Base.:+(g1::EntanglementXXGate, g2::EntanglementXXGate) = EntanglementXXGate(g1.θ[] + g2.θ[])
+Base.:+(g1::EntanglementYYGate, g2::EntanglementYYGate) = EntanglementYYGate(g1.θ[] + g2.θ[])
+Base.:+(g1::EntanglementZZGate, g2::EntanglementZZGate) = EntanglementZZGate(g1.θ[] + g2.θ[])
+
+Base.:*(α::Real, g::RxGate) = RxGate(α * g.θ[])
+Base.:*(α::Real, g::RyGate) = RyGate(α * g.θ[])
+Base.:*(α::Real, g::RzGate) = RzGate(α * g.θ[])
+
+Base.:*(α::Real, g::RotationGate) = RotationGate(α * g.nθ)
+
+Base.:*(α::Real, g::PhaseShiftGate) = PhaseShiftGate(α * g.ϕ[])
+
+Base.:*(α::Real, g::EntanglementXXGate) = EntanglementXXGate(α * g.θ[])
+Base.:*(α::Real, g::EntanglementYYGate) = EntanglementYYGate(α * g.θ[])
+Base.:*(α::Real, g::EntanglementZZGate) = EntanglementZZGate(α * g.θ[])
