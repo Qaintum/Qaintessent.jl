@@ -31,15 +31,15 @@ Matrix representation of density matrix `ρ`.
 """
 function matrix(ρ::DensityMatrix)
     # Pauli matrix basis (including identity matrix)
-    halfpauli = [
+    halfpauli = SparseMatrixCSC{ComplexF64,Int}[
         0.5 * sparse(one(ComplexF64)*I, 2, 2),
         0.5 * sparse_matrix(X),
         0.5 * sparse_matrix(Y),
         0.5 * sparse_matrix(Z),
     ]
     mat = zeros(ComplexF64, 2^ρ.N, 2^ρ.N)
-    for (i, pt) in enumerate(cartesian_tuples(4, Val(ρ.N)))
-        mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(pt)]...)
+    for i in 1:4^ρ.N
+        mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(quaternary_digits(i - 1, ρ.N))]...)
     end
     return mat
 end
@@ -53,15 +53,15 @@ Construct density matrix |ψ⟩⟨ψ| (Pauli representation) corresponding to qu
 function density_from_statevector(ψ::Vector)
     N = intlog2(length(ψ))
     2^N == length(ψ) || error("Length of input vector must be a power to 2.")
-    pauli = [
+    pauli = SparseMatrixCSC{ComplexF64,Int}[
         sparse(one(ComplexF64)*I, 2, 2),
         sparse_matrix(X),
         sparse_matrix(Y),
         sparse_matrix(Z),
     ]
     v = zeros(4^N)
-    for (i, pt) in enumerate((cartesian_tuples(4, Val(N))))
-        v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(pt)]...) * ψ))
+    for i in 1:4^N
+        v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(quaternary_digits(i - 1, N))]...) * ψ))
     end
     return DensityMatrix(v, N)
 end
@@ -75,15 +75,15 @@ Construct density matrix in Pauli representation from matrix `ρmat`.
 function density_from_matrix(ρmat::AbstractMatrix)
     N = intlog2(size(ρmat, 1))
     (2^N == size(ρmat, 1) && 2^N == size(ρmat, 2)) || error("Input must be a square `2^N × 2^N` matrix.")
-    pauli = [
+    pauli = SparseMatrixCSC{ComplexF64,Int}[
         sparse(one(ComplexF64)*I, 2, 2),
         sparse_matrix(X),
         sparse_matrix(Y),
         sparse_matrix(Z),
     ]
     v = zeros(4^N)
-    for (i, pt) in enumerate((cartesian_tuples(4, Val(N))))
-        v[i] = real(tr(kron([pauli[p + 1] for p in reverse(pt)]...) * ρmat))
+    for i in 1:4^N
+        v[i] = real(tr(kron([pauli[p + 1] for p in reverse(quaternary_digits(i - 1, N))]...) * ρmat))
     end
     return DensityMatrix(v, N)
 end

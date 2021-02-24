@@ -106,50 +106,48 @@ function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
     return gmat
 end
 
+
 function distribute_to_wires(gmat::SparseMatrixCSC{Complex{Float64},Int}, iwire::Vector{Int}, N::Int, M::Int)
-    # TODO: support general "qudits"
-    d = 2
 
     # complementary wires
     iwcompl = setdiff(1:N, iwire)
     @assert length(iwire) + length(iwcompl) == N
-    @assert size(gmat) == (d^M, d^M)
+    @assert size(gmat) == (2^M, 2^M)
 
     # Note: following the ordering convention of `kron` here, i.e.,
     # last qubit corresponds to fastest varying index
-    strides = Int[d^(j - 1) for j in 1:N]
+    strides = Int[2^j for j in 0:N-1]
     wstrides = strides[iwire]
     cstrides = strides[iwcompl]
-    b = BitArray(undef, M)
-    
-    values = Vector{ComplexF64}(undef, length(gmat.nzval) * d^(N - M))
-    value_size = length(gmat.nzval)
+    b = BitArray{1}(undef, M)
+
+    values = Vector{ComplexF64}(undef, length(gmat.nzval) * 2^(N - M))
+    nnz = length(gmat.nzval)
     rowind = Vector{Int}(undef, length(values))
     colind = Vector{Int}(undef, length(values))
 
-    for j in 1:length(gmat.colptr) - 1
+    for j in 1:length(gmat.colptr)-1
         index = gmat.colptr[j]:gmat.colptr[j + 1] - 1
-        colvalue = dot(binary_rep!(b, j - 1, M), wstrides) + 1
+        colvalue = dot(binary_digits!(b, j - 1), wstrides) + 1
         for i in index
-            @inbounds rowind[i] = dot(binary_rep!(b, gmat.rowval[i] - 1, M), wstrides) + 1
+            @inbounds rowind[i] = dot(binary_digits!(b, gmat.rowval[i] - 1), wstrides) + 1
             @inbounds colind[i] = colvalue
         end
     end
 
-    r = @view rowind[1:value_size]
-    c = @view colind[1:value_size]
-    @inbounds values[1:value_size] = gmat.nzval
-    v = @view values[1:value_size]
+    r = Base.view(rowind, 1:nnz)
+    c = Base.view(colind, 1:nnz)
+    @inbounds values[1:nnz] = gmat.nzval
 
     b = BitArray(undef, N - M)
-    for kw in 2:d^(N - M)
-        koffset = dot(binary_rep!(b, kw - 1, N - M), cstrides)
-        @inbounds rowind[value_size * (kw - 1) + 1:value_size * (kw)] = r .+ koffset
-        @inbounds colind[value_size * (kw - 1) + 1:value_size * (kw)] = c .+ koffset
-        @inbounds values[value_size * (kw - 1) + 1:value_size * (kw)] = v
+    for k in 2:2^(N - M)
+        koffset = dot(binary_digits!(b, k - 1), cstrides)
+        @inbounds rowind[nnz*(k-1)+1:nnz*k] = r .+ koffset
+        @inbounds colind[nnz*(k-1)+1:nnz*k] = c .+ koffset
+        @inbounds values[nnz*(k-1)+1:nnz*k] = gmat.nzval
     end
 
-    return sparse(rowind, colind, values, d^N, d^N)
+    return sparse(rowind, colind, values, 2^N, 2^N)
 end
 
 

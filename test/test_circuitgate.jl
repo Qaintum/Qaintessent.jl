@@ -5,6 +5,9 @@ using Qaintessent
 using SparseArrays
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 isunitary(cg::CircuitGate) = (sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)) ≈ I)
 
 
@@ -76,6 +79,10 @@ isunitary(cg::CircuitGate) = (sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)
     end
 end
 
+
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "circuit gate isapprox" begin
     θ = 0.7 * π
     ϕ = 0.4 * π
@@ -94,6 +101,10 @@ end
         @test !(cg1 ≈ cg3)
     end
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
+
 
 @testset ExtendedTestSet "circuit gate helper functions" begin
     N = 5

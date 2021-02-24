@@ -4,7 +4,13 @@ using LinearAlgebra
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adjoint(g)) ≈ I
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "quantum gates" begin
@@ -73,7 +79,6 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
         d = 2
         @test_throws ErrorException("Quantum gate must be unitary") MatrixGate(randn(ComplexF64, d^N, d^N))
     end
-
 
     @testset "general controlled gate" begin
         # test MatrixGate
