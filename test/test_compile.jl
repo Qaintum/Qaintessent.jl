@@ -61,7 +61,9 @@ end
             Q = Q*Q
         end
         A, B = Qaintessent.decomposeSO4(Q*Q)
+        @test E'*kron(A, B)*E ≈ Q*Q
     end
+    
 end
 
 @testset ExtendedTestSet "general compile unitaries helper functions" begin
@@ -158,7 +160,24 @@ end
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
     end
 
-    @testset "compile 1 qubit" begin
+    @testset "compile 1 qubit standard unitary" begin
+        N = 1
+        M = Stewart(ComplexF64, 2)
+        random_θ = rand(Float64, 3)
+        for gate in [X, Y, Z, HadamardGate(), TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
+            U = matrix(gate)
+
+            cgc = unitary2circuit(U)
+
+            ψ = rand(ComplexF64, 2^N)
+
+            ψ_ref = U*ψ
+            ψ_compiled = apply(cgc, ψ)
+            @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
+        end
+    end
+
+    @testset "compile 1 qubit random unitary" begin
         N = 1
         U, _ = qr(Stewart(ComplexF64, 2^N))
         U = Matrix(U)
@@ -202,5 +221,23 @@ end
         ψ_compiled = apply(cgc, ψ)
 
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
+    end
+
+    @testset "compile standard 2 qubit unitaries" begin
+        N = 2
+        M = Stewart(ComplexF64, 2^N)
+        l = deepcopy(M)
+        for _ in 1:100
+            random_θ = rand(Float64, 3)
+            for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
+                U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
+                cgc = unitary2circuit(U, N)
+                ψ = rand(ComplexF64, 2^N)
+                ψ_ref = U*ψ
+                ψ_compiled = apply(cgc, ψ)
+                
+                @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), rtol=1e-5, atol=1e-5)
+            end
+        end
     end
 end
