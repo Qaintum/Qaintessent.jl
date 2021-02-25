@@ -413,6 +413,10 @@ Base.adjoint(g::EntanglementYYGate) = EntanglementYYGate(-g.θ[])
 Base.adjoint(g::EntanglementZZGate) = EntanglementZZGate(-g.θ[])
 
 
+matrix(::UniformScaling{Bool}) = ComplexF64[1 0; 0 1]
+
+Base.kron(m::Union{UniformScaling{Bool},G}) where {G<:AbstractGate} = Base.kron(matrix.(m)...)
+
 """
 General controlled gate
 """
@@ -518,3 +522,4 @@ Base.:*(α::Real, g::PhaseShiftGate) = PhaseShiftGate(α * g.ϕ[])
 Base.:*(α::Real, g::EntanglementXXGate) = EntanglementXXGate(α * g.θ[])
 Base.:*(α::Real, g::EntanglementYYGate) = EntanglementYYGate(α * g.θ[])
 Base.:*(α::Real, g::EntanglementZZGate) = EntanglementZZGate(α * g.θ[])
+

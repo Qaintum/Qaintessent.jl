@@ -402,3 +402,16 @@ end
 num_wires(::Circuit{N}) where {N} = N
 
 Base.length(c::Circuit) = length(c.moments)
+
+function Base.reverse(c::Circuit)
+    c_new = deepcopy(c)
+    reverse!(c_new.moments)
+    reverse!.(c_new.moments)
+    return c_new
+end
+
+function Base.reverse!(c::Circuit)
+    reverse!(c.moments)
+    reverse!.(c.moments)
+    return c
+end
