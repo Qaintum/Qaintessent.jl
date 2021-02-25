@@ -1089,7 +1089,8 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
     cgU = CircuitGate{T,G}(cg.iwire[1:T], cg.gate.U)
 
     # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
-    for eo in reshape(Qaintessent.cartesian_tuples(2, C), :)
+    for p in 0:2^C-1
+        eo = binary_digits(p, C)
         τ = ρ
         for j in 1:C
             if eo[j] == 0
@@ -1127,21 +1128,19 @@ end
     pauli = Matrix{ComplexF64}[Matrix{ComplexF64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
     halfpauli = Matrix{ComplexF64}[Matrix{ComplexF64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
 
-    gtuples = reshape(Qaintessent.cartesian_tuples(4, M), :)
-
     U::Matrix{ComplexF64} = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
-    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(it)]...) * U * kron([halfpauli[p+1] for p in reverse(jt)]...) * U'))
-                for it in gtuples,
-                    jt in gtuples]
+    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits(i, M))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits(j, M))]...) * U'))
+                for i in 0:4^M-1,
+                    j in 0:4^M-1]
 
     ρv = reshape(ρ.v, fill(4, ρ.N)...)
 
     # apply conjU to circuit gate wires
     vs = similar(ρv)
-    for (i, it) in enumerate(gtuples)
+    for i in 1:4^M
         # cannot use .= here since broadcasting fails for scalar numbers
-        vs[sliced_index(it, cg.iwire, ρ.N)...] = sum(conjU[i, j] .* ρv[sliced_index(jt, cg.iwire, ρ.N)...] for (j, jt) in enumerate(gtuples))
+        vs[sliced_index(quaternary_digits(i - 1, M), cg.iwire, ρ.N)...] = sum(conjU[i, j] .* ρv[sliced_index(quaternary_digits(j - 1, M), cg.iwire, ρ.N)...] for j in 1:4^M)
     end
 
     return DensityMatrix(reshape(vs, :), ρ.N)

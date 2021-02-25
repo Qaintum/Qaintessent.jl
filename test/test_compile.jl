@@ -6,6 +6,9 @@ using RandomMatrices
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "compilediagonal unitaries helper functions" begin
     @testset "greyencode" begin
         g = Qaintessent.greyencode.(collect(0:15))
@@ -49,6 +52,10 @@ using Qaintessent
     end
 end
 
+
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "compile2qubit unitaries helper functions" begin
     @testset "decomposeSO4" begin
         N = 2
@@ -63,8 +70,11 @@ end
         A, B = Qaintessent.decomposeSO4(Q*Q)
         @test E'*kron(A, B)*E ≈ Q*Q
     end
-    
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
+
 
 @testset ExtendedTestSet "general compile unitaries helper functions" begin
     @testset "unblocked QR decomposition" begin
@@ -143,6 +153,10 @@ end
         @test Qaintessent.inverseM(N) ≈ mref
     end
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
+
 
 @testset ExtendedTestSet "unitary compilation" begin
     @testset "general compile" begin

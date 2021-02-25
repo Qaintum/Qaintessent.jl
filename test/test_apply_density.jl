@@ -5,10 +5,14 @@ using Random
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "apply gates to density matrix" begin
     N = 5
     ψ = randn(ComplexF64, 2^N)
     ψ /= norm(ψ)
+    # @code_warntype(density_from_statevector(ψ))
     ρ = density_from_statevector(ψ)
 
     @testset "density matrix apply single qubit gates" begin

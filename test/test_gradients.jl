@@ -4,6 +4,9 @@ using LinearAlgebra
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 # adapted from https://github.com/FluxML/Zygote.jl/blob/master/test/gradcheck.jl
 function ngradient(f, xs::AbstractArray...)
     grads = zero.(xs)
@@ -28,6 +31,9 @@ function ngradient(f, xs::AbstractArray...)
     end
     return grads
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "gate gradients" begin
@@ -83,7 +89,27 @@ end
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5)
         end
     end
-end   
+
+    @testset "controlled gates" begin
+        # fictitious gradients of cost function with respect to quantum gate
+        Δ = randn(ComplexF64, 8, 8)
+
+        f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{RyGate}(RyGate(θ[]), 2))))
+        θ = 2π*rand()
+        ngrad = ngradient(f, [θ])
+        dg = Qaintessent.backward(ControlledGate{RyGate}(RyGate(θ), 2), conj(Δ))
+        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
+
+        f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{EntanglementXXGate}(EntanglementXXGate(θ[]), 1))))
+        θ = 2π*rand()
+        ngrad = ngradient(f, [θ])
+        dg = Qaintessent.backward(ControlledGate{EntanglementXXGate}(EntanglementXXGate(θ), 2), conj(Δ))
+        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
+    end
+end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "circuit gradients" begin
@@ -142,6 +168,9 @@ end
          dc.moments[4][1].gate.nθ,
          sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "circuit gradients with moments" begin

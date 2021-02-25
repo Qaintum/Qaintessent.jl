@@ -4,6 +4,9 @@ using LinearAlgebra
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 # adapted from https://github.com/FluxML/Zygote.jl/blob/master/test/gradcheck.jl
 function ngradient(f, xs::AbstractArray...)
     grads = zero.(xs)
@@ -28,6 +31,9 @@ function ngradient(f, xs::AbstractArray...)
     end
     return grads
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "gate gradients density matrix" begin
@@ -183,6 +189,9 @@ end
         @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
     end
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "circuit gradients density matrix" begin

@@ -4,6 +4,9 @@ using RBNF
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "test lexer" begin
     # Adding random comments and spacings in src1 to test robustness of lexer
     src1 = """
@@ -129,6 +132,9 @@ end
 end
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "test reading openqasm" begin
     src1 = """
     // Repetition code syndrome measurement
@@ -189,6 +195,9 @@ end
     
     @test apply(cgc_ref.moments, ψ) ≈ apply(cgc.moments, ψ)
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "test writing" begin

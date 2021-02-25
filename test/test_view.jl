@@ -3,6 +3,9 @@ using TestSetExtensions
 using Qaintessent
 
 
+##==----------------------------------------------------------------------------------------------------------------------
+
+
 @testset ExtendedTestSet "test view" begin
 
     N = 5
@@ -34,6 +37,9 @@ using Qaintessent
     @test String(take!(io)) == cgc_refstring
 
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "test view with circuits" begin
@@ -69,6 +75,10 @@ end
     @test String(take!(io)) == cgc_refstring
 
 end
+
+
+##==----------------------------------------------------------------------------------------------------------------------
+
 
 @testset ExtendedTestSet "test view moments" begin
 

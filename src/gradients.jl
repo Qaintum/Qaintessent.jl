@@ -42,7 +42,7 @@ end
 function backward(g::RotationGate, Δ::AbstractMatrix)
     θ = norm(g.nθ)
     if θ == 0
-        σ = (sparse_matrix(X), sparse_matrix(Y), sparse_matrix(Z))
+        σ = Matrix{ComplexF64}[matrix(X), matrix(Y), matrix(Z)]
         RotationGate([real(sum(conj(-im * σ[i]) .* Δ)) for i in 1:3])
     else
         n = g.nθ / θ
