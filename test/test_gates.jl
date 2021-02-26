@@ -2,6 +2,7 @@ using Test
 using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
+using Random
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
@@ -12,6 +13,63 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
 
 ##==----------------------------------------------------------------------------------------------------------------------
 
+@testset ExtendedTestSet "gate helper functions" begin
+    @testset "kron" begin
+        @test kron(I,Z) ≈  kron(Matrix(I, (2,2)), matrix(Z))
+    end
+
+    @testset "gate addition rotation gates" begin
+        for g in [RxGate, RyGate, RzGate, PhaseShiftGate, EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
+            θ = 2π*rand()
+            ϕ = 2π*rand()
+
+            g1 = g(θ)
+            g2 = g(ϕ)
+
+            @test g1 + g2 ≈ g(θ+ϕ)
+        end
+    end
+
+    @testset "gate addition general rotation gate" begin
+        
+        θ = 2π*rand()
+        m = rand(3)
+        m = m./norm(m)
+
+        ϕ = 2π*rand()
+        n = rand(3)
+        n = n./norm(n)
+
+        g1 = RotationGate(θ, m)
+        g2 = RotationGate(ϕ, n)
+
+        @test g1 + g2 ≈ RotationGate(m*θ + ϕ*n)
+    end
+
+    @testset "gate phase multiplication rotation gates" begin
+        for g in [RxGate, RyGate, RzGate, PhaseShiftGate, EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
+            θ = 2π*rand()
+            α = rand()
+
+            g1 = g(θ)
+
+            @test α*g1 ≈ g(θ*α)
+        end
+    end
+
+    @testset "gate multiplication general rotation gate" begin
+        
+        θ = 2π*rand()
+        m = rand(3)
+        m = m./norm(m)
+
+        α = rand()
+
+        g1 = RotationGate(θ, m)
+
+        @test α*g1 ≈ RotationGate(m*θ*α)
+    end
+end
 
 @testset ExtendedTestSet "quantum gates" begin
 
