@@ -7,7 +7,10 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - uses: actions/checkout@v2     
+      - uses: actions/checkout@v2  
+        with:
+          # pulls all commits (needed for lerna / semantic release to correctly version)
+          fetch-depth: "0"
       - uses: julia-actions/setup-julia@latest
       - uses: julia-actions/julia-runtest@master
       - uses: julia-actions/julia-processcoverage@v1
