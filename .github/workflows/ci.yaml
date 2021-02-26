@@ -10,3 +10,4 @@ jobs:
       - uses: actions/checkout@v2     
       - uses: julia-actions/setup-julia@latest
       - uses: julia-actions/julia-runtest@master
+      - julia --code-coverage test/runtests.jl
