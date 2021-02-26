@@ -415,7 +415,7 @@ Base.adjoint(g::EntanglementZZGate) = EntanglementZZGate(-g.θ[])
 
 matrix(::UniformScaling{Bool}) = ComplexF64[1 0; 0 1]
 
-Base.kron(m::Union{UniformScaling{Bool},G}) where {G<:AbstractGate} = Base.kron(matrix.(m)...)
+Base.kron(m::Union{UniformScaling{Bool},G}...) where {G<:AbstractGate} = Base.kron(matrix.(m)...)
 
 """
 General controlled gate
