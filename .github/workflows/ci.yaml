@@ -3,14 +3,12 @@ name: Run tests
 on: pull_request
 
 jobs:
-  test:
+  unittests:
     runs-on: self-hosted
 
     steps:
       - uses: actions/checkout@v2     
       - uses: julia-actions/setup-julia@latest
       - uses: julia-actions/julia-runtest@master
-
-    after_success:
-      - run: julia -e 'using Pkg; cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
-
+      if: ${{ success() }}
+          - run: julia -e 'using Pkg; cd(Pkg.dir("MyPkg")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
