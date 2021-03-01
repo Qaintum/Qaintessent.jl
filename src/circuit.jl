@@ -195,6 +195,15 @@ end
     MeasurementOperator{M,G}
 
 General measurement operator. `M` is the number of wires affected by the measurement operator, `G` is the actual operator type (gate or sparse matrix).
+```
+julia> m = MeasurementOperator(X, (1,))
+MeasurementOperator{1,XGate}(XGate(), (1,))
+
+julia> m = MeasurementOperator([0 1; 1 0], (1,))
+MeasurementOperator{1,SparseArrays.SparseMatrixCSC{Complex{Float64},Int64}}(
+  [2, 1]  =  1.0+0.0im
+  [1, 2]  =  1.0+0.0im, (1,))
+```
 """
 struct MeasurementOperator{M,G}
     operator::G
@@ -208,7 +217,7 @@ struct MeasurementOperator{M,G}
     function MeasurementOperator(m::G, iwire::NTuple{M,Integer}) where {M,G <: AbstractMatrix}
         d = 2
         size(m) == (d^M, d^M) || error("Measurement operator must be a $(d^M) × $(d^M) matrix.")
-        m ≈ Base.adjoint(m) || error("Measurement operator must be Hermitian.")
+        m ≈ adjoint(m) || error("Measurement operator must be Hermitian.")
         new{M,SparseMatrixCSC{Complex{Float64},Int}}(sparse(m), iwire)
     end
 
@@ -262,9 +271,9 @@ sparse_matrix(g::SparseMatrixCSC{Complex{Float64},Int}) = g
 
 
 """
-    Circuit
+    Circuit{N}
 
-Quantum circuit consisting of a unitary gate chain and measurement operators.
+Quantum circuit consisting of a unitary gate chain and measurement operators with `N` qubits.
 """
 struct Circuit{N}
     moments::Vector{Moment}
