@@ -68,6 +68,9 @@ include("commute.jl")
         iscommuting
 
 include("apply.jl")
+export
+    apply
+    
 include("apply_density.jl")
 export
     apply
