@@ -9,8 +9,7 @@ CurrentModule = Qaintessent
 ## Density Matrices
 ```@docs
 DensityMatrix
-apply(cg::CircuitGate{M,G}, ρ::DensityMatrix) where {M,G}
-apply(cg::Vector{<:CircuitGate}, ρ::DensityMatrix)
+apply(cgs::Vector{<:CircuitGate}, ρ::DensityMatrix)
 apply(c::Circuit{N}, ρ::DensityMatrix) where {N}
 ```
 
