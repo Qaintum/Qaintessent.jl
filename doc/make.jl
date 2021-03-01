@@ -6,7 +6,9 @@ makedocs(
         "Home" => "index.md",
         "Section" => [
             "gates.md",
+            "circuitgates.md",
             "circuit.md",
+            "densitymatrices.md",
             "gradients.md",            
             "view.md",
             "qasm.md"

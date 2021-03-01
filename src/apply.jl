@@ -165,12 +165,23 @@ end
 """
     apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
 
-Apply a `CircuitGate{M,G}` to a quantum state vector `ψ`.
+Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
+# Examples
+
+```jldoctest
+julia> cg = circuit_gate(1, HadamardGate());
+julia> ψ = [1 0];
+julia> apply(cg, ψ)
+2-element Array{Complex{Float64},1}:
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
+```
 """
 function apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
     l = length(ψ)::Int
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
+    req_wires(cg) <= N || error("CircuitGate requires a minimum of $(req_wires(cg)) qubits, input vector `ψ` has $N qubits")
     _apply(cg, ψ, N)
 end
 
@@ -190,12 +201,27 @@ end
 """
     apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
 
-Apply a sequence of circuit gates to a quantum state vector `ψ`.
+Apply a sequence of [`CircuitGate`](@ref)(s) to a quantum state vector `ψ`.
+
+# Examples
+
+```jldoctest
+julia> cgs = [circuit_gate(1, HadamardGate()),
+                circuit_gate(1, X),
+                circuit_gate(1, Y)];
+julia> ψ = [1 0];
+julia> apply(cgs, ψ)
+2-element Array{Complex{Float64},1}:
+ 0.0 - 0.7071067811865475im
+ 0.0 + 0.7071067811865475im
+```
 """
 function apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
     l = length(ψ)
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
+    req = maximum(req_wires.(cgs))
+    req <= N || error("CircuitGates require a minimum of $req qubits, input vector `ψ` has $N qubits")
     for cg in cgs 
         ψ = _apply(cg, ψ, N)
     end
