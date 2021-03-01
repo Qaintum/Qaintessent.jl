@@ -7,21 +7,105 @@ Abtract unitary quantum gate. `N` is the number of "wires" the gate acts on.
 abstract type AbstractGate end
 
 """
-Pauli X gate
+    Base.adjoint(::AbstractGate)
+
+returns adjoint of AbstractGate objects
+
+# Examples
+```jldoctest    
+julia> X ≈ X
+true
+
+julia> Y ≈ Z
+false
+
+julia> RxGate(0.3) ≈ RxGate(0.3)
+true
+
+julia> RxGate(0.3) ≈ RxGate(0.2)
+false
+```
+"""
+Base.adjoint(::AbstractGate) = error("Not implemented")
+
+"""
+    num_wires(::AbstractGate)
+
+returns number of wires affected by AbstractGate object.
+
+# Examples
+```jldoctest
+julia> num_wires(X)
+1
+
+julia> num_wires(SwapGate())
+2
+```
+"""
+num_wires(::AbstractGate) = error("Not implemented")
+
+"""
+    matrix(::AbstractGate)
+
+returns dense matrix representation of [`AbstractGate`](@ref) objects
+
+# Examples
+```jldoctest    
+julia> matrix(X)
+2×2 Array{Complex{Float64},2}:
+ 0.0+0.0im  1.0+0.0im
+ 1.0+0.0im  0.0+0.0im
+```
+"""
+matrix(::AbstractGate) = error("Not implemented")
+
+"""
+    sparse_matrix(::AbstractGate)
+
+returns sparse matrix representation of [`AbstractGate`](@ref) objects
+
+# Examples
+```jldoctest    
+julia> sparse_matrix(X)
+2×2 SparseArrays.SparseMatrixCSC{Complex{Float64},Int64} with 2 stored entries:
+  [2, 1]  =  1.0+0.0im
+  [1, 2]  =  1.0+0.0im
+```
+"""
+sparse_matrix(::AbstractGate) = error("Not implemented")
+
+"""
+    adjoint(::AbstractGate)
+
+returns adjoint of [`AbstractGate`](@ref)
+
+# Examples
+```jldoctest    
+julia> adjoint(X)
+XGate()
+
+julia> adjoint(RxGate(0.3))
+RxGate(-0.3)
+```
+"""
+
+
+"""
+    Pauli X gate
 
 ``X = \\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}``
 """
 struct XGate <: AbstractGate end
 
 """
-Pauli Y gate
+    Pauli Y gate
 
 ``Y = \\begin{pmatrix} 0 & -i \\\\ i & 0 \\end{pmatrix}``
 """
 struct YGate <: AbstractGate end
 
 """
-Pauli Z gate
+    Pauli Z gate
 
 ``Z = \\begin{pmatrix} 1 & 0 \\\\ 0 & -1 \\end{pmatrix}``
 """
@@ -56,7 +140,7 @@ num_wires(::ZGate)::Int = 1
 
 
 """
-Hadamard gate
+    Hadamard gate
 
 ``H = \\frac{1}{\\sqrt{2}} \\begin{pmatrix} 1 & 1 \\\\ 1 & 1 \\end{pmatrix}``
 """
@@ -74,28 +158,28 @@ num_wires(::HadamardGate)::Int = 1
 
 
 """
-S gate
+    S gate
 
 ``S = \\begin{pmatrix} 1 & 0 \\\\ 0 & i \\end{pmatrix}``
 """
 struct SGate <: AbstractGate end
 
 """
-T gate
+    T gate
 
 ``T = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{\\frac{iπ}{4}} \\end{pmatrix}``
 """
 struct TGate <: AbstractGate end
 
 """
-S† gate
+    S^{†} gate
 
 ``S^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & -i \\end{pmatrix}``
 """
 struct SdagGate <: AbstractGate end
 
 """
-T† gate
+    T^{†} gate
 
 ``T^{†} = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{-\\frac{iπ}{4}} \\end{pmatrix}``
 """
@@ -131,9 +215,9 @@ num_wires(::TdagGate)::Int = 1
 
 
 """
-Rotation-X gate
+    Rotation-X gate
 
-``R_{x}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}) & -i\\sin(\\frac{\\theta}) \\\\ -i\\sin(\\frac{\\theta}) & \\cos(\\frac{\\theta}) \\end{pmatrix}``
+``R_{x}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -i\\sin(\\frac{\\theta}{2}) \\\\ -i\\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
 """
 struct RxGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
@@ -159,9 +243,9 @@ num_wires(::RxGate)::Int = 1
 
 
 """
-Rotation-Y gate
+    Rotation-Y gate
 
-``R_{y}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}) & -\\sin(\\frac{\\theta}) \\\\ \\sin(\\frac{\\theta}) & \\cos(\\frac{\\theta}) \\end{pmatrix}``
+``R_{y}(\\theta) = \\begin{pmatrix} \\cos(\\frac{\\theta}{2}) & -\\sin(\\frac{\\theta}{2}) \\\\ \\sin(\\frac{\\theta}{2}) & \\cos(\\frac{\\theta}{2}) \\end{pmatrix}``
 """
 struct RyGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
@@ -187,9 +271,9 @@ num_wires(::RyGate)::Int = 1
 
 
 """
-Rotation-Z gate
+    Rotation-Z gate
 
-``R_{z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}} & 0 \\\\ 0 & e^{\\frac{i\\theta}} \\end{pmatrix}``
+``R_{z}(\\theta) = \\begin{pmatrix} e^{\\frac{-i\\theta}{2}} & 0 \\\\ 0 & e^{\\frac{i\\theta}{2}} \\end{pmatrix}``
 """
 struct RzGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
@@ -218,9 +302,9 @@ num_wires(::RzGate)::Int = 1
 
 
 """
-General rotation operator gate: rotation by angle `θ` around unit vector `n`.
+    General rotation operator gate: rotation by angle `θ` around unit vector `n`.
 
-``R_{\\vec}(\\theta) = \\cos(\\frac{\\theta})I - i\\sin(\\frac{\\theta})\\vec\\sigma, \\\\ \\sigma = [X, Y, Z]``
+``R_{\\vec v}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec v \\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate
     nθ::Vector{Float64}
@@ -257,7 +341,7 @@ num_wires(::RotationGate)::Int = 1
 
 
 """
-Phase shift gate
+    Phase shift gate
 
 ``P(\\phi) = \\begin{pmatrix} 1 & 0 \\\\ 0 & e^{i\\phi} \\end{pmatrix}``
 """
@@ -283,7 +367,7 @@ num_wires(::PhaseShiftGate)::Int = 1
 
 
 """
-Swap gate
+    Swap gate
 
 ``SWAP = \\begin{pmatrix} 1 & 0 & 0 & 0 \\\\ 0 & 0 & 1 & 0 \\\\ 0 & 1 & 0 & 0 \\\\ 0 & 0 & 0 & 1 \\end{pmatrix}``
 """
@@ -303,7 +387,7 @@ num_wires(::SwapGate)::Int = 2
 
 
 """
-Entanglement-XX gate
+    Entanglement-XX gate
 
 ``G_{x}(\\theta) = e^{-i \\theta X \\otimes X / 2}``
 
@@ -339,7 +423,7 @@ num_wires(::EntanglementXXGate)::Int = 2
 
 
 """
-Entanglement-YY gate
+    Entanglement-YY gate
 
 ``G_{y}(\\theta) = e^{-i \\theta Y \\otimes Y / 2}``
 
@@ -375,7 +459,7 @@ num_wires(::EntanglementYYGate)::Int = 2
 
 
 """
-Entanglement-ZZ gate
+    Entanglement-ZZ gate
 
 ``G_{z}(\\theta) = e^{-i \\theta Z \\otimes Z / 2}``
 
@@ -414,11 +498,19 @@ Base.adjoint(g::EntanglementZZGate) = EntanglementZZGate(-g.θ[])
 
 
 matrix(::UniformScaling{Bool}) = ComplexF64[1 0; 0 1]
-
-Base.kron(m::Union{UniformScaling{Bool},G}...) where {G<:AbstractGate} = Base.kron(matrix.(m)...)
+sparse_matrix(::UniformScaling{Bool}) = sparse((1.0+0.0im)*I, 2, 2)
 
 """
-General controlled gate
+    kron(m::Union{UniformScaling{Bool},G}...) where {G<:AbstractGate}
+
+returns sparse matrix representation of kronecker product of AbstractGate objects
+"""
+Base.kron(m::Union{UniformScaling{Bool},G}...) where {G<:AbstractGate} = Base.kron(sparse_matrix.(m)...)
+
+"""
+    ControlledGate{G}(U::G, M::Int) where {G<:AbstractGate}
+
+returns ControlledGate object. Controls [`AbstractGate`](@ref) of type `G` with `M` control wires
 """
 struct ControlledGate{G} <: AbstractGate
     "target gate"
@@ -429,7 +521,35 @@ end
 
 # wires
 num_wires(g::ControlledGate)::Int = g.M + num_wires(g.U)
+
+"""
+    target_wires(g::ControlledGate)
+
+return target wires for a [`ControlledGate`](@ref)
+
+# Examples
+```jldocttest
+# controlled gate with 1 target wire
+julia> cnot = ControlledGate(X, 1);
+julia> target_wires(cnot)
+1
+```
+"""
 target_wires(g::ControlledGate) = num_wires(g.U)
+
+"""
+    control_wires(g::ControlledGate)
+
+return control wires for a [`ControlledGate`](@ref)
+
+# Examples
+```jldocttest
+# controlled gate with 2 control wires
+julia> ccnot = ControlledGate(X, 2);
+julia> target_wires(ccnot)
+2
+```
+"""
 control_wires(g::ControlledGate) = g.M
 
 function matrix(g::ControlledGate{G}) where {G <:AbstractGate}
@@ -461,7 +581,9 @@ isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 
 
 """
-MatrixGate: general gate constructed from an unitary matrix
+    MatrixGate
+
+general gate constructed from an unitary matrix
 """
 struct MatrixGate <: AbstractGate
     matrix::SparseMatrixCSC{ComplexF64,Int}
@@ -483,7 +605,23 @@ Base.adjoint(g::MatrixGate) = MatrixGate(Base.adjoint(g.matrix))
 
 LinearAlgebra.ishermitian(g::MatrixGate) = LinearAlgebra.ishermitian(g.matrix)
 
+"""
+    Base.isapprox(g1::G, g2::G) where {G <: AbstractGate} 
 
+returns true if input AbstractGates are of same type with same paremeters
+
+# Examples
+```jldoctest
+julia> X ≈ X
+true
+
+julia> X ≈ Y
+false
+
+julia> RxGate(0.1) ≈ RxGate(0.2)
+false
+```
+"""
 function Base.isapprox(g1::G, g2::G) where {G <: AbstractGate} 
     for name in fieldnames(G)
         if !(getfield(g1, name) ≈ getfield(g2, name))
