@@ -20,7 +20,7 @@ using Qaintessent
 using LinearAlgebra
 
 N = 3
-cgc_ref = CircuitGate[
+cgs_ref = CircuitGate[
     circuit_gate(3, XGate()),
     circuit_gate(1, RyGate(0.3π)),
     circuit_gate(2, RzGate(2.4)),
@@ -30,7 +30,7 @@ cgc_ref = CircuitGate[
     ]
 
 meas = MeasurementOperator(Matrix{Float64}(I, 2^N, 2^N), (1,2,3))
-c_ref = Circuit{N}(cgc_ref, [meas])
+c_ref = Circuit{N}(cgs_ref, [meas])
 qasm_rep = cgc2qasm(c_ref)
 
 cgc_from_qasm = qasm2cgc(qasm_rep)

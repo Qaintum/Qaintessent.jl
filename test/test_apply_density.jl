@@ -95,4 +95,21 @@ using Qaintessent
         # @code_warntype(apply(cg, ρ))
         @test ρs.v ≈ ρsref.v
     end
+
+    
+    @testset "density matrix apply multiple unitary gates" begin
+        iwperm = randperm(N)
+
+        cgs = [circuit_gate((iwperm[1], iwperm[2]), EntanglementYYGate(2π*rand()), (iwperm[3], iwperm[4])),
+            circuit_gate((iwperm[1], iwperm[2]), EntanglementZZGate(2π*rand()), (iwperm[3], iwperm[4])),
+            circuit_gate((iwperm[1], iwperm[2]), EntanglementXXGate(2π*rand()), (iwperm[3], iwperm[4])),
+        ]
+        ψs = apply(cgs, ψ)
+
+        ρsref = density_from_statevector(ψs)
+        
+        ρs = apply(cgs, ρ)
+        # @code_warntype(apply(cg, ρ))
+        @test ρs.v ≈ ρsref.v
+    end
 end

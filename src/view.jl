@@ -188,7 +188,7 @@ function _show(io::IO, c::Vector{Moment}, N::Union{Nothing,Int}=nothing)
     end
     cg = getproperty.(c, :gates)
     cg = collect(Base.Iterators.flatten(cg))
-    Base.show(io::IO, cg, N)
+    show(io::IO, cg, N)
 end
 
 """

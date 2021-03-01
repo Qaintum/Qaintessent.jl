@@ -1,41 +1,12 @@
 # Circuit Construction and Usage
 
-The output of typical Quantum simulation is the expectation values of the output quantum state based on certain measurement operators. In Qaintessent.jl, this is accomplished by applying a Quantum [Circuit](@ref)(s) consisting of a  series of [CircuitGate](@ref) objects and [Measurement Operators](@ref). See the corresponding sections for more information.
+The output of typical Quantum simulation is the expectation values of the output quantum state based on certain measurement operators. In Qaintessent.jl, this is accomplished by applying a Quantum [Circuit](@ref) consisting of a  series of [`CircuitGate`](@ref) objects and [Measurement Operators](@ref).
 
 ```@meta
 CurrentModule = Qaintessent
-```
-
-## CircuitGate
-The basic building block of any [Circuit](@ref) is CircuitGates. These are constructed from basic quantum [Gates](@ref). The constructor for CircuitGates is complicated: [CircuitGate Helper Functions](@ref) and a [CircuitGate Example](@ref) can be found below.
-
-```@docs
-CircuitGate
-apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
-```
-
-### CircuitGate Helper Functions
-```@docs
-circuit_gate
-```
-
-### CircuitGate Example
-
-The `Qaintessent.matrix` function can be used to convert `CircuitGate` objects to a CSC sparse matrix representation
-
-```@example CircuitGate
+DocTestSetup = quote
     using Qaintessent
-    N = 2
-    cnot = circuit_gate(1, XGate(), 2)
-
-    Qaintessent.sparse_matrix(cnot)
-```
-The `CircuitGate` can then be applied to a quantum state in state vector form.
-
-```@example CircuitGate
-    ψ = ComplexF64[0, 0, 1, 0]
-
-    apply(cnot, ψ)
+end
 ```
 
 ## Moments
@@ -45,7 +16,6 @@ When performing a quantum simulation, it may be required to define an intermedia
 Moment
 apply(m::Moment, ψ::Vector{<:Complex})
 ```
-
 ### Moment Example
 
 ```@example Moment
@@ -75,32 +45,37 @@ MeasurementOperator
 ```
 
 ## Circuit
-`Circuit` objects combine a Vector of `Moment` and a `MeasurementOperator` objects. Applying a `Circuit` to a given input quantum state outputs the various expectation values from the measurement operators defined in the `MeasurementOperator` objects. A simple circuit is shown in the [Circuit Example](@ref).
+[Circuit](@ref) objects combine a `Vector{Moment}` object and `Vector{MeasurementOperator}` object. Applying a `Circuit` to a given input quantum state outputs the various expectation values from the measurement operators defined in the [`Qaintessent.MeasurementOperator`](@ref) objects. A simple circuit is shown in the [Circuit Example](@ref).
 
 ```@docs
-Circuit
+Circuit{N}
 apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
 ```
 
 ### Circuit Example
 
-```@example Circuit
-    using Qaintessent
-    N = 3
-    cgc = CircuitGate[
-        circuit_gate(1, HadamardGate()),   
-        circuit_gate(2, HadamardGate()),
-        circuit_gate(3, HadamardGate()),
-    ]
-    I = ComplexF64[1 0 ; 0 1]
-    meas = [MeasurementOperator(X, (1,))]
-    c = Circuit{N}(cgc, meas)
-    println(c) # hide
+```jldoctest Circuit
+julia> N = 3;
+
+julia> cgs = CircuitGate[circuit_gate(1, HadamardGate()), circuit_gate(2, HadamardGate()), circuit_gate(3, HadamardGate())];
+
+julia> meas = [MeasurementOperator(X, (1,))]; # Measure with regard to X basis on first qubit.
+
+julia> c = Circuit{N}(cgs, meas) # create circuit object
+
+    3 —[H ]—
+            
+    2 —[H ]—
+            
+    1 —[H ]—
+
 ```
-Applying the `Circuit` object to a 3-qubit quantum state all in the ground 0 state.
+Applying the [Circuit](@ref) object to a 3-qubit quantum state all in the ground 0 state.
 
-```@example Circuit
-    ψ = ComplexF64[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+```jldoctest Circuit
+julia> ψ = ComplexF64[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 
-    apply(c, ψ)
+julia> apply(c, ψ)
+1-element Array{Float64,1}:
+ 0.9999999999999996
 ```

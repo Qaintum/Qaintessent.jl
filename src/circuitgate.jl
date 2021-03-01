@@ -1,6 +1,6 @@
 
 """
-AbstractCircuitGate
+    AbstractCircuitGate
 
 Abstract unitary quantum circuit gate.
 """
@@ -8,7 +8,7 @@ abstract type AbstractCircuitGate end
 
 
 """
-CircuitGate{M,G} <: AbstractCircuitGate
+    CircuitGate{M,G} <: AbstractCircuitGate
 
 Unitary quantum circuit gate. `M` is the number of wires affected by the CircuitGate, and `G` is the basic gate used to construct the CircuitGate.
 """
@@ -46,6 +46,11 @@ end
     req_wires(cg::CircuitGate{M,G})
 
 Minimum number of required qubit wires in a circuit to host the circuit gate `cg`.
+```jldoctest
+julia> cg = circuit_gate(3, X, (1,2,5));
+julia> req_wires(cg)
+5
+```
 """
 req_wires(cg::CircuitGate{M,G}) where {M,G} = maximum(cg.iwire)
 
@@ -69,9 +74,21 @@ LinearAlgebra.ishermitian(cg::CircuitGate) = LinearAlgebra.ishermitian(cg.gate)
 
 
 """
-    sparse_matrix(cg::CircuitGate{M,G}) where {M,G<:AbstractGate}
+    sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: AbstractGate}
 
-returns matrix representation of a `CircuitGate{M,G}` object that can applied to a state vector of `N` qubits.
+returns matrix representation of a [CircuitGate](@ref) object that can applied to a state vector of `N` qubits. `N` can be
+
+# Examples
+
+```jldoctest
+julia> cg = circuit_gate(2, Y, 1);
+julia> sparse_matrix(cg)
+4×4 SparseArrays.SparseMatrixCSC{Complex{Float64},Int64} with 4 stored entries:
+  [1, 1]  =  1.0+0.0im
+  [4, 2]  =  0.0+1.0im
+  [3, 3]  =  1.0+0.0im
+  [2, 4]  =  0.0-1.0im
+```
 """
 function sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: AbstractGate}
     # convert to array
@@ -89,6 +106,31 @@ function sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: Abstrac
     distribute_to_wires(gmat, iwire, N, M)
 end
 
+"""
+    sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
+
+returns matrix representation of a `Vector{<:CircuitGate}` object that can applied to a state vector of `N` qubits.
+
+# Examples
+
+```jldoctest
+julia> cgs = CircuitGate[
+                circuit_gate(2, Y, 1),
+                circuit_gate(2, Z),
+                circuit_gate(1, HadamardGate())
+                ];
+julia> sparse_matrix(cgs)
+4×4 SparseArrays.SparseMatrixCSC{Complex{Float64},Int64} with 8 stored entries:
+  [1, 1]  =  0.707107+0.0im
+  [2, 1]  =  0.707107+0.0im
+  [3, 2]  =  0.0-0.707107im
+  [4, 2]  =  0.0+0.707107im
+  [3, 3]  =  -0.707107+0.0im
+  [4, 3]  =  -0.707107+0.0im
+  [1, 4]  =  0.0-0.707107im
+  [2, 4]  =  0.0+0.707107im
+```
+"""
 function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
     Nmin = maximum(req_wires.(cgs))
     if N == 0
@@ -169,7 +211,18 @@ end
 """
     circuit_gate
 
-Construct a `CircuitGate` object from basic gate types.
+helper function to construct a [`CircuitGate`](@ref) object from basic gate types.
+
+```jldoctest
+julia> circuit_gate(1, X)
+CircuitGate{1,XGate}((1,), XGate())
+
+julia> circuit_gate(1, X, 2)
+CircuitGate{2,ControlledGate{XGate}}((1, 2), ControlledGate{XGate}(XGate(), 1))
+
+julia> circuit_gate((1,2), SwapGate(), (3,4))
+CircuitGate{4,ControlledGate{SwapGate}}((1, 2, 3, 4), ControlledGate{SwapGate}(SwapGate(), 2))
+```
 """
 function circuit_gate(iwire::Integer, gate::AbstractGate, control::Integer...)
     circuit_gate(iwire, gate, control)

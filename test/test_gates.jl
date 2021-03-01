@@ -154,3 +154,10 @@ end
         @test LinearAlgebra.ishermitian(cgateU) == (Qaintessent.matrix(cgateU) == Qaintessent.matrix(cgateUdag))
     end
 end
+
+@testset ExtendedTestSet "abstract gate tests" begin
+    @test_throws Exception adjoint(AbstractGate()) 
+    @test_throws Exception num_wires(AbstractGate()) 
+    @test_throws Exception matrix(AbstractGate()) 
+    @test_throws Exception sparse_matrix(AbstractGate()) 
+end
