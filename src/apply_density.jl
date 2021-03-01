@@ -1173,3 +1173,17 @@ function apply(c::Circuit{N}, ρ::DensityMatrix) where {N}
     ρmat = matrix(ρ)
     return [real(tr(sparse_matrix(m, N) * ρmat)) for m in c.meas]
 end
+
+"""
+    apply(cgs::Vector{<:CircuitGate}, ρ::DensityMatrix)
+
+Apply a [`CircuitGate`](@ref) to a quantum density matrix `ρ`.
+"""
+function apply(cgs::Vector{<:CircuitGate}, ρ::DensityMatrix)
+    req = maximum(req_wires.(cgs))
+    ρ.N >= req || error("Qubit number $req of [CircuitGate](@ref) not equal to qubit number $(ρ.N) of density matrix `ρ`")
+    for cg in cgs
+        ρ = apply(cg, ρ)
+    end
+    return ρ
+end
