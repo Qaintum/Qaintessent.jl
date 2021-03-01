@@ -1,9 +1,9 @@
 using LinearAlgebra
 
 """
-    iscommuting(A, B)
+    iscommuting(A::AbstractMatrix, B::AbstractMatrix)
 
-Test whether two AbstractMatix commute.
+returns true if [`AbstractMatrix`](@ref) `A` and `B` commute.
 """
 function iscommuting(A::AbstractMatrix, B::AbstractMatrix)
     # require compatible dimensions
@@ -56,9 +56,9 @@ iscommuting(::EntanglementZZGate, ::EntanglementZZGate) = true
 iscommuting(A::AbstractGate, B::AbstractGate) = iscommuting(Qaintessent.sparse_matrix(A), Qaintessent.sparse_matrix(B))
 
 """
-    iscommuting(A, B)
+    iscommuting(A::CircuitGate{L,ControlledGate{G}}, B::CircuitGate{M,ControlledGate{G}}) where {L,M,G<:AbstractGate}
 
-Test whether two controlled CircuitGate commute.
+returns true if controlled [`CircuitGate`](@ref) `A` and `B` commute.
 """
 function iscommuting(A::CircuitGate{L,ControlledGate{G}}, B::CircuitGate{M,ControlledGate{G}}) where {L,M,G<:AbstractGate}
     N = maximum((maximum(B.iwire), maximum(A.iwire)))
@@ -78,9 +78,9 @@ end
 
 
 """
-    iscommuting(A, B)
+    iscommuting(A::CircuitGate{L,G}, B::CircuitGate{M,H}) where {L,M,G,H}
 
-Test whether two general CircuitGate commute.
+returns true if general [`CircuitGate`](@ref) `A` and `B` commute.
 """
 function iscommuting(A::CircuitGate{L,G}, B::CircuitGate{M,H}) where {L,M,G,H}
     N = maximum((maximum(B.iwire), maximum(A.iwire)))
@@ -96,6 +96,11 @@ function iscommuting(A::CircuitGate{L,G}, B::CircuitGate{M,H}) where {L,M,G,H}
     iscommuting(Qaintessent.sparse_matrix(A,N), Qaintessent.sparse_matrix(B,N))
 end
 
+"""
+    iscommuting(A::MeasurementOperator{L,G}, B::MeasurementOperator{M,H}) where {L,M,G,H}
+
+returns true if [`MeasurementOperator`](@ref) `A` and `B` commute.
+"""
 function iscommuting(A::MeasurementOperator{L,G}, B::MeasurementOperator{M,H}) where {L,M,G,H}
     N = maximum((maximum(A.iwire), maximum(B.iwire)))
     if length(intersect(A.iwire, B.iwire)) == 0
