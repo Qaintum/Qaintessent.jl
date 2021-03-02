@@ -2,7 +2,6 @@ module Qaintessent
 
 using LinearAlgebra
 using SparseArrays
-using StaticArrays
 using Memoize
 
 

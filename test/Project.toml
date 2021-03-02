@@ -1,9 +1,6 @@
-name = "Qaintessent"
-uuid = "9e6618a4-6605-11ea-2880-e931cf774ea8"
-authors = ["Christian B. Mendl <christian.b.mendl@gmail.com>"]
-version = "0.1.0"
-
 [deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 GenericSchur = "c145ed77-6b09-5dd9-b285-bf645a82121e"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -14,13 +11,3 @@ RBNF = "83ef0002-5b9e-11e9-219b-65bac3c6d69c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RandomMatrices = "2576dda1-a324-5b11-aa66-c48ed7e3c618"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-
-[compat]
-GenericSchur = "0.4.0"
-JLD = "0.10.0"
-MLStyle = "0.4.6"
-Memoize = "0.4.3"
-PrettyPrint = "0.2.0"
-RBNF = "0.2.0"
-RandomMatrices = "0.5.0"
-julia = "1.5.0, 1.5.3, 1.6.0"
