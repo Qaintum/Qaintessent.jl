@@ -30,3 +30,13 @@ using Qaintessent
     ρalt = density_from_matrix(ρmat)
     @test ρalt.v ≈ ρ.v
 end
+
+@testset ExtendedTestSet "density matrix helper functions" begin
+    N = 4
+    ψ1 = randn(ComplexF64, 2^N)
+    ψ2 = randn(ComplexF64, 2^N)
+    ρ1 = density_from_statevector(ψ1)
+    ρ2 = density_from_statevector(ψ2)
+
+    @test dot(ρ1, ρ2) ≈ dot(ρ1.v, ρ2.v)
+end
