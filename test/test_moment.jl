@@ -38,6 +38,25 @@ using Qaintessent
         @test sparse_matrix(adjoint(m)) ≈ adjoint(sparse_matrix(m))
     end
 
+    @testset "moments approx" begin
+        g = CircuitGate((2,), ZGate())
+        h = CircuitGate((1,), SGate())
+        m = Moment([g, h])
+        m1 = Moment([g, h])
+        m2 = Moment([h, g])
+
+        @test !(m1 ≈ m2)
+        @test m1 ≈ m
+    end
+
+    @testset "moments sparse_matrix" begin
+        g = CircuitGate((2,), ZGate())
+        h = CircuitGate((1,), SGate())
+        m = Moment([g, h])        
+        
+        @test sparse_matrix(m) ≈ sparse_matrix(g, 2) * sparse_matrix(h, 2)
+    end
+
     @testset "moments reverse" begin
         g = CircuitGate((2,), ZGate())
         h = CircuitGate((1,), SGate())
@@ -47,5 +66,9 @@ using Qaintessent
         @test m_reverse[1] ≈ h
         @test m[1] ≈ g
         @test m[2] ≈ h
+
+        @test all(reverse!(m) .≈ m_reverse)
+        @test m[1] ≈ h
+        @test m[2] ≈ g
     end
 end
