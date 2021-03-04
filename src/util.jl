@@ -5,8 +5,8 @@ using LinearAlgebra
 
 Assemble the "Pauli vector" matrix.
 """
-_pv = ComplexF64[z x - im * y; x + im * y -z]
-pauli_vector(x, y, z) = _pv
+
+pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
 
 
 """
