@@ -1,4 +1,4 @@
-
+using LinearAlgebra
 """
     DensityMatrix
 
@@ -22,7 +22,6 @@ struct DensityMatrix
         new(v, N)
     end
 end
-
 
 """
     matrix(ρ::DensityMatrix)
@@ -53,19 +52,20 @@ Construct density matrix |ψ⟩⟨ψ| (Pauli representation) corresponding to qu
 function density_from_statevector(ψ::Vector)
     N = intlog2(length(ψ))
     2^N == length(ψ) || error("Length of input vector must be a power to 2.")
+
     pauli = SparseMatrixCSC{ComplexF64,Int}[
         sparse(one(ComplexF64)*I, 2, 2),
         sparse_matrix(X),
         sparse_matrix(Y),
         sparse_matrix(Z),
     ]
+
     v = zeros(4^N)
     for i in 1:4^N
         v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(quaternary_digits(i - 1, N))]...) * ψ))
     end
     return DensityMatrix(v, N)
 end
-
 
 """
     density_from_matrix(ρmat::AbstractMatrix)
@@ -103,4 +103,21 @@ end
 function pauli_group_matrix(paulistring::String)
     pd = Dict('I' => 0, 'X' => 1, 'Y' => 2, 'Z' => 3)
     pauli_group_matrix([pd[s] for s in paulistring])
+end
+
+
+"""
+    dot(ρ::DensityMatrix, Δ::DensityMatrix)
+
+returns dot product of DensityMatrix coefficients
+```jldoctest
+julia> ρ1 = density_from_statevector([0, 1, 0, 1]);
+julia> ρ2 = density_from_statevector([0, 0, 0, 1]);
+julia> dot(ρ1, ρ2)
+1
+```
+"""
+function LinearAlgebra.dot(ρ::DensityMatrix, Δ::DensityMatrix)
+    ρ.N == Δ.N || DimensionMismatch("first density matrix has $(ρ.N) qubits which does not match the number of qubits of the second, $(Δ.N)")
+    return dot(ρ.v, Δ.v)
 end
