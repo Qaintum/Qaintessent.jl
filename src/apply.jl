@@ -2,7 +2,6 @@
 apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
 
 
-
 """Tailored apply for XGate"""
 function _apply(cg::CircuitGate{1,XGate}, ψ::Vector{<:Complex}, N::Int) 
     i = cg.iwire[1]
