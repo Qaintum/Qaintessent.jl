@@ -17,10 +17,10 @@ struct Circuit{N}
     """
     function Circuit{N}(mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
         if isnothing(mops)
-            return new{N}(Moment[])
+            return new{N}(Moment[], MeasurementOperator[])
         end
-        meas_N = maximum(req_wires.(mops))
-        meas_N <= N || error("Measurement operators affecting $meas_N wires provided for Circuit of size $N")
+        mops_N = maximum(req_wires.(mops))
+        mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
         check_commute(mops) || error("Measurement operators do not commute") 
         return new{N}(Moment[], mops)
     end
@@ -47,10 +47,10 @@ struct Circuit{N}
         push!(moments, Moment(gates[j:end]))
 
         if isnothing(mops)
-            return new{N}(moments)
+            return new{N}(moments, MeasurementOperator[])
         end
-        meas_N = maximum(size.(mops))
-        meas_N <= N || error("Measurement operators affecting $meas_N wires provided for Circuit of size $N")
+        mops_N = maximum(size.(mops))
+        mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
         check_commute(mops) || error("Measurement operators do not commute") 
         return new{N}(moments, mops)
     end
@@ -85,8 +85,21 @@ sparse_matrix(c::Circuit{N}) where {N} = sparse_matrix(c.moments, N)
 function add_measurement!(c::Circuit{N}, mops::Vector{<:MeasurementOperator}) where {N}
     meas_N = maximum(req_wires.(mops))
     meas_N <= N || error("Measurement operators affecting $meas_N wires provided for circuit of size $N")
-    check_commute(mops) || error("Measurement operators do not commute") 
-    c.meas = mops
+    if isdefined(c, :meas)
+        check_commute([c.meas; mops]) || error("Measurement operators do not commute") 
+    else
+        check_commute(mops) || error("Measurement operators do not commute") 
+    end
+    append!(c.meas, mops)
+end
+
+function add_measurement!(c::Circuit{N}, mop::MeasurementOperator) where {N}
+    meas_N = maximum(req_wires(mop))
+    meas_N <= N || error("Measurement operators affecting $meas_N wires provided for circuit of size $N")
+    if isdefined(c, :meas)
+        check_commute([c.meas; mop]) || error("Measurement operators do not commute") 
+    end
+    push!(c.meas, mop)
 end
 
 # make Circuit iterable and indexable

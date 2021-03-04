@@ -249,6 +249,7 @@ end
 
 
 function apply(m::Vector{Moment}, ψ::Vector{<:Complex})
+    length(m) != 0 || error("Vector of length 0 cannot be applied")
     Nmoment = maximum(req_wires.(m))
     l = length(ψ)
     N = Qaintessent.intlog2(l)
@@ -294,6 +295,8 @@ returns list of expectation values from measurement operators in `c.meas` after 
 """
 function apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
     length(ψ)::Int == 2^N || error("Size of vector `ψ` must match Circuit size of $(2^N)")
+    length(c) != 0 || error("Circuit does not contain any gates")
+    length(c.meas) != 0 || error("Circuit does not contain any measurement operators")
     ψl = copy(ψ)
     for moment in c.moments
         ψl = _apply(moment, ψl, N)
