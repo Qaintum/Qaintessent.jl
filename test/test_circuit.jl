@@ -110,8 +110,8 @@ end
         meas = mop.([X, X, X], (1,2,3))
         c = Circuit{N}(cgs, meas)
         reverse_c = reverse(c)
-        reverse_ref_moments = reverse(ref_moments)
-        for i in 1:length(c_new)
+        reverse_ref_moments = reverse(reverse.(ref_moments))
+        for i in 1:length(c)
             @test reverse_c[i] ≈ reverse_ref_moments[i]
             @test c[i] ≈ ref_moments[i]
         end
