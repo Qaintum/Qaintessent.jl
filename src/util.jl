@@ -1,20 +1,12 @@
 using LinearAlgebra
 
-
-"""
-    comm(A, B)
-
-Matrix commutator [A, B].
-"""
-comm(A::AbstractMatrix, B::AbstractMatrix) = A * B - B * A
-
-
 """
     pauli_vector(x, y, z)
 
 Assemble the "Pauli vector" matrix.
 """
-pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
+_pv = ComplexF64[z x - im * y; x + im * y -z]
+pauli_vector(x, y, z) = _pv
 
 
 """
