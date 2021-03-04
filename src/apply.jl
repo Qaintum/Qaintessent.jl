@@ -1,8 +1,6 @@
 
 apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
 
-_apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
-
 
 
 """Tailored apply for XGate"""
