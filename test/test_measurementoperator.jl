@@ -14,6 +14,17 @@ using Qaintessent
 
     meas2 = MeasurementOperator.([X, Y], [(1,),(2,)])
     @test Qaintessent.check_commute(meas2) == true
+
+    meas3 = MeasurementOperator(X, 2)
+    meas4 = MeasurementOperator(Y, 4)
+    @test Qaintessent.check_commute([meas3, meas4]) == true
+end
+
+@testset ExtendedTestSet "measurement operator helper function constuction" begin
+    N = 2
+    meas1 = MeasurementOperator.([X, Y], [(1,),(2,)])
+    meas2 = mop.([X, Y], [(1,),(2,)])
+    @test all(sparse_matrix.(meas1, (2,)) .≈ sparse_matrix.(meas2, (2,)))
 end
 
 @testset ExtendedTestSet "measurement operator abstract matrix exceptions" begin
