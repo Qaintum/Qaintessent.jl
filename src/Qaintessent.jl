@@ -49,9 +49,12 @@ include("moment.jl")
 export
     Moment
 
+include("measurementoperator.jl")
+export
+    MeasurementOperator
+
 include("circuit.jl")
 export
-    MeasurementOperator,
     Circuit,
     distribution
 
