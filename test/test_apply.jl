@@ -34,7 +34,7 @@ using Qaintessent
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
             cg = Moment([circuit_gate(i, g)])
-            cga = Moment([CircuitGate{1,AbstractGate}(cg.iwire, cg.gate)]) # generate same gate with type AbstractGate{1}
+            cga = Moment([CircuitGate{1,AbstractGate}(cg[1].iwire, cg[1].gate)]) # generate same gate with type AbstractGate{1}
 
             @test apply(cg, ψ) ≈ apply(cga, ψ)
             @test apply(cg, ψ) ≈ sparse_matrix(cga, N) * ψ
