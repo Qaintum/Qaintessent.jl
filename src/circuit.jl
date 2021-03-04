@@ -85,20 +85,17 @@ sparse_matrix(c::Circuit{N}) where {N} = sparse_matrix(c.moments, N)
 function add_measurement!(c::Circuit{N}, mops::Vector{<:MeasurementOperator}) where {N}
     meas_N = maximum(req_wires.(mops))
     meas_N <= N || error("Measurement operators affecting $meas_N wires provided for circuit of size $N")
-    if isdefined(c, :meas)
-        check_commute([c.meas; mops]) || error("Measurement operators do not commute") 
-    else
-        check_commute(mops) || error("Measurement operators do not commute") 
-    end
+    
+    check_commute([c.meas; mops]) || error("Measurement operators do not commute") 
+    
     append!(c.meas, mops)
 end
 
 function add_measurement!(c::Circuit{N}, mop::MeasurementOperator) where {N}
     meas_N = maximum(req_wires(mop))
     meas_N <= N || error("Measurement operators affecting $meas_N wires provided for circuit of size $N")
-    if isdefined(c, :meas)
-        check_commute([c.meas; mop]) || error("Measurement operators do not commute") 
-    end
+    check_commute([c.meas; mop]) || error("Measurement operators do not commute") 
+    
     push!(c.meas, mop)
 end
 

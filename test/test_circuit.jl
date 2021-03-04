@@ -139,5 +139,11 @@ end
             @test reverse_c[i] ≈ reverse_ref_moments[i]
             @test c[i] ≈ ref_moments[i]
         end
+
+        reverse_c = reverse!(c)
+        for i in 1:length(c)
+            @test reverse_c[i] ≈ reverse_ref_moments[i]
+            @test c[i] ≈ reverse_ref_moments[i]
+        end
     end
 end
