@@ -62,9 +62,9 @@ struct Circuit{N}
     """
     function Circuit{N}(gate::CircuitGate, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
         if isnothing(mops)
-            return new{N}(Moment(gate))
+            return new{N}([Moment(gate)], MeasurementOperator[])
         end
-        new{N}(Moment(gate), mops)
+        new{N}([Moment(gate)], mops)
     end
 
     @doc """

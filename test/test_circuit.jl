@@ -19,6 +19,26 @@ using Qaintessent
                 circuit_gate(3, Z)]),
         Moment([circuit_gate(1, Y)])
     ]
+    iwires = [(1,), (2,), (3,)]
+
+    @testset "basic circuit with circuit gate" begin
+        c = Circuit{N}(cgs[1])
+        
+        @test c[1] ≈ Moment(cgs[1])
+
+        ψ = randn(ComplexF64, 2^N)
+        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
+
+        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(c, ψ)
+
+        meas = mop.([X, X, X], iwires)
+        
+        c = Circuit{N}(cgs[1], meas)
+        ψs = apply(c.moments, ψ)
+
+        @test c[1] ≈ Moment(cgs[1])
+        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+    end
     
     @testset "basic circuit construction" begin
         c = Circuit{N}(cgs)
@@ -34,17 +54,21 @@ using Qaintessent
     end
 
     @testset "circuit construction without gates" begin
-        meas = mop(Matrix{Float64}(I, 2^N, 2^N), (1,2,3))
+        meas = mop.([X, X, X], iwires)
         
         c = Circuit{N}()
 
         ψ = randn(ComplexF64, 2^N)
 
         @test_throws ErrorException("Circuit does not contain any gates") apply(c, ψ)
+
+        c = Circuit{N}(meas)
+
+        @test_throws ErrorException("Circuit does not contain any gates") apply(c, ψ)
     end
 
     @testset "circuit construction with measurements" begin
-        iwires = [(1,), (2,), (3,)]
+        
         meas = mop.([X, X, X], iwires)
         c = Circuit{N}(cgs, meas)
         ψ = randn(ComplexF64, 2^N)
