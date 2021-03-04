@@ -43,7 +43,8 @@ include("circuitgate.jl")
 export
     AbstractCircuitGate,
     CircuitGate,
-    circuit_gate
+    circuit_gate,
+    req_wires
 
 include("moment.jl")
 export
@@ -51,11 +52,13 @@ export
 
 include("measurementoperator.jl")
 export
-    MeasurementOperator
+    MeasurementOperator,
+    mop
 
 include("circuit.jl")
 export
     Circuit,
+    add_measurement!,
     distribution
 
 include("density_matrix.jl")
