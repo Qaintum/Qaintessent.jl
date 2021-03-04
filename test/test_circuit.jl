@@ -107,6 +107,7 @@ end
     end
 
     @testset "circuit reverse" begin
+        meas = mop.([X, X, X], (1,2,3))
         c = Circuit{N}(cgs, meas)
         reverse_c = reverse(c)
         reverse_ref_moments = reverse(ref_moments)
