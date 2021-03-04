@@ -24,6 +24,10 @@ isunitary(cg::CircuitGate) = (sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)
             Qaintessent.sparse_matrix(cgadj.gate) == adjoint(Qaintessent.sparse_matrix(cg.gate))
             @test LinearAlgebra.ishermitian(cg) == (Qaintessent.sparse_matrix(cg) == Qaintessent.sparse_matrix(adjoint(cg)))
         end
+
+        cgs = circuit_gate.((2,), [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)])
+
+        @test all(sparse_matrix(adjoint(cgs)) .≈ adjoint(sparse_matrix(cgs)))
     end
 
     # test sparse_matrix 
