@@ -33,6 +33,7 @@ end
     end
 
     @test x ≈ n1
+    @test binary_to_int(bd) ≈ n1
 end
 
 @testset ExtendedTestSet "util binary_digits!" begin

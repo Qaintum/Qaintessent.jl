@@ -23,12 +23,26 @@ end
 
 Fill `m` with the binary representation of the integer `x` (least significant bit at first index).
 """
-function binary_digits!(m::BitArray{1}, x::Integer)
+function binary_digits!(m::BitArray{1}, x::Integer=0)
     for i in 1:length(m)
         m[i] = x & 1
         x >>= 1
     end
     return m
+end
+
+"""
+    binary_to_int(m::BitArray{1}, s=0)
+
+converts BitArray `m` into Integer
+"""
+function binary_to_int(m::BitArray{1}, x=0)
+    v = 1
+    for i in view(m,length(m):-1:1)
+        x += v*i
+        v <<= 1
+    end 
+    x
 end
 
 
