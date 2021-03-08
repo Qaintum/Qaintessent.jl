@@ -138,7 +138,7 @@ end
 
         @test all(c[:] .≈ c.moments)
         @test all(c[1:2] .≈ [m1, m2])
-        @test m[1:2] == m.moments
+        @test c[1:2] == c.moments
         @test isempty(c) == false
         @test m2 ≈ pop!(c)
         @test isempty(c) == false
