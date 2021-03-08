@@ -6,7 +6,7 @@ using Qaintessent
 ##==----------------------------------------------------------------------------------------------------------------------
 
 
-@testset ExtendedTestSet "test view" begin
+@testset ExtendedTestSet "view basic" begin
 
     N = 5
     cgc = [
@@ -38,18 +38,27 @@ using Qaintessent
         "              |     |                       |                 |         \n" *
         "    1 ————————•—————x————————————————[Ry]———x—————————————————•—————————\n"
 
+    io = IOBuffer()
+    show(io, cgc)
+    @test String(take!(io)) == cgc_refstring
+    
+
+end
+
+@testset ExtendedTestSet "empty basic view" begin
+    cgc = CircuitGate[]
+
+    cgc_refstring = "[]\n"
 
     io = IOBuffer()
     show(io, cgc)
     @test String(take!(io)) == cgc_refstring
-
 end
-
 
 ##==----------------------------------------------------------------------------------------------------------------------
 
 
-@testset ExtendedTestSet "test view with circuits" begin
+@testset ExtendedTestSet "view circuit" begin
 
     N = 5
     cgc = Circuit{N}([
@@ -83,11 +92,21 @@ end
 
 end
 
+@testset ExtendedTestSet "view empty circuit" begin
+    N = 5
+    cgc = Circuit{N}()
+    cgc_refstring = "[]\n"
+
+    io = IOBuffer()
+    show(io, cgc)
+    @test String(take!(io)) == cgc_refstring
+end
+
 
 ##==----------------------------------------------------------------------------------------------------------------------
 
 
-@testset ExtendedTestSet "test view moments" begin
+@testset ExtendedTestSet "view moment" begin
 
     N = 5
     m = Moment([circuit_gate(2, PhaseShiftGate(0.2π)),
@@ -175,6 +194,17 @@ end
     "CircuitGate{1,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
     "CircuitGate{2,ControlledGate{HadamardGate}}((2, 4), ControlledGate{HadamardGate}(HadamardGate(), 1))\n" *
     "CircuitGate{1,RyGate}((1,), RyGate([4.39822971502571]))\n"
+
+    io = IOBuffer()
+    show(io, m)
+    @test String(take!(io)) == m_refstring
+end
+
+@testset ExtendedTestSet "view empty moment" begin
+    N = 5
+    cgc = CircuitGate[]
+    m = Moment(cgc)
+    m_refstring = ""
 
     io = IOBuffer()
     show(io, m)
