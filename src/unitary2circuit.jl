@@ -66,8 +66,7 @@ cgc = unitary2circuit(M)
 function unitary2circuit(m::AbstractMatrix{ComplexF64}, N::Union{Int, Nothing}=nothing, wires=nothing)
     m * m' ≈ I || error("Only unitary matrices can be compiled into a quantum circuit")
     s = size(m)
-    s[1] == s[2] || error("Only square matrices can be compiled into a quantum circuit")
-
+    
     if isnothing(N)
         N = intlog2(s[1])
     end
@@ -127,50 +126,8 @@ function unitary2circuit(m::AbstractMatrix{ComplexF64}, N::Union{Int, Nothing}=n
 end
 
 """
-    qr_blocked(m::Matrix{Complex64,2})
-
-performs blocked qr decomposition on matrix `m`
-"""
-function qr_blocked!(m::AbstractMatrix{ComplexF64}, block_size=2::Integer)
-    N = size(m)[1]
-    N == size(m)[2] || error("Matrix `m` must be a square matrix")
-    if block_size > N
-        return qr_unblocked(m)
-    end
-    τ = ComplexF64[]
-    num_blocks = N ÷ block_size
-    for x in 0:num_blocks - 1
-        row = x * block_size
-        col = x * block_size
-        for y in 1:block_size
-                a = angle(m[row + y, col + y])
-                b = norm(m[row + y, col + y])
-                m[row + y,col + y] = -exp(im * a)
-                m[row + y + 1:N, col + y] =  m[row + y + 1:N, col + y] ./ (exp(im * a) * (1 + b))
-                push!(τ, 1 + b)
-            if y < block_size
-                update1 = m[row + y + 1:N, col + y] .* m[row + y, col + y + 1]
-                update2 = m[row + y, col + y + 1:N] .* m[row + y + 1, col + y]
-                m[row + y + 1:N,col + y + 1] = m[row + y + 1:N,col + y + 1] - update1
-                m[row + y + 1,col + y + 2:N] = m[row + y + 1,col + y + 2:N] - update2[2:end]
-            end
-        end
-        if col + block_size < N
-            m[row + block_size + 1:N, col + block_size + 1:N] -=
-                m[row + block_size + 1:N, col + 1:col + block_size] *
-                m[row + 1:row + block_size, col + block_size + 1:N]
-        end
-    end
-    if N % block_size != 0
-        m_unblocked, τ_unblocked = qr_unblocked(m[num_blocks * block_size:end, num_blocks * block_size:end])
-        m[num_blocks * block_size:end,num_blocks * block_size:end] = m_unblocked
-        append!(τ, τ_unblocked)
-    end
-    return m, τ
-end
-
-"""
     qr_unblocked(m::Matrix{Complex64,2})
+
 performs serial qr decomposition on matrix `m`
 """
 function qr_unblocked!(m::AbstractMatrix{ComplexF64}, n=1::Integer)
