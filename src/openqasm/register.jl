@@ -35,26 +35,27 @@ function (qreg::QRegister)(indices::Array{Int,1})
     qreg, qreg[indices]
 end
 
-"""
-    CRegister{N}
+# TODO: Reimplement CRegister smartly
+# """
+#     CRegister{N}
 
-Classical register of `N` bits.
-"""
-struct CRegister <: Register
-    # TODO: Create function to read QRegister using ind
-    "size of register"
-    N::Int
-    "vector of quantum wire numbers in this quantum register"
-    ind::Vector{Int}
-    "bit array of bits in this classical register"
-    n::BitArray{1}
-    "ref to circuit"
-    circuit::CircuitReference
+# Classical register of `N` bits.
+# """
+# struct CRegister <: Register
+#     # TODO: Create function to read QRegister using ind
+#     "size of register"
+#     N::Int
+#     "vector of quantum wire numbers in this quantum register"
+#     ind::Vector{Int}
+#     "bit array of bits in this classical register"
+#     n::BitArray{1}
+#     "ref to circuit"
+#     circuit::CircuitReference
 
-    # function CRegister(N::Int64, ind::Vector{Int}, n::BitArray{1})
-    #     new(N, ind, n)
-    # end
-end
+#     # function CRegister(N::Int64, ind::Vector{Int}, n::BitArray{1})
+#     #     new(N, ind, n)
+#     # end
+# end
 
 """
     qreg(n::Int)
@@ -65,14 +66,14 @@ function qreg(n::Int)
     QRegister(n, zeros(Int, n), CircuitReference())
 end
 
-"""
-    creg(n::Int)
+# """
+#     creg(n::Int)
 
-constructs classical register of size `n`
-"""
-function creg(n::Int)
-    CRegister(n, zeros(Int, n), BitArray(undef, (n)), CircuitReference())
-end
+# constructs classical register of size `n`
+# """
+# function creg(n::Int)
+#     CRegister(n, zeros(Int, n), BitArray(undef, (n)), CircuitReference())
+# end
 
 
 
@@ -93,57 +94,51 @@ function Base.getindex(r::Register, i::Array{Int,1})
     return r.ind[i]
 end
 
-function int2bit(x::Int; pad=nothing)
-    if isnothing(pad)
-        pad = floor(Int64, log2(3) + 1)
-    end
-    BitArray(digits(x, base=2, pad=pad) |> reverse)
+function Base.getindex(r::Register, ::Colon)
+    !any(r.ind .== 0) || error("Register object has yet to be used in a Circuit object")
+
+    return r.ind[:]
 end
 
-function bit2int(b::BitArray)
-    b = deepcopy(b)
-    num = 0
-    count = 0
-    while !isempty(b)
-        num += pop!(b) * 2^count
-        count += 1
-    end
-    num
+function Base.getindex(r::Register, ur::UnitRange{Int64})
+    !any(r.ind .== 0) || error("Register object has yet to be used in a Circuit object")
+
+    return r.ind[ur]
 end
 
 
-"""
-    reg_check(c::Qaintessent.CRegister, val::Int)
+# """
+#     reg_check(c::Qaintessent.CRegister, val::Int)
 
-create expression to verify that classical register is equal to integer value `val`
-"""
-function reg_check(c::Qaintessent.CRegister, val::Int)
-    r = Ref(c.n)
-    return :(Qaintessent.bit2int($r[]) == $val)
-end
+# create expression to verify that classical register is equal to integer value `val`
+# """
+# function reg_check(c::Qaintessent.CRegister, val::Int)
+#     r = Ref(c.n)
+#     return :(Qaintessent.binary_to_int($r[]) == $val)
+# end
 
-"""
-    set_creg!(reg::CRegister, index::Int, value::Bool) where {N}
+# """
+#     set_creg!(reg::CRegister, index::Int, value::Bool) where {N}
 
-Set the classical register `reg` bit `index` to value `value`
-"""
-function set_creg!(reg::CRegister, index::Int, value::Bool)
-    index = length(reg.n) - index + 1
-    reg.n[index] = value
-end
+# Set the classical register `reg` bit `index` to value `value`
+# """
+# function set_creg!(reg::CRegister, index::Int, value::Bool)
+#     index = length(reg.n) - index + 1
+#     reg.n[index] = value
+# end
 
-"""
-    set_creg!(reg::CRegister, value::Int) where {N}
+# """
+#     set_creg!(reg::CRegister, value::Int) where {N}
 
-Set the classical register `reg` to value `value`
-"""
-function set_creg!(reg::CRegister, value::Int)
-    l = length(reg.n)
-    log2(value) <= l || error("Unable to store integer value " * string(value) * " in BitArray of size " * string(l))
-    reg.n .= int2bit(value; pad=l)
-end
+# Set the classical register `reg` to value `value`
+# """
+# function set_creg!(reg::CRegister, value::Int)
+#     l = length(reg.n)
+#     log2(value) <= l || error("Unable to store integer value " * string(value) * " in BitArray of size " * string(l))
+#     reg.n .= binary_digits(l, value)
+# end
 
-num_wires(creg::CRegister) = creg.N
+# num_wires(creg::CRegister) = creg.N
 num_wires(qreg::QRegister) = qreg.N
 
 """
@@ -170,7 +165,8 @@ end
 function add!(g::AbstractGate, q::QRegister)
     isdefined(q.circuit, :reference) || error("Register object has yet to be used in a Circuit object")
     if num_wires(g) == num_wires(q)
-        append!(q.circuit.reference[], circuit_gate(q[:], g))
+        append!(q.circuit.reference[], circuit_gate(Tuple(q[:]), g))
+        return
     end 
     num_wires(g) == 1 || error("AbstractGate $g is applied to $(num_wires(g)) wires, quantum register of size $(num_wires(q)) provided. Unable to determine gates to be applied.")
 
@@ -182,24 +178,27 @@ end
 function add!(g::AbstractGate, target_wires::Tuple{QRegister, Array{Int}}...)
     circuit_length = num_wires(g)
     circuit_references = getfield.(target_wires, 1)
-    wires = getfield.(target_wires, 2)
+
+    wires = reduce(hcat, getfield.(target_wires, 2))
+    length(wires) == circuit_length || error("AbstractGate $g is applied to $circuit_length wires. However, $(length(wires)) wires provided")
     for ref in circuit_references[2:end]
         isdefined(ref.circuit, :reference) || error("Register object has yet to be used in a Circuit object")
         ref.circuit.reference[] === circuit_references[1].circuit.reference[] || error("Targetted Registers belong to different Circuit objects")
     end
-    for i in 1:circuit_length
-        append!(circuit_references[1].circuit.reference[], circuit_gate(getindex.(wires, i), g))
-    end
+    append!(circuit_references[1].circuit.reference[], CircuitGate(Tuple(wires), g))
+    return
 end
 
 function add_control!(g::AbstractGate, target_q::QRegister, control_q::QRegister)
+    num_wires(g) == 1 || error("Helper function for controlled gates across entire registers only supports 1 qubit gates")
     isdefined(target_q.circuit, :reference) || error("Target quantum register is not included in any circuit")
     isdefined(control_q.circuit, :reference) || error("Control quantum register is not included in any circuit")
     target_q.circuit.reference[] === control_q.circuit.reference[] || error("Target quantum register and control quantum register are used in different circuits")
 
-    circuit_length = num_wires(g)
-    num_wires(g) == num_wires(target_q) || error("Gate affecting $(num_wires(g)) qubits applied to quantum register of $(num_wires(target_q)) qubits")
-    append!(target_q.circuit.reference[], circuit_gate((target_q.ind...), g, control_q.ind...))
+    num_wires(target_q) == num_wires(control_q) || error("Control register and Target register have differing number of qubits, unable to determine gates to be applied")
+    for i in 1:num_wires(control_q)
+        append!(target_q.circuit.reference[], circuit_gate(target_q.ind[i], g, control_q.ind[i]))
+    end
 end
 
 function add_control!(g::AbstractGate, target_wires::Tuple{QRegister, Array{Int}}, control_wires::Tuple{QRegister, Array{Int}})
