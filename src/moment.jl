@@ -72,6 +72,14 @@ function Base.getindex(m::Moment, i::Integer)
     return m.gates[i]
 end
 
+function Base.getindex(m::Moment, ::Colon) 
+    return m.gates[:]
+end
+
+function Base.getindex(m::Moment, ur::UnitRange{Int64}) 
+    return m.gates[ur]
+end
+
 function Base.iterate(m::Moment, state=1) 
     return state > length(m.gates) ? nothing : (m[state], state + 1)
 end

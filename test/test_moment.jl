@@ -51,6 +51,9 @@ using Qaintessent
 
     @testset "moments array operations" begin
         m = Moment([CircuitGate((2,), ZGate()), CircuitGate((1,), SGate())])
+
+        @test all(m[:] .≈ m.gates)
+        @test all(m[1:2] .≈ m.gates)
         @test isempty(m) == false
         @test CircuitGate((1,), SGate()) ≈ pop!(m)
         @test isempty(m) == false

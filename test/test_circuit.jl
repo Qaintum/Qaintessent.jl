@@ -135,6 +135,10 @@ end
         m2 = Moment([circuit_gate(2, ZGate()), circuit_gate(1, TdagGate())])
         cgc = [circuit_gate(3, ZGate(), 1), circuit_gate(2, SGate()), circuit_gate(2, ZGate()), circuit_gate(1, TdagGate())]
         c = Circuit{3}(cgc)
+
+        @test all(c[:] .≈ c.moments)
+        @test all(c[1:2] .≈ [m1, m2])
+        @test m[1:2] == m.moments
         @test isempty(c) == false
         @test m2 ≈ pop!(c)
         @test isempty(c) == false

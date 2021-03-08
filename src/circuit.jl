@@ -105,6 +105,15 @@ function Base.getindex(c::Circuit, i::Integer)
     return c.moments[i]
 end
 
+function Base.getindex(c::Circuit, ::Colon) 
+    return c.moments[:]
+end
+
+function Base.getindex(c::Circuit, ur::UnitRange{Int64}) 
+    return c.moments[ur]
+end
+
+
 function Base.iterate(c::Circuit, state=1) 
     return state > length(c.moments) ? nothing : (c.moments[state], state + 1)
 end
