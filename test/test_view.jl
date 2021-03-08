@@ -13,24 +13,31 @@ using Qaintessent
         circuit_gate(3, HadamardGate()),
         circuit_gate(2, RxGate(√0.2), (1, 4)),
         circuit_gate((1,5), SwapGate(), (2,4)),
+        circuit_gate(2, TGate()),
         circuit_gate(2, PhaseShiftGate(0.2π)),
+        circuit_gate(2, SdagGate()),
         circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
         circuit_gate(1, RyGate(1.4π)),
+        circuit_gate(3, RzGate(0.4π)),
         circuit_gate(1,2, SwapGate()),
         circuit_gate((3,5), SwapGate(), 4),
+        circuit_gate((3,), Y, 2),
+        circuit_gate((5,), Z, 1),
+        circuit_gate((4,), X)
     ]
 
     cgc_refstring =
         "\n" *
-        "    5 ——————————————x———————————x———\n" *
-        "                    |           |   \n" *
-        "    4 ————————•—————•———————————•———\n" *
-        "              |     |           |   \n" *
-        "    3 —[H ]——————————————[Rθ]———x———\n" *
-        "              |     |               \n" *
-        "    2 ———————[Rx]———•————[Pϕ]———x———\n" *
-        "              |     |           |   \n" *
-        "    1 ————————•—————x————[Ry]———x———\n"
+        "    5 ——————————————x—————————————————————————————x——————————[Z ]———————\n" *
+        "                    |                             |           |         \n" *
+        "    4 ————————•—————•—————————————————————————————•————————————————[X ]—\n" *
+        "              |     |                             |           |         \n" *
+        "    3 —[H ]——————————————————————————[Rθ]——[Rz]———x————[Y ]—————————————\n" *
+        "              |     |                                   |     |         \n" *
+        "    2 ———————[Rx]———•————[T ]——[Pϕ]——[S†]———x———————————•———————————————\n" *
+        "              |     |                       |                 |         \n" *
+        "    1 ————————•—————x————————————————[Ry]———x—————————————————•—————————\n"
+
 
     io = IOBuffer()
     show(io, cgc)
