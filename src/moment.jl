@@ -115,3 +115,11 @@ end
     end
     return N
 end
+
+function Base.pop!(m::Moment)
+    pop!(m.gates)
+end
+
+function Base.isempty(m::Moment)
+    isempty(m.gates)
+end

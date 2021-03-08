@@ -131,7 +131,17 @@ end
 function Base.append!(c::Circuit{N}, gates::Vector{<:CircuitGate}) where {N}
     j = 1
     iwires = falses(N)
-    buffer = CircuitGate[]
+    if !isempty(c)
+        buffer = pop!(c).gates
+
+        for cg in buffer
+            cgwires = collect(cg.iwire)
+            iwires[cgwires] .= true
+        end
+    else
+        buffer = CircuitGate[]
+    end
+
     for (i, cg) in enumerate(gates)
         cgwires = collect(cg.iwire)
         all(cgwires .<= N) || error("Unable to add gate with `iwire`: $(cg.iwire), with maximum circuit size `N`: $(N)")
@@ -164,4 +174,12 @@ function Base.reverse!(c::Circuit)
     reverse!(c.moments)
     reverse!.(c.moments)
     return c
+end
+
+function Base.pop!(c::Circuit)
+    pop!(c.moments)
+end
+
+function Base.isempty(c::Circuit)
+    isempty(c.moments)
 end

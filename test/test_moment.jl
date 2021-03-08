@@ -49,6 +49,16 @@ using Qaintessent
         @test m1 ≈ m
     end
 
+    @testset "moments array operations" begin
+        m = Moment([CircuitGate((2,), ZGate()), CircuitGate((1,), SGate())])
+        @test isempty(m) == false
+        @test CircuitGate((1,), SGate()) ≈ pop!(m)
+        @test isempty(m) == false
+        @test CircuitGate((2,), ZGate()) ≈ pop!(m)
+        @test isempty(m) == true
+        @test_throws ArgumentError("array must be non-empty") pop!(m)
+    end
+
     @testset "moments sparse_matrix" begin
         g = CircuitGate((2,), ZGate())
         h = CircuitGate((1,), SGate())

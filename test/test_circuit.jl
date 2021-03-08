@@ -130,6 +130,19 @@ end
         @test_throws ErrorException("Measurement operators affecting 5 wires provided for circuit of size 3") add_measurement!(c, [meas3])
     end
 
+    @testset "circuit array operations" begin
+        m1 = Moment([circuit_gate(3, ZGate(), 1), circuit_gate(2, SGate())])
+        m2 = Moment([circuit_gate(2, ZGate()), circuit_gate(1, TdagGate())])
+        cgc = [circuit_gate(3, ZGate(), 1), circuit_gate(2, SGate()), circuit_gate(2, ZGate()), circuit_gate(1, TdagGate())]
+        c = Circuit{3}(cgc)
+        @test isempty(c) == false
+        @test m2 ≈ pop!(c)
+        @test isempty(c) == false
+        @test m1 ≈ pop!(c)
+        @test isempty(c) == true
+        @test_throws ArgumentError("array must be non-empty") pop!(c)
+    end
+
     @testset "circuit reverse" begin
         meas = mop.([X, X, X], (1,2,3))
         c = Circuit{N}(cgs, meas)
