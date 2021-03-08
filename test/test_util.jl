@@ -20,8 +20,8 @@ end
 end
 
 @testset ExtendedTestSet "util binary_digits" begin
-    # n1 = abs(rand(Int, 1)[])
-    n1 = 5
+    n1 = abs(rand(Int, 1)[])
+    # n1 = 5
     M = Qaintessent.intlog2(n1) + 1
     bd = Qaintessent.binary_digits(M, n1)
     x = 0

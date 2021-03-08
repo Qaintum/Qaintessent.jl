@@ -38,7 +38,7 @@ converts BitArray `m` into Integer
 """
 function binary_to_int(m::BitArray{1}, x=0)
     v = 1
-    for i in view(m,length(m):-1:1)
+    for i in Base.view(m, :)
         x += v*i
         v <<= 1
     end 
