@@ -17,9 +17,11 @@ using Qaintessent
         circuit_gate(2, PhaseShiftGate(0.2π)),
         circuit_gate(2, SdagGate()),
         circuit_gate(3, RotationGate(0.1π, [1, 0, 0])),
+        circuit_gate(4, TdagGate()),
         circuit_gate(1, RyGate(1.4π)),
         circuit_gate(3, RzGate(0.4π)),
         circuit_gate(1,2, SwapGate()),
+        circuit_gate(4, SGate()),
         circuit_gate((3,5), SwapGate(), 4),
         circuit_gate((3,), Y, 2),
         circuit_gate((5,), Z, 1),
@@ -30,7 +32,7 @@ using Qaintessent
         "\n" *
         "    5 ——————————————x—————————————————————————————x——————————[Z ]———————\n" *
         "                    |                             |           |         \n" *
-        "    4 ————————•—————•—————————————————————————————•————————————————[X ]—\n" *
+        "    4 ————————•—————•————————————————[T†]——[S ]———•————————————————[X ]—\n" *
         "              |     |                             |           |         \n" *
         "    3 —[H ]——————————————————————————[Rθ]——[Rz]———x————[Y ]—————————————\n" *
         "              |     |                                   |     |         \n" *
@@ -204,6 +206,18 @@ end
     N = 5
     cgc = CircuitGate[]
     m = Moment(cgc)
+    m_refstring = ""
+
+    io = IOBuffer()
+    show(io, m)
+    @test String(take!(io)) == m_refstring
+end
+
+
+@testset ExtendedTestSet "view empty moments" begin
+    N = 5
+    cgc = CircuitGate[]
+    m = [Moment(cgc)]
     m_refstring = ""
 
     io = IOBuffer()

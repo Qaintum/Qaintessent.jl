@@ -79,7 +79,7 @@ function interleave(a::Vector{T}, b::Vector{T}) where {T}
     return c
 end
 
-function updatecol(g::CircuitGate{M,G}, nw::AbstractVector{String}, ng::AbstractVector{String}) where {M,G}
+function updatecol(g::CircuitGate{M,G}, nw::Vector{String}, ng::Vector{String}) where {M,G}
     iwire = [x for x in g.iwire]
     if length(g.iwire) > 1
         index = min(iwire...):max(iwire...)-1
@@ -97,9 +97,9 @@ function wire_enum(N::Int)
     return wires, gaps
 end
 
-function momentdiagram(io::IO, m::Moment, N::Union{Nothing,Int}=nothing)
-    if isnothing(N)
-        N = size(m)
+function momentdiagram(io::IO, m::Moment, N::Int)
+    if N == 0
+        return
     end
     w, g = wire_enum(N)
     i = Int[]
@@ -131,7 +131,7 @@ function momentdiagram(io::IO, m::Moment, N::Union{Nothing,Int}=nothing)
     println(io, "")
 end
 
-function Base.show(io::IO, m::AbstractVector{Moment})
+function Base.show(io::IO, m::Vector{Moment})
     if length(m) == 0
         return
     end
@@ -182,10 +182,7 @@ function Base.show(io::IO, cgs::Vector{<:CircuitGate}, N::Union{Nothing,Int}=not
     end
 end
 
-function _show(io::IO, c::Vector{Moment}, N::Union{Nothing,Int}=nothing)
-    if isnothing(N)
-        N = maximum(size.(c))
-    end
+function _show(io::IO, c::Vector{Moment}, N::Int)
     cg = getproperty.(c, :gates)
     cg = collect(Base.Iterators.flatten(cg))
     show(io::IO, cg, N)
