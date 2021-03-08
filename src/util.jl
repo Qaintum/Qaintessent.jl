@@ -14,7 +14,7 @@ pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
 
 Return `M` bits of the binary representation of the integer `x` as array (least significant bit at first index).
 """
-function binary_digits(x::Integer, M::Integer)
+function binary_digits(M::Integer, x::Integer)
     binary_digits!(BitArray(undef, M), x)
 end
 
@@ -37,7 +37,7 @@ end
 
 Return `M` base-4 digits of the quaternary representation of the integer `x` as array (least significant digit at first index).
 """
-function quaternary_digits(x::Integer, M::Integer)
+function quaternary_digits(M::Integer, x::Integer)
     quaternary_digits!(Vector{Int}(undef, M), x)
 end
 
@@ -58,7 +58,7 @@ end
 """
     intlog2(x::Integer)
 
-Compute integar base-2 logarithm.
+Compute integer base-2 logarithm. Rounds to floor if x is not a power of 2.
 """
 function intlog2(x::Integer)
     x == 0 && error("Logarithm of 0 is undefined")
@@ -93,13 +93,16 @@ Compute orthogonalized real vectors.
 """
 function gramm_schmidt!(a::Array{Float64})
     num_vectors = size(a,2)
+    
     a[:, end] = a[:, end] ./ norm(a[:, end])
-    for i in num_vectors-1:-1:1
-        while norm(dot(a[:, i+1], a[:, i])) > 1e-16
-            a[:, i] -= dot(a[:, i], a[:, i+1] / dot(a[:, i], a[:, i])) * a[:, i+1]
-            a[:, i] = a[:, i] ./ norm(a[:, i])
+
+    for i in num_vectors-1:-1:1        
+        for j in i+1:num_vectors
+            a[:, i] = a[:, i] - (dot(a[:, i], a[:, j]) / dot(a[:, j], a[:, j])) * a[:, j]
         end
+        a[:, i] = a[:, i] ./ norm(a[:, i])
     end
+
     return a
 end
 
@@ -109,13 +112,15 @@ end
 Compute orthogonalized complex vectors.
 """
 function gramm_schmidt!(a::Array{ComplexF64})
-    num_vectors = size(a, 2)
+    num_vectors = size(a,2)
+
     a[:, end] = a[:, end] ./ norm(a[:, end])
-    for i in num_vectors-1:-1:1
-        while norm(dot(a[:, i+1], a[:, i])) > 1e-16
-            a[:, i] -= conj(dot(a[:, i], a[:, i+1]) / dot(a[:, i], a[:, i])) * a[:, i+1]
-            a[:, i] = a[:, i] ./ norm(a[:, i])
+
+    for i in num_vectors-1:-1:1        
+        for j in num_vectors:-1:i+1
+            a[:, i] = a[:, i] - conj(dot(a[:, i], a[:, j]) / dot(a[:, j], a[:, j])) * a[:, j]
         end
+        a[:, i] = a[:, i] ./ norm(a[:, i])
     end
     return a
 end
