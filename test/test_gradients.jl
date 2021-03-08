@@ -48,7 +48,7 @@ end
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(g(θ), conj(Δ))
-            @test isapprox(dg.θ, ngrad[1], rtol=1e-5)
+            @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
         end
 
         for g in [XGate, YGate, ZGate, HadamardGate, SGate, SdagGate, TGate, TdagGate]
@@ -61,7 +61,7 @@ end
             ϕ = 2π*rand()
             ngrad = ngradient(f, [ϕ])
             dg = Qaintessent.backward(PhaseShiftGate(ϕ), conj(Δ))
-            @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5)
+            @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5, atol=1e-5)
         end
 
         begin
@@ -91,7 +91,7 @@ end
                 θ = 2π*rand()
                 ngrad = ngradient(f, [θ])
                 dg = Qaintessent.backward(g(θ), conj(Δ))
-                @test isapprox(dg.θ, ngrad[1], rtol=1e-5)
+                @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
             end
         end
 
@@ -107,12 +107,13 @@ end
     @testset "controlled gates" begin
         # fictitious gradients of cost function with respect to quantum gate
         Δ = randn(ComplexF64, 8, 8)
+        
         for g in [RxGate, RyGate, RzGate]
             f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{g}(g(θ[]), 2))))
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(ControlledGate{g}(g(θ), 2), conj(Δ))
-            @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
+            @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5, atol=1e-5)
         end
 
         for g in [EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
@@ -120,7 +121,7 @@ end
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(ControlledGate{g}(g(θ), 2), conj(Δ))
-            @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
+            @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5, atol=1e-5)
         end
 
         for g in [XGate, YGate, ZGate, HadamardGate, SGate, SdagGate, TGate, TdagGate]
