@@ -1089,8 +1089,9 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
     cgU = CircuitGate{T,G}(cg.iwire[1:T], cg.gate.U)
 
     # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
+    eo = binary_digits(C, 0)
     for p in 0:2^C-1
-        eo = binary_digits(p, C)
+        binary_digits!(eo, p)
         τ = ρ
         for j in 1:C
             if eo[j] == 0
@@ -1130,7 +1131,8 @@ end
 
     U::Matrix{ComplexF64} = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
-    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits(i, M))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits(j, M))]...) * U'))
+    m = quaternary_digits(M, 0)
+    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits!(m, i))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits!(m, j))]...) * U'))
                 for i in 0:4^M-1,
                     j in 0:4^M-1]
 
@@ -1140,7 +1142,7 @@ end
     vs = similar(ρv)
     for i in 1:4^M
         # cannot use .= here since broadcasting fails for scalar numbers
-        vs[sliced_index(quaternary_digits(i - 1, M), cg.iwire, ρ.N)...] = sum(conjU[i, j] .* ρv[sliced_index(quaternary_digits(j - 1, M), cg.iwire, ρ.N)...] for j in 1:4^M)
+        vs[sliced_index(quaternary_digits!(m, i - 1), cg.iwire, ρ.N)...] = sum(conjU[i, j] .* ρv[sliced_index(quaternary_digits!(m, j - 1), cg.iwire, ρ.N)...] for j in 1:4^M)
     end
 
     return DensityMatrix(reshape(vs, :), ρ.N)

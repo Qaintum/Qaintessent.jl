@@ -38,8 +38,9 @@ function matrix(ρ::DensityMatrix)
         0.5 * sparse_matrix(Z),
     ]
     mat = zeros(ComplexF64, 2^ρ.N, 2^ρ.N)
+    m = quaternary_digits(ρ.N, 0)
     for i in 1:4^ρ.N
-        mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(quaternary_digits(i - 1, ρ.N))]...)
+        mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(quaternary_digits!(m, i - 1))]...)
     end
     return mat
 end
@@ -60,8 +61,9 @@ function density_from_statevector(ψ::Vector)
         sparse_matrix(Z),
     ]
     v = zeros(4^N)
+    m = quaternary_digits(N, 0)
     for i in 1:4^N
-        v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(quaternary_digits(i - 1, N))]...) * ψ))
+        v[i] = real(dot(ψ, kron([pauli[p + 1] for p in reverse(quaternary_digits!(m, i - 1))]...) * ψ))
     end
     return DensityMatrix(v, N)
 end
@@ -82,8 +84,9 @@ function density_from_matrix(ρmat::AbstractMatrix)
         sparse_matrix(Z),
     ]
     v = zeros(4^N)
+    m = quaternary_digits(N, 0)
     for i in 1:4^N
-        v[i] = real(tr(kron([pauli[p + 1] for p in reverse(quaternary_digits(i - 1, N))]...) * ρmat))
+        v[i] = real(tr(kron([pauli[p + 1] for p in reverse(quaternary_digits!(m, i - 1))]...) * ρmat))
     end
     return DensityMatrix(v, N)
 end

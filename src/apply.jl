@@ -186,10 +186,12 @@ function _apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}, N::Int) where {M,G}
     U = matrix(cg.gate)
     ψs = reshape(ψ, fill(2, N)...)
     χ = similar(ψs)
+    it = binary_digits(M, 0)
+    m = binary_digits(M, 0)
     for i in 1:2^M
-        it = binary_digits(i - 1, M)
+        binary_digits!(it, i - 1)
         # cannot use .= here since broadcasting fails for scalar numbers
-        χ[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits(j - 1, M), cg.iwire, N)...] for j in 1:2^M)
+        χ[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits!(m, j - 1), cg.iwire, N)...] for j in 1:2^M)
     end
     return reshape(χ, :)
 end
