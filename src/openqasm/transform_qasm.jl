@@ -27,6 +27,8 @@ using PrettyPrint
 @as_record Struct_ry
 @as_record Struct_rz
 @as_record Struct_ch
+@as_record Struct_crx
+@as_record Struct_cry
 @as_record Struct_crz
 @as_record Struct_idlist
 @as_record Struct_mixedlist
@@ -207,6 +209,22 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 arg = :($(rec(in)))
                 :(append!($qasm_cgc, [circuit_gate(($ref), RzGate($arg))]))
             end
+            
+        Struct_crx(in=in, out1=out1, out2=out2) =>
+            let out = :($(rec(out2))),
+                cntrl = :($(rec(out1))),
+                arg = :($(rec(in)))
+
+                :(append!($qasm_cgc, [circuit_gate(($out), RxGate($arg), ($cntrl))]))
+            end
+
+        Struct_cry(in=in, out1=out1, out2=out2) =>
+            let out = :($(rec(out2))),
+                cntrl = :($(rec(out1))),
+                arg = :($(rec(in)))
+
+                :(append!($qasm_cgc, [circuit_gate(($out), RyGate($arg), ($cntrl))]))
+            end
 
         Struct_crz(in=in, out1=out1, out2=out2) =>
             let out = :($(rec(out2))),
@@ -282,8 +300,9 @@ function transform_qasm(ctx_tokens)
     N = num_wires(qasm_cgc)
 
     gates_declr = trans_gates(ctx_tokens, Ref(qasm_cgc), Ref(N))
-    eval.(gates_declr)
 
+    eval.(gates_declr)
+    
     qasm_cgc
 end
 
@@ -296,4 +315,9 @@ function qasm2cgc(txt::String)
     qasmlex = lex(txt)
     qasmparse = parse_qasm(qasmlex)
     qasm_cgc = transform_qasm(qasmparse)
+end
+
+
+function Base.:(==)(dcl1::Struct_gate, dcl2::Struct_gate)
+    dcl1.decl == dcl2.decl && dcl1.goplist == dcl2.goplist
 end

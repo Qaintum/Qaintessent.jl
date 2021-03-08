@@ -65,9 +65,17 @@ end
 
 function custom_gate_cx(args, outs...; qasm_cgc=nothing, N=nothing)
     if length(outs) == 2
-        append!(qasm_cgc, circuit_gate((outs[2]), X, (outs[1])))
+        append!(qasm_cgc, [circuit_gate((outs[2]), X, (outs[1]))])
     else
         append!(qasm_cgc, circuit_gate((outs[end]), X, (outs[1:end-1]...,)))
+    end
+end
+
+function custom_gate_cy(args, outs...; qasm_cgc=nothing, N=nothing)
+    if length(outs) == 2
+        append!(qasm_cgc, [circuit_gate((outs[2]), Y, (outs[1]))])
+    else
+        append!(qasm_cgc, circuit_gate((outs[end]), Y, (outs[1:end-1]...,)))
     end
 end
 
@@ -103,6 +111,22 @@ function custom_gate_rz(args, outs...; qasm_cgc=nothing, N=nothing)
     end
 end
 
+function custom_gate_crx(args, outs...; qasm_cgc=nothing, N=nothing)
+    if length(outs) == 2
+        append!(qasm_cgc, circuit_gate((outs[2]), RxGate(args[1]), (outs[1])))
+    else
+        append!(qasm_cgc, circuit_gate((outs[end]), RxGate(args[1]), (outs[1:end-1]...,)))
+    end
+end
+
+function custom_gate_cry(args, outs...; qasm_cgc=nothing, N=nothing)
+    if length(outs) == 2
+        append!(qasm_cgc, circuit_gate((outs[2]), RyGate(args[1]), (outs[1])))
+    else
+        append!(qasm_cgc, circuit_gate((outs[end]), RyGate(args[1]), (outs[1:end-1]...,)))
+    end
+end
+
 function custom_gate_crz(args, outs...; qasm_cgc=nothing, N=nothing)
     if length(outs) == 2
         append!(qasm_cgc, circuit_gate((outs[2]), RzGate(args[1]), (outs[1])))
@@ -110,6 +134,8 @@ function custom_gate_crz(args, outs...; qasm_cgc=nothing, N=nothing)
         append!(qasm_cgc, circuit_gate((outs[end]), RzGate(args[1]), (outs[1:end-1]...,)))
     end
 end
+
+
 
 function custom_gate_u(args, outs...; qasm_cgc=nothing, N=nothing)
     if length(outs) == 1

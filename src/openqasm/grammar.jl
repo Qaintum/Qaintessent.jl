@@ -40,7 +40,7 @@ RBNF.@parser QASMLang begin
     reset       := ["reset", arg=argument, ';'] # not impl
     measure     := ["measure", arg1=argument, "->", arg2=argument, ';'] # not impl
 
-    uop         = (u | cx | h | x | y | z | s | sdg | t | tdg | rx | ry | rz | crz | iduop)
+    uop         = (u | cx | h | x | y | z | s | sdg | t | tdg | rx | ry | rz | crx | cry | crz | iduop)
     u          := ['U', '(', in1=nnexp, ',', in2=nnexp, ',', in3=nnexp, ')', out=argument, ';']
     cx         := ["CX", out1=argument, ',', out2=argument, ';']
     ch         := ["ch", out1=argument, ',', out2=argument, ';']
@@ -55,6 +55,8 @@ RBNF.@parser QASMLang begin
     rx         := ["rx",  '(', in=nnexp, ')', out=argument, ';']
     ry         := ["ry",  '(', in=nnexp, ')', out=argument, ';']
     rz         := ["rz",  '(', in=nnexp, ')', out=argument, ';']
+    crx        := ["crx",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
+    cry        := ["cry",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
     crz        := ["crz",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
 
     iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
