@@ -78,7 +78,7 @@ end
     n = randn(3); n /= norm(n)
 
     @testset "basic quantum gates" begin
-        for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ), SwapGate(), EntanglementXXGate(θ), EntanglementYYGate(θ), EntanglementZZGate(θ), controlled_not()]
+        for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ), SwapGate(), EntanglementXXGate(θ), EntanglementYYGate(θ), EntanglementZZGate(θ), controlled_not()]
             @test isunitary(g)
             gdag = adjoint(g)
 

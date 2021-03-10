@@ -48,7 +48,12 @@ end
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(g(θ), conj(Δ))
-            @test isapprox(dg.θ, ngrad[1], rtol=1e-5)
+            @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
+        end
+
+        for g in [XGate, YGate, ZGate, HadamardGate, SGate, SdagGate, TGate, TdagGate]
+            dg = Qaintessent.backward(g(), conj(Δ))
+            @test dg ≈ g()
         end
 
         begin
@@ -56,7 +61,7 @@ end
             ϕ = 2π*rand()
             ngrad = ngradient(f, [ϕ])
             dg = Qaintessent.backward(PhaseShiftGate(ϕ), conj(Δ))
-            @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5)
+            @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5, atol=1e-5)
         end
 
         begin
@@ -77,34 +82,54 @@ end
         end
     end
 
-    @testset "entanglement gates" begin
+    @testset "two qubit gates" begin
         # fictitious gradients of cost function with respect to quantum gate
         Δ = randn(ComplexF64, 4, 4)
-
-        for g in [EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
-            f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(g(θ[]))))
-            θ = 2π*rand()
-            ngrad = ngradient(f, [θ])
-            dg = Qaintessent.backward(g(θ), conj(Δ))
-            @test isapprox(dg.θ, ngrad[1], rtol=1e-5)
+        @testset "entanglement gates" begin
+            for g in [EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
+                f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(g(θ[]))))
+                θ = 2π*rand()
+                ngrad = ngradient(f, [θ])
+                dg = Qaintessent.backward(g(θ), conj(Δ))
+                @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
+            end
         end
+
+        @testset "two qubit gates" begin
+            for g in [SwapGate()]
+                dg = Qaintessent.backward(g, conj(Δ))
+                @test dg ≈ g
+            end
+        end
+
     end
 
     @testset "controlled gates" begin
         # fictitious gradients of cost function with respect to quantum gate
         Δ = randn(ComplexF64, 8, 8)
+        
+        for g in [RxGate, RyGate, RzGate]
+            f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{g}(g(θ[]), 2))))
+            θ = 2π*rand()
+            ngrad = ngradient(f, [θ])
+            dg = Qaintessent.backward(ControlledGate{g}(g(θ), 2), conj(Δ))
+            @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5, atol=1e-5)
+        end
 
-        f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{RyGate}(RyGate(θ[]), 2))))
-        θ = 2π*rand()
-        ngrad = ngradient(f, [θ])
-        dg = Qaintessent.backward(ControlledGate{RyGate}(RyGate(θ), 2), conj(Δ))
-        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
+        for g in [EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
+            f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{g}(g(θ[]), 1))))
+            θ = 2π*rand()
+            ngrad = ngradient(f, [θ])
+            dg = Qaintessent.backward(ControlledGate{g}(g(θ), 2), conj(Δ))
+            @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5, atol=1e-5)
+        end
 
-        f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(ControlledGate{EntanglementXXGate}(EntanglementXXGate(θ[]), 1))))
-        θ = 2π*rand()
-        ngrad = ngradient(f, [θ])
-        dg = Qaintessent.backward(ControlledGate{EntanglementXXGate}(EntanglementXXGate(θ), 2), conj(Δ))
-        @test isapprox(dg.U.θ, ngrad[1], rtol=1e-5)
+        for g in [XGate, YGate, ZGate, HadamardGate, SGate, SdagGate, TGate, TdagGate]
+
+            dg = Qaintessent.backward(ControlledGate{g}(g(), 2), conj(Δ))
+
+            @test dg ≈ ControlledGate{g}(g(), 2)
+        end
     end
 end
 
@@ -117,20 +142,36 @@ end
     # construct parametrized circuit
     N = 4
     A = rand(ComplexF64, 2 ,2)
-    i = rand(1:N)
     U, R = qr(A)
     U = Array(U)
+    i = rand(1:N)
 
     cgc(θ, ϕ, χ, κ, ωn) = CircuitGate[
         circuit_gate(3, HadamardGate()),
         circuit_gate(2, RzGate(θ), (1, 4)),
+        circuit_gate(2, TGate(), 4),
         circuit_gate(2, 3, SwapGate()),
+        circuit_gate(2, SdagGate(), 1),
         circuit_gate(3, PhaseShiftGate(ϕ)),
-        circuit_gate(3, RotationGate(ωn)),
         circuit_gate(1, RyGate(χ)),
+        circuit_gate(4, HadamardGate(), 2),
+        circuit_gate(3, X, 1),
+        circuit_gate(2, Z, 4),
+        circuit_gate(4, Y, 1),
         circuit_gate(3, 1, EntanglementYYGate(κ)),
-        circuit_gate(i, MatrixGate(U))
+        circuit_gate(3, RotationGate(ωn)),
+        circuit_gate(4, SGate()),
+        circuit_gate(2, TdagGate(), 3),
+        circuit_gate(i, MatrixGate(U)),
+        circuit_gate(2, Z),
+        circuit_gate(3, X),
+        circuit_gate(2, Y, 4),
+        circuit_gate(1, SGate()),
+        circuit_gate(2, 3, SwapGate(), 4),
+        circuit_gate(3, SdagGate()),
+        circuit_gate(2, TGate()),
     ]
+
     # measurement operators
     meas(M) = MeasurementOperator.([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)], (Tuple(1:N),))
 
@@ -159,13 +200,13 @@ end
     ngrad = ngradient(f, [θ], [ϕ], [χ], [κ], ωn, M)
     # symmetrize gradient with respect to measurement operator
     ngrad[end][:] = 0.5*(ngrad[end] + adjoint(ngrad[end]))
-
+    
     @test all(isapprox.(ngrad,
         (dc.moments[1][2].gate.U.θ,
-         dc.moments[3][1].gate.ϕ,
-         dc.moments[4][2].gate.θ,
+         dc.moments[4][2].gate.ϕ,
          dc.moments[5][1].gate.θ,
-         dc.moments[4][1].gate.nθ,
+         dc.moments[8][1].gate.θ,
+         dc.moments[9][1].gate.nθ,
          sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
 end
 
@@ -189,6 +230,7 @@ end
             circuit_gate(1, RyGate(χ)),
         ]),
     ]
+    
    # measurement operators
    meas(M) = MeasurementOperator.([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)], (Tuple(1:N),))
 

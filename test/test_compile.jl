@@ -77,33 +77,62 @@ end
 
 
 @testset ExtendedTestSet "general compile unitaries helper functions" begin
-    @testset "unblocked QR decomposition" begin
+    @testset "QR decomposition" begin
         N = 2
         U, _ = qr(Matrix(Stewart(ComplexF64, 2^N)))
         U = Matrix(U)
         Uref = deepcopy(U)
-        M = Stewart(ComplexF64, 4)
 
-        QR, τ = Qaintessent.qr_unblocked(deepcopy(U))
-        R = diag(QR)
-        Q = Matrix{ComplexF64}(I, (2^N, 2^N))
-        Id = Matrix{ComplexF64}(I, (2^N, 2^N))
+        @testset "unblocked QR decomposition" begin
+            QR, τ = Qaintessent.qr_unblocked(deepcopy(U))
+            R = diag(QR)
+            Q = Matrix{ComplexF64}(I, (2^N, 2^N))
+            Id = Matrix{ComplexF64}(I, (2^N, 2^N))
 
-        for i in 1:size(U)[1]-1
-            u = pushfirst!(QR[i+1:2^N, i], 1)
-            u = u ./ norm(u)
-            H = deepcopy(Id)
-            H[i:2^N, i:2^N] = H[i:2^N, i:2^N] - 2*u*u'
-            Q = H*Q
-            U = H*U
+            for i in 1:size(U)[1]-1
+                u = pushfirst!(QR[i+1:2^N, i], 1)
+                u = u ./ norm(u)
+                H = deepcopy(Id)
+                H[i:2^N, i:2^N] = H[i:2^N, i:2^N] - 2*u*u'
+                Q = H*Q
+                U = H*U
+            end
+            d = diag(U)
+
+            @test diagm(d) ≈ U
+            @test diag(U) ≈ R
+            @test Q*Uref ≈ U
+            @test inv(Q)*U ≈ Uref
         end
-        d = diag(U)
 
-        @test diagm(d) ≈ U
-        @test diag(U) ≈ R
-        @test Q*Uref ≈ U
-        @test inv(Q)*U ≈ Uref
+        U, _ = qr(Matrix(Stewart(ComplexF64, 2^N)))
+        U = Matrix(U)
+        Uref = deepcopy(U)
+
+        @testset "unblocked! QR decomposition" begin
+            QR = deepcopy(U)
+            τ = Qaintessent.qr_unblocked!(QR)
+            R = diag(QR)
+            Q = Matrix{ComplexF64}(I, (2^N, 2^N))
+            Id = Matrix{ComplexF64}(I, (2^N, 2^N))
+
+            for i in 1:size(U)[1]-1
+                u = pushfirst!(QR[i+1:2^N, i], 1)
+                u = u ./ norm(u)
+                H = deepcopy(Id)
+                H[i:2^N, i:2^N] = H[i:2^N, i:2^N] - 2*u*u'
+                Q = H*Q
+                U = H*U
+            end
+            d = diag(U)
+
+            @test diagm(d) ≈ U
+            @test diag(U) ≈ R
+            @test Q*Uref ≈ U
+            @test inv(Q)*U ≈ Uref
+        end
     end
+
 
     @testset "stateprep" begin
         @inline function allequal(x)
@@ -172,6 +201,15 @@ end
         ψ_compiled = apply(cgc, ψ)
 
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
+    end
+
+    @testset "general compile exceptions" begin
+        N = 6
+        U = rand(ComplexF64, (2^N, 2^N))
+        @test_throws ErrorException("Only unitary matrices can be compiled into a quantum circuit") unitary2circuit(U)
+
+        U = rand(ComplexF64, (2^N, 2^(N-1)))
+        @test_throws ErrorException("Only unitary matrices can be compiled into a quantum circuit") unitary2circuit(U)
     end
 
     @testset "compile 1 qubit standard unitary" begin

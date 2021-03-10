@@ -17,16 +17,11 @@ using MLStyle
 @as_record SdagGate
 @as_record TdagGate
 
-
-function trans_circuit(c::Circuit)
-    trans_circuit(c.moments)
-end
-
-function trans_bitarray(ba::BitArray{1})
-    name_register = "creg creg" * string(classical_register_count) * "[" * string(length(ba)) * "];\n"
-    global classical_register_count += 1
-    return name_register
-end
+# function trans_bitarray(ba::BitArray{1})
+#     name_register = "creg creg" * string(classical_register_count) * "[" * string(length(ba)) * "];\n"
+#     global classical_register_count += 1
+#     return name_register
+# end
 
 function trans_g(g::AbstractGate)
     @match g begin

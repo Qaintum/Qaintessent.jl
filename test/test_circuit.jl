@@ -5,156 +5,162 @@ using Qaintessent
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
-
-
-@testset ExtendedTestSet "moments" begin
-    N = 3
-    @testset "moments constructor" begin
-        g = CircuitGate((2,), XGate())
-        m = Moment(g)
-        @test m[1] === g
-
-        h = CircuitGate((3,), YGate())
-        m = Moment([g,h])
-        @test m[1] === g
-        @test m[2] === h
-    end
-
-    @testset "moments constructor exceptions" begin
-        g = CircuitGate((2,), XGate())
-        h = CircuitGate((2,), YGate())
-        @test_throws ErrorException("Only gates on different wires are allowed in a Moment") cgc_ref =
-            Moment([g, h])
-    end
-
-    @testset "moments adjoint" begin
-        g = CircuitGate((2,), ZGate())
-        h = CircuitGate((1,), SGate())
-        m = Moment([g, h])
-        madj = adjoint(m)
-        @test madj[1] ≈ adjoint(h)
-        @test madj[2] ≈ adjoint(g)
-
-        @test sparse_matrix(adjoint(m)) ≈ adjoint(sparse_matrix(m))
-    end
-
-    @testset "moments reverse" begin
-        g = CircuitGate((2,), ZGate())
-        h = CircuitGate((1,), SGate())
-        m = Moment([g, h])
-        m_reverse = reverse(m)
-        @test m_reverse[2] ≈ g
-        @test m_reverse[1] ≈ h
-        @test m[1] ≈ g
-        @test m[2] ≈ h
-    end
-end
-
-@testset ExtendedTestSet "measurement operator construction" begin
-    N = 5
-    meas1 = MeasurementOperator.([3 * Matrix{Float64}(I, 2^N, 2^N), 2 * Matrix{Float64}(I, 2^N, 2^N)], ((1,2,3,4,5),))
-    @test Qaintessent.check_commute(meas1) == true
-
-    meas2 = MeasurementOperator.([X, Y], [(1,),(2,)])
-    @test Qaintessent.check_commute(meas2) == true
-end
-
-@testset ExtendedTestSet "measurement operator abstract matrix exceptions" begin
-    N = 2
-    small_matrix = Matrix{Float64}(I, 2^(N)-1, 2^(N)-1)
-    large_matrix = Matrix{Float64}(I, 2^(N)+1, 2^(N)+1)
-    uneven_matrix = Matrix{Float64}(I, 2^(N), 2^(N+1))
-    iwires = (3,4)
-    non_hermitian_matrix = Qaintessent.sparse_matrix(circuit_gate(1, RxGate(0.2), 2))
-
-    @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(small_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(small_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(large_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(large_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(uneven_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be a $(2^N) × $(2^N) matrix.") MeasurementOperator(uneven_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOperator(non_hermitian_matrix, iwires)
-    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOperator(non_hermitian_matrix, iwires)
-
-    noncomm_matrix_1 = sparse_matrix(circuit_gate(1, HadamardGate(), 2))
-    noncomm_matrix_2 = sparse_matrix(circuit_gate(1, X, 2))
-    m = MeasurementOperator.([noncomm_matrix_1, noncomm_matrix_2], (iwires,))
-    @test Qaintessent.check_commute(m) == false
-end
-
-@testset ExtendedTestSet "measurement operator abstract matrix exceptions" begin
-    iwires = (1,)
-
-    non_hermitian_matrix = RxGate(0.2)
-    @test_throws ErrorException("Measurement operator must be Hermitian.") MeasurementOperator(non_hermitian_matrix, iwires)
-    iwires = (1,)
-    noncomm_gate_1 = HadamardGate()
-    noncomm_gate_2 = X
-    m = MeasurementOperator.([noncomm_gate_1, noncomm_gate_2], (iwires,))
-    @test Qaintessent.check_commute(m) == false
-end
-
 @testset ExtendedTestSet "circuit construction" begin
-    N = 1
-    cgs = [
-        circuit_gate(1, X),
-        circuit_gate(1, HadamardGate()),
-        circuit_gate(1, Z),
-        circuit_gate(1, Y),
-        ]
-    ref_moments = Moment.(cgs)
-    meas = MeasurementOperator(Matrix{Float64}(I, 2^N, 2^N), (1,))
-    c = Circuit{N}(cgs, [meas])
-    for i in 1:length(cgs)
-        @test c[i] ≈ ref_moments[i]
-    end
-    ψ = randn(ComplexF64, 2^N)
-    @test distribution(c, ψ) ≈ apply(c.moments, ψ)
-
-    ψs = apply(cgs, ψ)
-    ψref = apply(c, ψ)
-    
-    @test [dot(ψs, apply(meas, ψs))] ≈ apply(c, ψ)
-end
-
-@testset ExtendedTestSet "circuit construction with circuit gate measurements" begin
     N = 3
-    cgc = [
+    cgs = [
         circuit_gate(1, X),
         circuit_gate(2, HadamardGate()),
         circuit_gate(3, Z),
         circuit_gate(1, Y),
+        ]
+    ref_moments = Moment[
+        Moment([circuit_gate(1, X),
+                circuit_gate(2, HadamardGate()),
+                circuit_gate(3, Z)]),
+        Moment([circuit_gate(1, Y)])
     ]
     iwires = [(1,), (2,), (3,)]
-    meas = MeasurementOperator.([X, X, X], iwires)
-    c = Circuit{N}(cgc, meas)
-    ψ = randn(ComplexF64, 2^N)
-    @test distribution(c, ψ) ≈ apply(c.moments, ψ)
 
-    ψs = apply(cgc, ψ)
-    @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
-end
+    @testset "basic circuit with circuit gate" begin
+        c = Circuit{N}(cgs[1])
+        
+        @test c[1] ≈ Moment(cgs[1])
 
+        ψ = randn(ComplexF64, 2^N)
+        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
 
-@testset ExtendedTestSet "reduced density matrix" begin
-    N = 4
-    ψ = randn(ComplexF64, 2^N)
-    χ = randn(ComplexF64, 2^N)
-    # full density matrix |ψ⟩⟨χ|
-    ρ = reshape(kron(conj(χ), ψ), 2^N, 2^N)
+        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(c, ψ)
 
-    id = Matrix{ComplexF64}(I, 2, 2)
-    A = randn(ComplexF64, 2, 2)
-    B = randn(ComplexF64, 2, 2)
-    @testset ExtendedTestSet "reduced density matrix correctness" begin
-        @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(B, id, A, id) .* ρ)
+        meas = mop.([X, X, X], iwires)
+        
+        c = Circuit{N}(cgs[1], meas)
+        ψs = apply(c.moments, ψ)
+
+        @test c[1] ≈ Moment(cgs[1])
+        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+    end
+    
+    @testset "basic circuit construction" begin
+        c = Circuit{N}(cgs)
+        
+        for i in 1:length(c)
+            @test c[i] ≈ ref_moments[i]
+        end
+
+        ψ = randn(ComplexF64, 2^N)
+        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
+
+        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(c, ψ)
     end
 
-    @testset ExtendedTestSet "reduced density matrix exceptions" begin
-        @test_throws ErrorException("Need at least one wire to act on.") rdm(N, (), ψ, χ)
-        @test_throws ErrorException("Number of gate wires cannot be larger than total number of wires.") rdm(N, (1, 2, 3, 4, 5), ψ, χ)
-        @test_throws ErrorException("Wire indices must be unique.") rdm(N, (2, 2), ψ, χ)
-        @test_throws ErrorException("Wire index cannot be smaller than 1.") rdm(N, (-1, 2), ψ, χ)
-        @test_throws ErrorException("Wire index cannot be larger than total number of wires.") rdm(N, (5, 1), ψ, χ)
+    @testset "circuit construction without gates" begin
+        meas = mop.([X, X, X], iwires)
+        
+        c = Circuit{N}()
+
+        ψ = randn(ComplexF64, 2^N)
+
+        @test_throws ErrorException("Circuit does not contain any gates") apply(c, ψ)
+
+        c = Circuit{N}(meas)
+
+        @test_throws ErrorException("Circuit does not contain any gates") apply(c, ψ)
+    end
+
+    @testset "circuit construction with measurements" begin
+        
+        meas = mop.([X, X, X], iwires)
+        c = Circuit{N}(cgs, meas)
+        ψ = randn(ComplexF64, 2^N)
+        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
+
+        ψs = apply(cgs, ψ)
+        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+    end
+end
+
+@testset ExtendedTestSet "circuit helper functions" begin
+    N = 3
+    cgs = [
+        circuit_gate(1, X),
+        circuit_gate(2, HadamardGate()),
+        circuit_gate(3, Z),
+        circuit_gate(1, Y),
+        ]
+    ref_moments = Moment[
+        Moment([circuit_gate(1, X),
+                circuit_gate(2, HadamardGate()),
+                circuit_gate(3, Z)]),
+        Moment([circuit_gate(1, Y)])
+    ]
+    @testset "circuit add measurement operator" begin
+        c = Circuit{N}(cgs)
+
+        meas = mop(X, 1)
+        add_measurement!(c, meas)
+
+        ψ = randn(ComplexF64, 2^N)
+        ψs = apply(cgs, ψ)
+
+        @test [dot(ψs, apply(meas, ψs))] ≈ apply(c, ψ)
+    end
+
+    @testset "circuit add measurement operators" begin
+        c = Circuit{N}(cgs)
+
+        meas = mop.([X, X, X], (1,2,3))
+        add_measurement!(c, meas)
+
+        ψ = randn(ComplexF64, 2^N)
+        ψs = apply(cgs, ψ)
+
+        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+    end
+
+    @testset "circuit add measurement operator exceptions" begin
+        meas = mop.([X, X, X], (1,2,3))
+        c = Circuit{N}(cgs, meas)
+
+        meas2 = mop(Y, 1)
+        @test_throws ErrorException("Measurement operators do not commute") add_measurement!(c, meas2)
+        @test_throws ErrorException("Measurement operators do not commute") add_measurement!(c, [meas2])
+
+        meas3 = mop(X, 5)
+        @test_throws ErrorException("Measurement operators affecting 5 wires provided for circuit of size 3") add_measurement!(c, meas3)
+        @test_throws ErrorException("Measurement operators affecting 5 wires provided for circuit of size 3") add_measurement!(c, [meas3])
+    end
+
+    @testset "circuit array operations" begin
+        m1 = Moment([circuit_gate(3, ZGate(), 1), circuit_gate(2, SGate())])
+        m2 = Moment([circuit_gate(2, ZGate()), circuit_gate(1, TdagGate())])
+        cgc = [circuit_gate(3, ZGate(), 1), circuit_gate(2, SGate()), circuit_gate(2, ZGate()), circuit_gate(1, TdagGate())]
+        c = Circuit{3}(cgc)
+
+        @test all(c[:] .≈ c.moments)
+        @test all(c[1:2] .≈ [m1, m2])
+        @test c[1:2] == c.moments
+        @test isempty(c) == false
+        @test m2 ≈ pop!(c)
+        @test isempty(c) == false
+        @test m1 ≈ pop!(c)
+        @test isempty(c) == true
+        @test_throws ArgumentError("array must be non-empty") pop!(c)
+    end
+
+    @testset "circuit reverse" begin
+        meas = mop.([X, X, X], (1,2,3))
+        c = Circuit{N}(cgs, meas)
+        reverse_c = reverse(c)
+        reverse_ref_moments = reverse(reverse.(ref_moments))
+        for i in 1:length(c)
+            @test reverse_c[i] ≈ reverse_ref_moments[i]
+            @test c[i] ≈ ref_moments[i]
+        end
+
+        reverse_c = reverse!(c)
+        for i in 1:length(c)
+            @test reverse_c[i] ≈ reverse_ref_moments[i]
+            @test c[i] ≈ reverse_ref_moments[i]
+        end
     end
 end

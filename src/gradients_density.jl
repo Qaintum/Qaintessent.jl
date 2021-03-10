@@ -237,8 +237,9 @@ function backward_density(g::ControlledGate{G}, Δ::AbstractMatrix) where {G}
     # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
     Δadd = zeros(eltype(Δ), 4^T, 4^T)
     Δsub = zeros(eltype(Δ), 4^T, 4^T)
+    eo = binary_digits(C, 0)
     for p in 0:2^C-1
-        eo = binary_digits(p, C)
+        binary_digits!(eo, p)
         Δr = reshape(Δ, 4^T, 4^C, 4^T, 4^C)
         for j in 1:C
             # use another variable for type stability

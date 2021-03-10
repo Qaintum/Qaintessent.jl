@@ -1,9 +1,6 @@
 
 apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
 
-_apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
-
-
 
 """Tailored apply for XGate"""
 function _apply(cg::CircuitGate{1,XGate}, ψ::Vector{<:Complex}, N::Int) 
@@ -189,10 +186,12 @@ function _apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}, N::Int) where {M,G}
     U = matrix(cg.gate)
     ψs = reshape(ψ, fill(2, N)...)
     χ = similar(ψs)
+    it = binary_digits(M, 0)
+    m = binary_digits(M, 0)
     for i in 1:2^M
-        it = binary_digits(i - 1, M)
+        binary_digits!(it, i - 1)
         # cannot use .= here since broadcasting fails for scalar numbers
-        χ[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits(j - 1, M), cg.iwire, N)...] for j in 1:2^M)
+        χ[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits!(m, j - 1), cg.iwire, N)...] for j in 1:2^M)
     end
     return reshape(χ, :)
 end
@@ -252,6 +251,7 @@ end
 
 
 function apply(m::Vector{Moment}, ψ::Vector{<:Complex})
+    length(m) != 0 || error("Vector of length 0 cannot be applied")
     Nmoment = maximum(req_wires.(m))
     l = length(ψ)
     N = Qaintessent.intlog2(l)
@@ -297,6 +297,8 @@ returns list of expectation values from measurement operators in `c.meas` after 
 """
 function apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
     length(ψ)::Int == 2^N || error("Size of vector `ψ` must match Circuit size of $(2^N)")
+    length(c) != 0 || error("Circuit does not contain any gates")
+    length(c.meas) != 0 || error("Circuit does not contain any measurement operators")
     ψl = copy(ψ)
     for moment in c.moments
         ψl = _apply(moment, ψl, N)
