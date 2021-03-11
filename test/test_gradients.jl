@@ -195,7 +195,7 @@ end
 
     dc = Qaintessent.gradients(c, ψ, Δ)[1]
 
-    f(rθ, rϕ, rχ, rκ, ωn, M) = dot(Δ, apply(Circuit{N}(cgc(rθ[], rϕ[], rχ[], rκ[], ωn), meas(M)), ψ))
+    f(rθ, rϕ, rχ, rκ, ωn, M) = dot(Δ, apply(ψ, Circuit{N}(cgc(rθ[], rϕ[], rχ[], rκ[], ωn), meas(M))))
     # numeric gradients
     ngrad = ngradient(f, [θ], [ϕ], [χ], [κ], ωn, M)
     # symmetrize gradient with respect to measurement operator
@@ -254,7 +254,7 @@ end
 
    dc = Qaintessent.gradients(c, ψ, Δ)[1]
 
-   f(rθ, rϕ, rχ, ωn, M) = dot(Δ, apply(Circuit{N}(cgc(rθ[], rϕ[], rχ[], ωn), meas(M)), ψ))
+   f(rθ, rϕ, rχ, ωn, M) = dot(Δ, apply(ψ, Circuit{N}(cgc(rθ[], rϕ[], rχ[], ωn), meas(M))))
    # numeric gradients
    ngrad = ngradient(f, [θ], [ϕ], [χ], ωn, M)
    # symmetrize gradient with respect to measurement operator

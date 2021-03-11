@@ -104,7 +104,7 @@ function unitary2circuit(m::AbstractMatrix{ComplexF64}, N::Union{Int, Nothing}=n
         for j in 1:N - 1
             cg = stateprep(u[1:2^(j - 1):end], N, j)
             append!(prepd, cg)
-            u = apply(cg, u)
+            u = apply(u, cg)
         end
         θ = real(atan(-u[2^(N - 1) + 1] ./ u[1]) .* 2)
         if !isnan(θ)

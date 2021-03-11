@@ -127,8 +127,8 @@ function Base.lastindex(c::Circuit)
     return length(c.moments)
 end
 
-function distribution(c::Circuit, ψ::AbstractVector) 
-    return apply(c.moments, ψ)
+function distribution(ψ::AbstractVector, c::Circuit) 
+    return apply(ψ, c.moments)
 end
 
 function Base.append!(c::Circuit{N}, gate::CircuitGate) where {N}
