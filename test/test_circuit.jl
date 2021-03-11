@@ -27,17 +27,17 @@ using Qaintessent
         @test c[1] ≈ Moment(cgs[1])
 
         ψ = randn(ComplexF64, 2^N)
-        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
+        @test distribution(ψ, c) ≈ apply(ψ, c.moments)
 
-        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(c, ψ)
+        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(ψ, c)
 
         meas = mop.([X, X, X], iwires)
         
         c = Circuit{N}(cgs[1], meas)
-        ψs = apply(c.moments, ψ)
+        ψs = apply(ψ, c.moments)
 
         @test c[1] ≈ Moment(cgs[1])
-        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+        @test [dot(ψs, apply(ψs, m)) for m in meas] ≈ apply(ψ, c)
     end
     
     @testset "basic circuit construction" begin
@@ -48,9 +48,9 @@ using Qaintessent
         end
 
         ψ = randn(ComplexF64, 2^N)
-        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
+        @test distribution(ψ, c) ≈ apply(ψ, c.moments)
 
-        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(c, ψ)
+        @test_throws ErrorException("Circuit does not contain any measurement operators") apply(ψ, c)
     end
 
     @testset "circuit construction without gates" begin
@@ -60,11 +60,11 @@ using Qaintessent
 
         ψ = randn(ComplexF64, 2^N)
 
-        @test_throws ErrorException("Circuit does not contain any gates") apply(c, ψ)
+        @test_throws ErrorException("Circuit does not contain any gates") apply(ψ, c)
 
         c = Circuit{N}(meas)
 
-        @test_throws ErrorException("Circuit does not contain any gates") apply(c, ψ)
+        @test_throws ErrorException("Circuit does not contain any gates") apply(ψ, c)
     end
 
     @testset "circuit construction with measurements" begin
@@ -72,10 +72,10 @@ using Qaintessent
         meas = mop.([X, X, X], iwires)
         c = Circuit{N}(cgs, meas)
         ψ = randn(ComplexF64, 2^N)
-        @test distribution(c, ψ) ≈ apply(c.moments, ψ)
+        @test distribution(ψ, c) ≈ apply(ψ, c.moments)
 
-        ψs = apply(cgs, ψ)
-        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+        ψs = apply(ψ, cgs)
+        @test [dot(ψs, apply(ψs, m)) for m in meas] ≈ apply(ψ, c)
     end
 end
 
@@ -100,9 +100,9 @@ end
         add_measurement!(c, meas)
 
         ψ = randn(ComplexF64, 2^N)
-        ψs = apply(cgs, ψ)
+        ψs = apply(ψ, cgs)
 
-        @test [dot(ψs, apply(meas, ψs))] ≈ apply(c, ψ)
+        @test [dot(ψs, apply(ψs, meas))] ≈ apply(ψ, c)
     end
 
     @testset "circuit add measurement operators" begin
@@ -112,9 +112,9 @@ end
         add_measurement!(c, meas)
 
         ψ = randn(ComplexF64, 2^N)
-        ψs = apply(cgs, ψ)
+        ψs = apply(ψ, cgs)
 
-        @test [dot(ψs, apply(m, ψs)) for m in meas] ≈ apply(c, ψ)
+        @test [dot(ψs, apply(ψs,m)) for m in meas] ≈ apply(ψ, c)
     end
 
     @testset "circuit add measurement operator exceptions" begin

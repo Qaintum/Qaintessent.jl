@@ -550,7 +550,7 @@ end
     cgc = qasm2cgc(src1)
     ψ = randn(ComplexF64, 2^N)
     
-    @test apply(cgc_ref.moments, ψ) ≈ apply(cgc.moments, ψ)
+    @test apply(ψ, cgc_ref.moments) ≈ apply(ψ, cgc.moments)
 end
 
 
@@ -609,6 +609,6 @@ end
     ψ = randn(ComplexF64, 2^N)
     cgc = qasm2cgc(src_ref)
 
-    @test apply(cgc.moments, ψ) ≈ apply(cgc_ref.moments, ψ)
+    @test apply(ψ, cgc.moments) ≈ apply(ψ, cgc_ref.moments)
     @test src_ref == cgc2qasm(cgc_ref)
 end

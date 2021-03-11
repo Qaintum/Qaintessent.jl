@@ -305,10 +305,10 @@ function backward_density(m::Moment, ρ::DensityMatrix, Δ::DensityMatrix)
     dgates = CircuitGate[]
     for cg in reverse(m.gates)
         Udag = Base.adjoint(cg)
-        ρ = apply(Udag, ρ)
+        ρ = apply(ρ, Udag)
         # backward step of quantum state
         pushfirst!(dgates, backward_density(cg, ρ, Δ))
-        Δ = apply(Udag, Δ)
+        Δ = apply(Δ, Udag)
     end
     return Moment(dgates), ρ, Δ
 end
@@ -338,7 +338,7 @@ function gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real})
     # length of circuit output vector must match gradient vector
     @assert(length(Δ) == length(c.meas))
     # forward pass through unitary gates
-    ρ = apply(c.moments, ρ)
+    ρ = apply(ρ, c.moments)
     # gradient of cost function with respect to ρ
     ρbar = density_from_matrix(0.5^N * sum([Δ[i] * sparse_matrix(c.meas[i], N) for i in 1:length(Δ)]))
     # backward pass through unitary gates

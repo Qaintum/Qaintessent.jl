@@ -14,7 +14,7 @@ When performing a quantum simulation, it may be required to define an intermedia
 
 ```@docs
 Moment
-apply(m::Moment, ψ::Vector{<:Complex})
+apply(ψ::Vector{<:Complex}, m::Moment)
 ```
 ### Moment Example
 
@@ -34,7 +34,7 @@ The `Moment` can then be applied to a quantum state in state vector form.
 ```@example Moment
     ψ = randn(ComplexF64, 2^N)
 
-    apply(m, ψ)
+    apply(ψ, m)
 ```
 
 ## Measurement Operators
@@ -49,7 +49,7 @@ MeasurementOperator
 
 ```@docs
 Circuit{N}
-apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
+apply(ψ::Vector{<:Complex}, c::Circuit{N}) where {N}
 ```
 
 ### Circuit Example
@@ -75,7 +75,7 @@ Applying the [Circuit](@ref) object to a 3-qubit quantum state all in the ground
 ```jldoctest Circuit
 julia> ψ = ComplexF64[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 
-julia> apply(c, ψ)
+julia> apply(ψ, c)
 1-element Array{Float64,1}:
  0.9999999999999996
 ```

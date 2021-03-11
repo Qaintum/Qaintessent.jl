@@ -13,8 +13,8 @@ end
 ```@docs
 CircuitGate
 circuit_gate
-apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
-apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
+apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
+apply(ψ::Vector{<:Complex}, cgs::Vector{<:CircuitGate})
 sparse_matrix(cg::CircuitGate{M,G}, N::Integer=0) where {M,G <: AbstractGate}
 sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
 ```

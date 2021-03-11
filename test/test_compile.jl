@@ -156,13 +156,13 @@ end
 
         for j in 1:N-1
             cg = Qaintessent.stateprep(ψ[1:2^(j-1):end], N, j)
-            ψ = apply(cg, ψ)
+            ψ = apply(ψ, cg)
         end
         θ = real(atan(-ψ[2^(N-1)+1]./ψ[1]).*2)
 
         if !isnan(θ)
             cg = CircuitGate((N,), RyGate(θ))
-            ψ = apply(cg, ψ)
+            ψ = apply(ψ, cg)
         end
 
         @test ψ ≈ ϕ
@@ -194,11 +194,11 @@ end
         U = Matrix(U)
         M = Stewart(ComplexF64, 2^N)
 
-        cgc = unitary2circuit(deepcopy(U), N)
+        cgs = unitary2circuit(deepcopy(U), N)
 
         ψ = rand(ComplexF64, 2^N)
         ψ_ref = U*ψ
-        ψ_compiled = apply(cgc, ψ)
+        ψ_compiled = apply(ψ, cgs)
 
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
     end
@@ -219,12 +219,12 @@ end
         for gate in [X, Y, Z, HadamardGate(), TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
             U = matrix(gate)
 
-            cgc = unitary2circuit(U)
+            cgs = unitary2circuit(U)
 
             ψ = rand(ComplexF64, 2^N)
 
             ψ_ref = U*ψ
-            ψ_compiled = apply(cgc, ψ)
+            ψ_compiled = apply(ψ, cgs)
             @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
         end
     end
@@ -235,12 +235,12 @@ end
         U = Matrix(U)
         M = Stewart(ComplexF64, 2)
 
-        cgc = unitary2circuit(U, N)
+        cgs = unitary2circuit(U, N)
 
         ψ = rand(ComplexF64, 2^N)
 
         ψ_ref = U*ψ
-        ψ_compiled = apply(cgc, ψ)
+        ψ_compiled = apply(ψ, cgs)
 
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
     end
@@ -250,12 +250,12 @@ end
         U = diagm(exp.(im .* rand(Float64, 2^N)))
         M = Stewart(ComplexF64, 2^N)
 
-        cgc = unitary2circuit(U, N)
+        cgs = unitary2circuit(U, N)
 
         ψ = rand(ComplexF64, 2^N)
 
         ψ_ref = U*ψ
-        ψ_compiled = apply(cgc, ψ)
+        ψ_compiled = apply(ψ, cgs)
 
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
     end
@@ -266,11 +266,11 @@ end
         U = Matrix(U)
         M = Stewart(ComplexF64, 2^N)
 
-        cgc = unitary2circuit(U, N)
+        cgs = unitary2circuit(U, N)
         ψ = rand(ComplexF64, 2^N)
 
         ψ_ref = U*ψ
-        ψ_compiled = apply(cgc, ψ)
+        ψ_compiled = apply(ψ, cgs)
 
         @test ψ_ref'*M*ψ_ref ≈ ψ_compiled'*M*ψ_compiled
     end
@@ -283,10 +283,10 @@ end
             random_θ = rand(Float64, 3)
             for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
                 U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
-                cgc = unitary2circuit(U, N)
+                cgs = unitary2circuit(U, N)
                 ψ = rand(ComplexF64, 2^N)
                 ψ_ref = U*ψ
-                ψ_compiled = apply(cgc, ψ)
+                ψ_compiled = apply(ψ, cgs)
                 
                 @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), rtol=1e-5, atol=1e-5)
             end
