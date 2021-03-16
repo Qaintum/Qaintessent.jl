@@ -6,6 +6,8 @@ using Memoize
 
 
 include("util.jl")
+export 
+    rdm
 
 include("gates.jl")
 export
@@ -41,19 +43,23 @@ include("circuitgate.jl")
 export
     AbstractCircuitGate,
     CircuitGate,
-    circuit_gate
+    circuit_gate,
+    req_wires
+
+include("moment.jl")
+export
+    Moment
+
+include("measurementoperator.jl")
+export
+    MeasurementOperator,
+    mop
 
 include("circuit.jl")
 export
-    Moment,
-    single_qubit_circuit_gate,
-    two_qubit_circuit_gate,
-    controlled_circuit_gate,
-    circuit_gate,
-    MeasurementOperator,
     Circuit,
-    distribution,
-    rdm
+    add_measurement!,
+    distribution
 
 include("density_matrix.jl")
 export

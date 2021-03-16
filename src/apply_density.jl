@@ -1,7 +1,7 @@
 
 
 """Tailored conjugation of density matrix by XGate"""
-@views function apply(cg::CircuitGate{1,XGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,XGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -16,7 +16,7 @@
 end
 
 """Tailored implementation of 1/2 (X ρ + ρ X)"""
-@views function apply_mixed_add(cg::CircuitGate{1,XGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,XGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -31,7 +31,7 @@ end
 end
 
 """Tailored implementation of i/2 (X ρ - ρ X)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,XGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,XGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -47,7 +47,7 @@ end
 
 
 """Tailored conjugation of density matrix by YGate"""
-@views function apply(cg::CircuitGate{1,YGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,YGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -62,7 +62,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Y ρ + ρ Y)"""
-@views function apply_mixed_add(cg::CircuitGate{1,YGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,YGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -77,7 +77,7 @@ end
 end
 
 """Tailored implementation of i/2 (Y ρ - ρ Y)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,YGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,YGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -93,7 +93,7 @@ end
 
 
 """Tailored conjugation of density matrix by ZGate"""
-@views function apply(cg::CircuitGate{1,ZGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,ZGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -108,7 +108,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Z ρ + ρ Z)"""
-@views function apply_mixed_add(cg::CircuitGate{1,ZGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,ZGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -123,7 +123,7 @@ end
 end
 
 """Tailored implementation of i/2 (Z ρ - ρ Z)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,ZGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,ZGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -139,7 +139,7 @@ end
 
 
 """Tailored conjugation of density matrix by the Hadamard gate"""
-@views function apply(cg::CircuitGate{1,HadamardGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -154,7 +154,7 @@ end
 end
 
 """Tailored implementation of 1/2 (H ρ + ρ H)"""
-@views function apply_mixed_add(cg::CircuitGate{1,HadamardGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -172,7 +172,7 @@ end
 end
 
 """Tailored implementation of i/2 (H ρ - ρ H)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,HadamardGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -191,7 +191,7 @@ end
 
 
 """Tailored conjugation of density matrix by SGate"""
-@views function apply(cg::CircuitGate{1,SGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,SGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -206,7 +206,7 @@ end
 end
 
 """Tailored implementation of 1/2 (S ρ + ρ S†)"""
-@views function apply_mixed_add(cg::CircuitGate{1,SGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,SGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -221,7 +221,7 @@ end
 end
 
 """Tailored implementation of i/2 (S ρ - ρ S†)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,SGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,SGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -237,7 +237,7 @@ end
 
 
 """Tailored conjugation of density matrix by SdagGate"""
-@views function apply(cg::CircuitGate{1,SdagGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -252,7 +252,7 @@ end
 end
 
 """Tailored implementation of 1/2 (S† ρ + ρ S)"""
-@views function apply_mixed_add(cg::CircuitGate{1,SdagGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -267,7 +267,7 @@ end
 end
 
 """Tailored implementation of i/2 (S† ρ - ρ S)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,SdagGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -283,7 +283,7 @@ end
 
 
 """Tailored conjugation of density matrix by TGate"""
-@views function apply(cg::CircuitGate{1,TGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,TGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -298,7 +298,7 @@ end
 end
 
 """Tailored implementation of 1/2 (T ρ + ρ T†)"""
-@views function apply_mixed_add(cg::CircuitGate{1,TGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,TGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -313,7 +313,7 @@ end
 end
 
 """Tailored implementation of i/2 (T ρ - ρ T†)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,TGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,TGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -329,7 +329,7 @@ end
 
 
 """Tailored conjugation of density matrix by TdagGate"""
-@views function apply(cg::CircuitGate{1,TdagGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -344,7 +344,7 @@ end
 end
 
 """Tailored implementation of 1/2 (T† ρ + ρ T)"""
-@views function apply_mixed_add(cg::CircuitGate{1,TdagGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -359,7 +359,7 @@ end
 end
 
 """Tailored implementation of i/2 (T† ρ - ρ T)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,TdagGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -375,7 +375,7 @@ end
 
 
 """Tailored conjugation of density matrix by RxGate"""
-@views function apply(cg::CircuitGate{1,RxGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,RxGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -392,7 +392,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rx(θ) ρ + ρ Rx(-θ))"""
-@views function apply_mixed_add(cg::CircuitGate{1,RxGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,RxGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -407,7 +407,7 @@ end
 end
 
 """Tailored implementation of i/2 (Rx(θ) ρ - ρ Rx(-θ))"""
-@views function apply_mixed_sub(cg::CircuitGate{1,RxGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,RxGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -422,7 +422,7 @@ end
 
 
 """Tailored conjugation of density matrix by RyGate"""
-@views function apply(cg::CircuitGate{1,RyGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,RyGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -439,7 +439,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Ry(θ) ρ + ρ Ry(-θ))"""
-@views function apply_mixed_add(cg::CircuitGate{1,RyGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,RyGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -454,7 +454,7 @@ end
 end
 
 """Tailored implementation of i/2 (Ry(θ) ρ - ρ Ry(-θ))"""
-@views function apply_mixed_sub(cg::CircuitGate{1,RyGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,RyGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -469,7 +469,7 @@ end
 
 
 """Tailored conjugation of density matrix by RzGate"""
-@views function apply(cg::CircuitGate{1,RzGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,RzGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -486,7 +486,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rz(θ) ρ + ρ Rz(-θ))"""
-@views function apply_mixed_add(cg::CircuitGate{1,RzGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,RzGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -501,7 +501,7 @@ end
 end
 
 """Tailored implementation of i/2 (Rz(θ) ρ - ρ Rz(-θ))"""
-@views function apply_mixed_sub(cg::CircuitGate{1,RzGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,RzGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -516,7 +516,7 @@ end
 
 
 """Tailored conjugation of density matrix by RotationGate"""
-@views function apply(cg::CircuitGate{1,RotationGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate})
     θ = norm(cg.gate.nθ)
     if θ == 0
         # for consistency, we return a copy here
@@ -541,7 +541,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rn(θ) ρ + ρ Rn(-θ))"""
-@views function apply_mixed_add(cg::CircuitGate{1,RotationGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate})
     θ = norm(cg.gate.nθ)
     if θ == 0
         # for consistency, we return a copy here
@@ -566,7 +566,7 @@ end
 end
 
 """Tailored implementation of i/2 (Rn(θ) ρ - ρ Rn(-θ))"""
-@views function apply_mixed_sub(cg::CircuitGate{1,RotationGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate})
     θ = norm(cg.gate.nθ)
     if θ == 0
         return DensityMatrix(zero(ρ.v), ρ.N)
@@ -590,7 +590,7 @@ end
 
 
 """Tailored conjugation of density matrix by PhaseShiftGate"""
-@views function apply(cg::CircuitGate{1,PhaseShiftGate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -608,7 +608,7 @@ end
 end
 
 """Tailored implementation of 1/2 (P(ϕ) ρ + ρ P(-ϕ))"""
-@views function apply_mixed_add(cg::CircuitGate{1,PhaseShiftGate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -625,7 +625,7 @@ end
 end
 
 """Tailored implementation of i/2 (P(ϕ) ρ - ρ P(-ϕ))"""
-@views function apply_mixed_sub(cg::CircuitGate{1,PhaseShiftGate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -644,7 +644,7 @@ end
 
 
 """Tailored conjugation of density matrix by SwapGate"""
-function apply(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
+function apply(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -677,7 +677,7 @@ function apply(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
 end
 
 """Tailored implementation of 1/2 (SWAP ρ + ρ SWAP)"""
-function apply_mixed_add(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
+function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -710,7 +710,7 @@ function apply_mixed_add(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
 end
 
 """Tailored implementation of i/2 (SWAP ρ - ρ SWAP)"""
-function apply_mixed_sub(cg::CircuitGate{2,SwapGate}, ρ::DensityMatrix)
+function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -746,7 +746,7 @@ end
 
 
 """Tailored conjugation of density matrix by EntanglementXXGate"""
-function apply(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
+function apply(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -783,7 +783,7 @@ function apply(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
 end
 
 """Tailored implementation of 1/2 (Rxx(θ) ρ + ρ Rxx(-θ))"""
-function apply_mixed_add(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
+function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -808,7 +808,7 @@ function apply_mixed_add(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatri
 end
 
 """Tailored implementation of i/2 (Rxx(θ) ρ - ρ Rxx(-θ))"""
-function apply_mixed_sub(cg::CircuitGate{2,EntanglementXXGate}, ρ::DensityMatrix)
+function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -833,7 +833,7 @@ end
 
 
 """Tailored conjugation of density matrix by EntanglementYYGate"""
-function apply(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
+function apply(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -870,7 +870,7 @@ function apply(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
 end
 
 """Tailored implementation of 1/2 (Ryy(θ) ρ + ρ Ryy(-θ))"""
-function apply_mixed_add(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
+function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -895,7 +895,7 @@ function apply_mixed_add(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatri
 end
 
 """Tailored implementation of i/2 (Ryy(θ) ρ - ρ Ryy(-θ))"""
-function apply_mixed_sub(cg::CircuitGate{2,EntanglementYYGate}, ρ::DensityMatrix)
+function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -920,7 +920,7 @@ end
 
 
 """Tailored conjugation of density matrix by EntanglementZZGate"""
-function apply(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
+function apply(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -957,7 +957,7 @@ function apply(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
 end
 
 """Tailored implementation of 1/2 (Rzz(θ) ρ + ρ Rzz(-θ))"""
-function apply_mixed_add(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
+function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -982,7 +982,7 @@ function apply_mixed_add(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatri
 end
 
 """Tailored implementation of i/2 (Rzz(θ) ρ - ρ Rzz(-θ))"""
-function apply_mixed_sub(cg::CircuitGate{2,EntanglementZZGate}, ρ::DensityMatrix)
+function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate})
     # qubit indices the gate acts on
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i)  # sort them
@@ -1027,7 +1027,7 @@ num_wires(::Proj1Gate)::Int = 1
 
 
 """Tailored conjugation of density matrix by Proj1Gate"""
-@views function apply(cg::CircuitGate{1,Proj1Gate}, ρ::DensityMatrix)
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -1044,7 +1044,7 @@ num_wires(::Proj1Gate)::Int = 1
 end
 
 """Tailored implementation of 1/2 (|1><1| ρ + ρ |1><1|)"""
-@views function apply_mixed_add(cg::CircuitGate{1,Proj1Gate}, ρ::DensityMatrix)
+@views function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -1057,7 +1057,7 @@ end
 end
 
 """Tailored implementation of i/2 (|1><1| ρ - ρ |1><1|)"""
-@views function apply_mixed_sub(cg::CircuitGate{1,Proj1Gate}, ρ::DensityMatrix)
+@views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     ρv = reshape(ρ.v, 4^(j-1), 4, 4^(ρ.N-j))
@@ -1071,7 +1071,7 @@ end
 
 
 """Tailored conjugation of density matrix by a general ControlledGate"""
-function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M,G}
+function apply(ρ::DensityMatrix, cg::CircuitGate{M,ControlledGate{G}}) where {M,G}
 
     # number of target wires
     T = target_wires(cg.gate)
@@ -1089,21 +1089,22 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
     cgU = CircuitGate{T,G}(cg.iwire[1:T], cg.gate.U)
 
     # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
+    eo = binary_digits(C, 0)
     for p in 0:2^C-1
-        eo = binary_digits(p, C)
+        binary_digits!(eo, p)
         τ = ρ
         for j in 1:C
             if eo[j] == 0
-                τ = apply_mixed_add(CircuitGate((cg.iwire[T + j],), Proj1Gate()), τ)
+                τ = apply_mixed_add(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
             else
-                τ = apply_mixed_sub(CircuitGate((cg.iwire[T + j],), Proj1Gate()), τ)
+                τ = apply_mixed_sub(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
             end
         end
         nodd::Int = sum(eo)
         if iseven(nodd)
-            τ.v .= apply_mixed_add(cgU, τ).v .- τ.v
+            τ.v .= apply_mixed_add(τ, cgU).v .- τ.v
         else
-            τ = apply_mixed_sub(cgU, τ)
+            τ = apply_mixed_sub(τ, cgU)
         end
         # sign factor from even powers of i
         signfac = 1 - 2*(((nodd + 1) ÷ 2) % 2)
@@ -1113,16 +1114,16 @@ function apply(cg::CircuitGate{M,ControlledGate{G}}, ρ::DensityMatrix) where {M
     # conjugate by |1><1| x (U - I)
     τ = ρ
     for j in 1:C
-        τ = apply(CircuitGate((cg.iwire[T + j],), Proj1Gate()), τ)
+        τ = apply(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
     end
-    ρs.v .+= apply(cgU, τ).v .- 2.0.*apply_mixed_add(cgU, τ).v .+ τ.v
+    ρs.v .+= apply(τ, cgU).v .- 2.0.*apply_mixed_add(τ, cgU).v .+ τ.v
 
     return ρs
 end
 
 
 """Conjugate density matrix by a general MatrixGate"""
-@views function apply(cg::CircuitGate{M,MatrixGate}, ρ::DensityMatrix) where {M}
+@views function apply(ρ::DensityMatrix, cg::CircuitGate{M,MatrixGate}) where {M}
 
     # Pauli matrix basis (including identity matrix)
     pauli = Matrix{ComplexF64}[Matrix{ComplexF64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
@@ -1130,7 +1131,8 @@ end
 
     U::Matrix{ComplexF64} = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
-    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits(i, M))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits(j, M))]...) * U'))
+    m = quaternary_digits(M, 0)
+    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits!(m, i))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits!(m, j))]...) * U'))
                 for i in 0:4^M-1,
                     j in 0:4^M-1]
 
@@ -1140,50 +1142,50 @@ end
     vs = similar(ρv)
     for i in 1:4^M
         # cannot use .= here since broadcasting fails for scalar numbers
-        vs[sliced_index(quaternary_digits(i - 1, M), cg.iwire, ρ.N)...] = sum(conjU[i, j] .* ρv[sliced_index(quaternary_digits(j - 1, M), cg.iwire, ρ.N)...] for j in 1:4^M)
+        vs[sliced_index(quaternary_digits!(m, i - 1), cg.iwire, ρ.N)...] = sum(conjU[i, j] .* ρv[sliced_index(quaternary_digits!(m, j - 1), cg.iwire, ρ.N)...] for j in 1:4^M)
     end
 
     return DensityMatrix(reshape(vs, :), ρ.N)
 end
 
 
-function apply(moment::Moment, ρ::DensityMatrix) 
+function apply(ρ::DensityMatrix, moment::Moment) 
     for cg in moment
-        ρ = apply(cg, ρ)
+        ρ = apply(ρ, cg)
     end
     return ρ
 end
 
-function apply(moments::Vector{Moment}, ρ::DensityMatrix)
+function apply(ρ::DensityMatrix, moments::Vector{Moment})
     for m in moments
-        ρ = apply(m, ρ)
+        ρ = apply(ρ, m)
     end
     return ρ
 end
 
 
 """
-    apply(c::Circuit{N}, ρ::DensityMatrix) where {N}
+    apply(ρ::DensityMatrix, c::Circuit{N}) where {N}
 
 Compute list of expectation values from measurement operators in `c.meas`, after applying circuit gates in `c.cgc` on the N-qubit density matrix `ρ`
 """
-function apply(c::Circuit{N}, ρ::DensityMatrix) where {N}
+function apply(ρ::DensityMatrix, c::Circuit{N}) where {N}
     ρ.N == N || error("Qubit number $N of circuit not equal to qubit number $(ρ.N) of density matrix")
-    ρ = apply(c.moments, ρ)
+    ρ = apply(ρ, c.moments)
     ρmat = matrix(ρ)
     return [real(tr(sparse_matrix(m, N) * ρmat)) for m in c.meas]
 end
 
 """
-    apply(cgs::Vector{<:CircuitGate}, ρ::DensityMatrix)
+    apply(ρ::DensityMatrix, cgs::Vector{<:CircuitGate})
 
 Apply a [`CircuitGate`](@ref) to a quantum density matrix `ρ`.
 """
-function apply(cgs::Vector{<:CircuitGate}, ρ::DensityMatrix)
+function apply(ρ::DensityMatrix, cgs::Vector{<:CircuitGate})
     req = maximum(req_wires.(cgs))
     ρ.N >= req || error("Qubit number $req of [CircuitGate](@ref) not equal to qubit number $(ρ.N) of density matrix `ρ`")
     for cg in cgs
-        ρ = apply(cg, ρ)
+        ρ = apply(ρ, cg)
     end
     return ρ
 end

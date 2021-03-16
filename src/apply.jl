@@ -1,12 +1,9 @@
 
-apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
-
-_apply(m::AbstractMatrix, ψ::Vector{<:Complex}) = m*ψ
-
+apply(ψ::Vector{<:Complex}, m::AbstractMatrix) = m*ψ
 
 
 """Tailored apply for XGate"""
-function _apply(cg::CircuitGate{1,XGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,XGate}, N::Int) 
     i = cg.iwire[1]
     χ = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = χ[:, [2, 1], :]
@@ -15,7 +12,7 @@ end
 
 
 """Tailored apply for YGate"""
-function _apply(cg::CircuitGate{1,YGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,YGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -26,7 +23,7 @@ end
 
 
 """Tailored apply for ZGate"""
-function _apply(cg::CircuitGate{1,ZGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,ZGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -37,7 +34,7 @@ end
 
 
 """Tailored apply for HadamardGate"""
-function _apply(cg::CircuitGate{1,HadamardGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,HadamardGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -48,7 +45,7 @@ end
 
 
 """Tailored apply for SGate"""
-function _apply(cg::CircuitGate{1,SGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,SGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -59,7 +56,7 @@ end
 
 
 """Tailored apply for SdagGate"""
-function _apply(cg::CircuitGate{1,SdagGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,SdagGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -70,7 +67,7 @@ end
 
 
 """Tailored apply for TGate"""
-function _apply(cg::CircuitGate{1,TGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,TGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -81,7 +78,7 @@ end
 
 
 """Tailored apply for TdagGate"""
-function _apply(cg::CircuitGate{1,TdagGate}, ψ::Vector{<:Complex}, N::Int)
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,TdagGate}, N::Int)
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -92,7 +89,7 @@ end
 
 
 """Tailored apply for RzGate"""
-function _apply(cg::CircuitGate{1,RzGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,RzGate}, N::Int) 
     i = cg.iwire[1]
     θ = cg.gate.θ[]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
@@ -104,7 +101,7 @@ end
 
 
 """Tailored apply for PhaseShiftGate"""
-function _apply(cg::CircuitGate{1,PhaseShiftGate}, ψ::Vector{<:Complex}, N::Int) 
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,PhaseShiftGate}, N::Int) 
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -115,7 +112,7 @@ end
 
 
 """Tailored apply for a general single qubit gate"""
-function _apply(cg::CircuitGate{1,AbstractGate}, ψ::Vector{<:Complex}, N::Int)
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,AbstractGate}, N::Int)
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
@@ -127,7 +124,7 @@ end
 #
 
 """Tailored apply for SwapGate"""
-function _apply(cg::CircuitGate{2,SwapGate}, ψ::Vector{<:Complex}, N::Int)
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{2,SwapGate}, N::Int)
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i) # sort them
 
@@ -144,7 +141,7 @@ end
 
 
 """Tailored apply for a general ControlledGate"""
-function _apply(cg::CircuitGate{M,ControlledGate{G}}, ψ::Vector{<:Complex}, N::Int) where {M,G}
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,ControlledGate{G}}, N::Int) where {M,G}
     χ = copy(ψ) # TODO: copy only what's needed
     χ = reshape(χ, fill(2, N)...)
     T = target_wires(cg.gate)
@@ -156,14 +153,14 @@ function _apply(cg::CircuitGate{M,ControlledGate{G}}, ψ::Vector{<:Complex}, N::
     slice_target = Tuple(i in icontrol ? 2 : Colon() for i in 1:N)
     new_cg = CircuitGate(new_iwire, cg.gate.U)
 
-    χ[slice_target...] = reshape(apply(new_cg, reshape(χ[slice_target...], :)),
+    χ[slice_target...] = reshape(apply(reshape(χ[slice_target...], :), new_cg),
                                  fill(2, N-M+T)...)
     return reshape(χ, :)
 end
 
 
 """
-    apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
+    apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
 
 Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
 # Examples
@@ -171,35 +168,37 @@ Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
 ```jldoctest
 julia> cg = circuit_gate(1, HadamardGate());
 julia> ψ = [1 0];
-julia> apply(cg, ψ)
+julia> apply(ψ, cg)
 2-element Array{Complex{Float64},1}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
 ```
 """
-function apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}) where {M,G}
+function apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
     l = length(ψ)::Int
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
     req_wires(cg) <= N || error("CircuitGate requires a minimum of $(req_wires(cg)) qubits, input vector `ψ` has $N qubits")
-    _apply(cg, ψ, N)
+    _apply(ψ, cg, N)
 end
 
-function _apply(cg::CircuitGate{M,G}, ψ::Vector{<:Complex}, N::Int) where {M,G}
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}, N::Int) where {M,G}
     U = matrix(cg.gate)
     ψs = reshape(ψ, fill(2, N)...)
     χ = similar(ψs)
+    it = binary_digits(M, 0)
+    m = binary_digits(M, 0)
     for i in 1:2^M
-        it = binary_digits(i - 1, M)
+        binary_digits!(it, i - 1)
         # cannot use .= here since broadcasting fails for scalar numbers
-        χ[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits(j - 1, M), cg.iwire, N)...] for j in 1:2^M)
+        χ[sliced_index(it, cg.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits!(m, j - 1), cg.iwire, N)...] for j in 1:2^M)
     end
     return reshape(χ, :)
 end
 
 
 """
-    apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
+    apply(ψ::Vector{<:Complex}, cgs::Vector{<:CircuitGate})
 
 Apply a sequence of [`CircuitGate`](@ref)(s) to a quantum state vector `ψ`.
 
@@ -210,100 +209,103 @@ julia> cgs = [circuit_gate(1, HadamardGate()),
                 circuit_gate(1, X),
                 circuit_gate(1, Y)];
 julia> ψ = [1 0];
-julia> apply(cgs, ψ)
+julia> apply(ψ, cgs)
 2-element Array{Complex{Float64},1}:
  0.0 - 0.7071067811865475im
  0.0 + 0.7071067811865475im
 ```
 """
-function apply(cgs::Vector{<:CircuitGate}, ψ::Vector{<:Complex})
+function apply(ψ::Vector{<:Complex}, cgs::Vector{<:CircuitGate})
     l = length(ψ)
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
     req = maximum(req_wires.(cgs))
     req <= N || error("CircuitGates require a minimum of $req qubits, input vector `ψ` has $N qubits")
     for cg in cgs 
-        ψ = _apply(cg, ψ, N)
+        ψ = _apply(ψ, cg, N)
     end
     return ψ
 end
 
 
 """
-    apply(m::Moment, ψ::Vector{<:Complex}) 
+    apply(ψ::Vector{<:Complex}, m::Moment)
 
 returns state vector of `N` qubits after applying a `Moment{N}` object to a quantum state vector of `N` qubits `ψ`
 """
-function apply(m::Moment, ψ::Vector{<:Complex}) 
+function apply(ψ::Vector{<:Complex}, m::Moment) 
     Nmoment = req_wires(m)
     l = length(ψ)
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
     Nmoment <= N || error("Moment affecting $Nmoment qubits applied to $N qubits")
-    _apply(m, ψ, N)   
+    _apply(ψ, m, N)   
 end
 
-function _apply(m::Moment, ψ::Vector{<:Complex}, N::Int)
+function _apply(ψ::Vector{<:Complex}, m::Moment, N::Int)
     for gate in m
-        ψ = _apply(gate, ψ, N)
+        ψ = _apply(ψ, gate, N)
     end
     return ψ
 end
 
 
-function apply(m::Vector{Moment}, ψ::Vector{<:Complex})
+function apply(ψ::Vector{<:Complex}, m::Vector{Moment})
+    length(m) != 0 || error("Vector of length 0 cannot be applied")
     Nmoment = maximum(req_wires.(m))
     l = length(ψ)
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
     Nmoment <= N || error("Moment affecting $Nmoment qubits applied to $N qubits")
     for moment in m
-        ψ = _apply(moment, ψ, N)
+        ψ = _apply(ψ, moment, N)
     end
     return ψ
 end
 
 
 """
-    apply(m::MeasurementOperator, ψ::Vector{<:Complex}) 
+    apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractGate}
 
 returns state vector of `N` qubits after applying a `Moment{N}` object to a quantum state vector of `N` qubits `ψ`
 """
 
-function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:AbstractGate}
+function apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractGate}
     Nmoment = num_wires(m)
     l = length(ψ)::Int    
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
     Nmoment <= N || error("MeasurementOperator affecting $Nmoment qubits applied to $N qubits")
     c = circuit_gate((m.iwire...), m.operator)
-    _apply(c, ψ, N)   
+    _apply(ψ, c, N)   
 end
 
-function apply(m::MeasurementOperator{M,G}, ψ::Vector{<:Complex}) where {M,G<:AbstractMatrix}
+function apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractMatrix}
     Nmoment = num_wires(m)
     l = length(ψ)::Int    
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
     Nmoment <= N || error("MeasurementOperator affecting $Nmoment qubits applied to $N qubits")
-    apply(m.operator, ψ)   
+    apply(ψ, m.operator)   
 end
 
 
 """
-    apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
+    apply(ψ::Vector{<:Complex}, c::Circuit{N}) where {N}
 
 returns list of expectation values from measurement operators in `c.meas` after applying circuit gates in `c.cgc` on state vector of `N` qubits `ψ`
 """
-function apply(c::Circuit{N}, ψ::Vector{<:Complex}) where {N}
+function apply(ψ::Vector{<:Complex}, c::Circuit{N}) where {N}
     length(ψ)::Int == 2^N || error("Size of vector `ψ` must match Circuit size of $(2^N)")
+    length(c) != 0 || error("Circuit does not contain any gates")
+    length(c.meas) != 0 || error("Circuit does not contain any measurement operators")
     ψl = copy(ψ)
     for moment in c.moments
-        ψl = _apply(moment, ψl, N)
+        ψl = _apply(ψl, moment, N)
     end
-    ψr = apply.(c.meas, (ψl,)) 
+    ψr = apply.((ψl,), c.meas) 
     return real.(dot.((ψl,), ψr))
 end
 
 
-(c::Circuit)(ψ) = apply(c, ψ)
+(c::Circuit)(ψ) = apply(ψ, c)

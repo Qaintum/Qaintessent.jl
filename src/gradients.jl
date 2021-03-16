@@ -101,10 +101,10 @@ function backward(m::Moment, ψ::AbstractVector, Δ::AbstractVector, N::Int)
     gates = AbstractCircuitGate[]
     for cg in reverse(m.gates)
         Udag = Base.adjoint(cg)
-        ψ = apply(Udag, ψ)
+        ψ = apply(ψ, Udag)
         # backward step of quantum state
         pushfirst!(gates, backward(cg, ψ, Δ, N))
-        Δ = apply(Udag, Δ)
+        Δ = apply(Δ, Udag)
     end
     return Moment(gates), ψ, Δ
 end
@@ -133,7 +133,7 @@ function gradients(c::Circuit{N}, ψ::AbstractVector, Δ::AbstractVector{<:Real}
     # length of circuit output vector must match gradient vector
     @assert length(Δ) == length(c.meas)
     # forward pass through unitary gates
-    ψ = apply(c.moments, ψ)
+    ψ = apply(ψ, c.moments)
     # gradient (conjugated Wirtinger derivatives) of cost function with respect to ψ
     ψbar = sum([Δ[i] * (sparse_matrix(c.meas[i]) * ψ) for i in 1:length(Δ)])
     # backward pass through unitary gates
