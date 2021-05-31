@@ -131,7 +131,7 @@ using Qaintessent
 end
 
 
-##==----------------------------------------------------------------------------------------------------------------------
+# ##==----------------------------------------------------------------------------------------------------------------------
 
 @testset ExtendedTestSet "qasm complex qasm2circuit" begin
     # Adding random comments and spacings in src1 to test robustness of lexer
@@ -489,7 +489,7 @@ end
     end
 end
 
-##==----------------------------------------------------------------------------------------------------------------------
+# ##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "test reading openqasm" begin
@@ -500,6 +500,7 @@ end
     qreg d[3];
     qreg a[2];
     qreg c[3];
+    creg e[2]
     gate syndrome(alpha) d1,d2,d3,a1,a2
     {
       cx d1,a1; cx d2,a1;
@@ -518,6 +519,9 @@ end
     t d[1];
     s a[0];
     h d[0];
+
+    measure d[1] -> e[0];
+    measure a[0] -> e[1];
     """
 
     d1 = qreg(3)
@@ -544,14 +548,93 @@ end
         circuit_gate(4, SGate()),
         circuit_gate(1, HadamardGate()),
     ]
+    meas_ref = [
+        mop(Z, 2),
+        mop(Z, 4)
+    ]
 
     append!(cgc_ref, gates_ref)
+    add_measurement!(cgc_ref, meas_ref)
 
     cgc = qasm2cgc(src1)
     ψ = randn(ComplexF64, 2^N)
     
     @test apply(ψ, cgc_ref.moments) ≈ apply(ψ, cgc.moments)
+    @test apply(ψ, cgc_ref) ≈ apply(ψ, cgc)
 end
+
+##==----------------------------------------------------------------------------------------------------------------------
+
+@testset ExtendedTestSet "test openqasm warnings" begin
+    src1 = """
+    // Repetition code syndrome measurement
+    OPENQASM 2.0;
+    include "qelib1.inc";
+    qreg d[3];
+    qreg a[2];
+    qreg c[3];
+    creg e[2]
+    gate syndrome(alpha) d1,d2,d3,a1,a2
+    {
+      cx d1,a1; cx d2,a1;
+      cx d2,a2; cx d3,a2; ry(alpha) a1;
+    }
+    gate syn2drome(theta) d1,d2,d3,a1,a2
+    {
+        syndrome(theta) d1,d2,d3,a1,a2;
+        syndrome(theta) d2,d3,a1,d1,a2;
+        rx(theta) d2;
+        cx d3,a1;
+        cx a1,d3;
+        cx d3,a1;
+    }
+    syn2drome(0.1*pi) d[0],d[1],d[2],a[0],a[1];
+    t d[1];
+    barrier d[1];
+    s a[0];
+    h d[0];
+
+    measure d[1] -> e[0];
+    measure a[0] -> e[1];
+    """
+
+    @test_logs (:warn,"Barrier operation is not yet supported") qasm2cgc(src1)
+    
+    src2 = """
+    // Repetition code syndrome measurement
+    OPENQASM 2.0;
+    include "qelib1.inc";
+    qreg d[3];
+    qreg a[2];
+    qreg c[3];
+    creg e[2]
+    gate syndrome(alpha) d1,d2,d3,a1,a2
+    {
+      cx d1,a1; cx d2,a1;
+      cx d2,a2; cx d3,a2; ry(alpha) a1;
+    }
+    gate syn2drome(theta) d1,d2,d3,a1,a2
+    {
+        syndrome(theta) d1,d2,d3,a1,a2;
+        syndrome(theta) d2,d3,a1,d1,a2;
+        rx(theta) d2;
+        cx d3,a1;
+        cx a1,d3;
+        cx d3,a1;
+    }
+    syn2drome(0.1*pi) d[0],d[1],d[2],a[0],a[1];
+    t d[1];
+    reset d[1];
+    s a[0];
+    h d[0];
+
+    measure d[1] -> e[0];
+    measure a[0] -> e[1];
+    """
+
+    @test_logs (:warn,"Reset operation is not yet supported") qasm2cgc(src2)
+end
+
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
