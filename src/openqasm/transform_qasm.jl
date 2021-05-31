@@ -99,8 +99,11 @@ function trans_reg(ctx_tokens, qregs)
         ) =>
             let id = Symbol(id),
                 n = parse(Int, n)
-                
-                return :($id = qreg($n); push!($qregs, $id))
+                if regtype == "qreg"
+                    return :($id = qreg($n); push!($qregs, $id))
+                else
+                    return nothing
+                end
             end
 
         Struct_mainprogram(
