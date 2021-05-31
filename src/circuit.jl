@@ -15,9 +15,9 @@ struct Circuit{N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `CircuitGate` objects.
     """
-    function Circuit{N}(mops::Vector{<:MeasurementOperator}=[]) where {N}
-        if isnothing(mops)
-            return new{N}(Moment[], MeasurementOperator[])
+    function Circuit{N}(mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
+        if isempty(mops)
+            return new{N}(Moment[], mops)
         end
         mops_N = maximum(req_wires.(mops))
         mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
