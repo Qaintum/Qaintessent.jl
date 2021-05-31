@@ -9,6 +9,7 @@ using PrettyPrint
 @as_record Struct_gate
 @as_record Struct_gatedecl
 @as_record Struct_decl
+@as_record Struct_barrier
 @as_record Struct_barrier_ids
 @as_record Struct_reset
 @as_record Struct_measure
@@ -289,6 +290,40 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
     end
 end
 
+function trans_measure(ctx_tokens, meas, N)
+    function app(op, args...)
+        args = map(rec, args)
+        op = Symbol(op)
+        :($op($(args...)))
+    end
+
+    @match ctx_tokens begin
+        Struct_measure(arg1=arg1, arg2=arg2) =>
+            let ref = :($(rec(arg1)))
+                :(append!($meas, [mop(Z, $ref)]))  
+            end
+
+        Struct_barrier(value=value) =>
+            let ref = :($(rec(value)))
+                :(@warn "Barrier operation is not yet supported")
+            end
+
+        Struct_reset(arg=arg) =>
+            let ref = :($(rec(arg)))
+                :(@warn "Reset operation is not yet supported")
+            end
+
+        Struct_mainprogram(
+            prog = stmts
+        ) =>
+            let stmts = trans_measure.(stmts, meas, N)
+                stmts
+            end
+        _ => nothing
+    end
+end
+
+
 
 function transform_qasm(ctx_tokens)
 
@@ -297,11 +332,16 @@ function transform_qasm(ctx_tokens)
     eval.(reg_declr)
 
     qasm_cgc = Circuit(qregs...)
+    meas = MeasurementOperator[]
     N = num_wires(qasm_cgc)
 
     gates_declr = trans_gates(ctx_tokens, Ref(qasm_cgc), Ref(N))
 
     eval.(gates_declr)
+
+    measure_declr = trans_measure(ctx_tokens, Ref(meas), Ref(N))
+    eval.(measure_declr)
+    add_measurement!(qasm_cgc, meas)
     
     qasm_cgc
 end
@@ -314,7 +354,7 @@ converts OpenQASM 2.0 text to Circuit{N} object
 function qasm2cgc(txt::String)
     qasmlex = lex(txt)
     qasmparse = parse_qasm(qasmlex)
-    qasm_cgc = transform_qasm(qasmparse)
+    transform_qasm(qasmparse)
 end
 
 
