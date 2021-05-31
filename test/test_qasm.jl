@@ -500,7 +500,7 @@ end
     qreg d[3];
     qreg a[2];
     qreg c[3];
-    creg e[2]
+    creg e[2];
     gate syndrome(alpha) d1,d2,d3,a1,a2
     {
       cx d1,a1; cx d2,a1;
@@ -519,6 +519,9 @@ end
     t d[1];
     s a[0];
     h d[0];
+    x a[1];
+    y d[0];
+    z c[0];
 
     measure d[1] -> e[0];
     measure a[0] -> e[1];
@@ -530,7 +533,6 @@ end
     cgc_ref = Circuit(d1, a1, c1)
 
     N = num_wires(cgc_ref)
-
     gates_ref = [
         circuit_gate(4, X, 1),
         circuit_gate(4, X, 2),
@@ -547,6 +549,9 @@ end
         circuit_gate(2, TGate()),
         circuit_gate(4, SGate()),
         circuit_gate(1, HadamardGate()),
+        circuit_gate(5, X),
+        circuit_gate(1, Y),
+        circuit_gate(6, Z)
     ]
     meas_ref = [
         mop(Z, 2),
@@ -556,7 +561,7 @@ end
     append!(cgc_ref, gates_ref)
     add_measurement!(cgc_ref, meas_ref)
 
-    cgc = qasm2cgc(src1)
+    cgc = qasm2cgc(src1)    
     ψ = randn(ComplexF64, 2^N)
     
     @test apply(ψ, cgc_ref.moments) ≈ apply(ψ, cgc.moments)
@@ -627,6 +632,7 @@ end
     reset d[1];
     s a[0];
     h d[0];
+    cx d[0], d[1];
 
     measure d[1] -> e[0];
     measure a[0] -> e[1];
