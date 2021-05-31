@@ -62,8 +62,12 @@ struct Circuit{N}
     """
     function Circuit{N}(gate::CircuitGate, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
         if isempty(mops)
-            return new{N}([Moment(gate)], MeasurementOperator[])
+            return new{N}([Moment(gate)], mops)
         end
+
+        mops_N = maximum(size.(mops))
+        mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
+        check_commute(mops) || error("Measurement operators do not commute") 
         new{N}([Moment(gate)], mops)
     end
 
@@ -74,8 +78,13 @@ struct Circuit{N}
     """
     function Circuit{N}(moments::Vector{Moment}, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
         if isempty(mops)
-            return new{N}(moments)
+            return new{N}(moments, mops)
         end
+        
+        mops_N = maximum(size.(mops))
+        mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
+        check_commute(mops) || error("Measurement operators do not commute") 
+
         new{N}(moments, mops)
     end
 end
