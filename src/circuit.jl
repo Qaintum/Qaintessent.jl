@@ -61,7 +61,7 @@ struct Circuit{N}
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `AbstractCircuitGate` objects.
     """
     function Circuit{N}(gate::CircuitGate, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
-        if isnothing(mops)
+        if isempty(mops)
             return new{N}([Moment(gate)], MeasurementOperator[])
         end
         new{N}([Moment(gate)], mops)
@@ -73,7 +73,7 @@ struct Circuit{N}
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `AbstractCircuitGate` objects.
     """
     function Circuit{N}(moments::Vector{Moment}, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
-        if isnothing(mops)
+        if isempty(mops)
             return new{N}(moments)
         end
         new{N}(moments, mops)
