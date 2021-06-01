@@ -15,9 +15,9 @@ struct Circuit{N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `CircuitGate` objects.
     """
-    function Circuit{N}(mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
-        if isnothing(mops)
-            return new{N}(Moment[], MeasurementOperator[])
+    function Circuit{N}(mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
+        if isempty(mops)
+            return new{N}(Moment[], mops)
         end
         mops_N = maximum(req_wires.(mops))
         mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
@@ -30,7 +30,7 @@ struct Circuit{N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `CircuitGate` objects.
     """
-    function Circuit{N}(gates::Vector{<:CircuitGate}, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
+    function Circuit{N}(gates::Vector{<:CircuitGate}, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
         j = 1
         iwires = falses(N)
         moments = Moment[]
@@ -45,9 +45,9 @@ struct Circuit{N}
             iwires[cgwires] .= true
         end
         push!(moments, Moment(gates[j:end]))
-
-        if isnothing(mops)
-            return new{N}(moments, MeasurementOperator[])
+        
+        if isempty(mops)
+            return new{N}(moments, mops)
         end
         mops_N = maximum(size.(mops))
         mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
@@ -60,10 +60,14 @@ struct Circuit{N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `AbstractCircuitGate` objects.
     """
-    function Circuit{N}(gate::CircuitGate, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
-        if isnothing(mops)
-            return new{N}([Moment(gate)], MeasurementOperator[])
+    function Circuit{N}(gate::CircuitGate, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
+        if isempty(mops)
+            return new{N}([Moment(gate)], mops)
         end
+
+        mops_N = maximum(size.(mops))
+        mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
+        check_commute(mops) || error("Measurement operators do not commute") 
         new{N}([Moment(gate)], mops)
     end
 
@@ -72,10 +76,15 @@ struct Circuit{N}
 
     Chain of quantum circuit gates in a circuit of `N` qubits. Constructed from vector of `AbstractCircuitGate` objects.
     """
-    function Circuit{N}(moments::Vector{Moment}, mops::Union{Vector{<:MeasurementOperator},Nothing}=nothing) where {N}
-        if isnothing(mops)
-            return new{N}(moments)
+    function Circuit{N}(moments::Vector{Moment}, mops::Vector{<:MeasurementOperator}=MeasurementOperator[]) where {N}
+        if isempty(mops)
+            return new{N}(moments, mops)
         end
+        
+        mops_N = maximum(size.(mops))
+        mops_N <= N || error("Measurement operators affecting $mops_N wires provided for Circuit of size $N")
+        check_commute(mops) || error("Measurement operators do not commute") 
+
         new{N}(moments, mops)
     end
 end
@@ -83,12 +92,16 @@ end
 sparse_matrix(c::Circuit{N}) where {N} = sparse_matrix(c.moments, N)
 
 function add_measurement!(c::Circuit{N}, mops::Vector{<:MeasurementOperator}) where {N}
+    if isempty(mops)
+        return c
+    end
     meas_N = maximum(req_wires.(mops))
     meas_N <= N || error("Measurement operators affecting $meas_N wires provided for circuit of size $N")
     
     check_commute([c.meas; mops]) || error("Measurement operators do not commute") 
     
     append!(c.meas, mops)
+    return c
 end
 
 function add_measurement!(c::Circuit{N}, mop::MeasurementOperator) where {N}

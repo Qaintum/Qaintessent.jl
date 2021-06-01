@@ -160,7 +160,7 @@ end
         ]
 
     m_refstring =
-        "Array{Moment,1}[\n" *
+        "Vector{Moment}[\n" *
         "    5 ...|—[Pϕ]———————|...\n" *
         "         |            |   \n" *
         "    4 ...|———————[H ]—|...\n" *
@@ -192,10 +192,10 @@ end
         circuit_gate((2), HadamardGate(), 4),
         circuit_gate(1, RyGate(1.4π))])
     m_refstring =
-    "CircuitGate{1,PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
-    "CircuitGate{1,RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
-    "CircuitGate{2,ControlledGate{HadamardGate}}((2, 4), ControlledGate{HadamardGate}(HadamardGate(), 1))\n" *
-    "CircuitGate{1,RyGate}((1,), RyGate([4.39822971502571]))\n"
+    "CircuitGate{1, PhaseShiftGate}((5,), PhaseShiftGate([0.6283185307179586]))\n" *
+    "CircuitGate{1, RotationGate}((3,), RotationGate([0.3141592653589793, 0.0, 0.0]))\n" *
+    "CircuitGate{2, ControlledGate{HadamardGate}}((2, 4), ControlledGate{HadamardGate}(HadamardGate(), 1))\n" *
+    "CircuitGate{1, RyGate}((1,), RyGate([4.39822971502571]))\n"
 
     io = IOBuffer()
     show(io, m)

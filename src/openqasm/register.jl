@@ -155,7 +155,7 @@ function Circuit(regs::Register...)
         regs[i].ind .= j:regs[i].N+j-1
         j = regs[i].N+j
     end
-    c = Circuit{N}(Moment[])
+    c = Circuit{N}()
     for i in 1:length(regs)
         regs[i].circuit.reference = c
     end
