@@ -6,8 +6,8 @@ jobs:
   unittests:
     runs-on: self-hosted
     strategy: 
-      matrix: 
-        julia-version['1.6-nightly', '1.6.0', '1.5.3']
+      matrix:
+        julia-version: ['1.6-nightly', '1.6.0', '1.5.3']
     steps:
       - uses: actions/checkout@v2  
         with:
