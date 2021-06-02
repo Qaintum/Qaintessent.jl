@@ -49,17 +49,17 @@ end
         for g in [RxGate, RyGate, RzGate]
             θval = 2π*rand()
 
-            f(θ) = dot(Δ.v, apply(ρ, CircuitGate((1,), g(θ[]))).v)
+            f = (θ)->dot(Δ.v, apply(ρ, CircuitGate((1,), g(θ[]))).v)
             ngrad = ngradient(f, [θval])
             dg = Qaintessent.backward_density(g(θval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fa(θ) = dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1,), g(θ[]))).v)
+            fa = (θ)->dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1,), g(θ[]))).v)
             ngrad = ngradient(fa, [θval])
             dg = Qaintessent.backward_density_mixed_add(g(θval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fs(θ) = dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1,), g(θ[]))).v)
+            fs = (θ)->dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1,), g(θ[]))).v)
             ngrad = ngradient(fs, [θval])
             dg = Qaintessent.backward_density_mixed_sub(g(θval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
@@ -73,17 +73,17 @@ end
         begin
             nθval = randn(3)
 
-            f(nθ) = dot(Δ.v, apply(ρ, CircuitGate((1,), RotationGate(nθ))).v)
+            f = (nθ)->dot(Δ.v, apply(ρ, CircuitGate((1,), RotationGate(nθ))).v)
             ngrad = ngradient(f, nθval)
             dg = Qaintessent.backward_density(RotationGate(nθval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.nθ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fa(nθ) = dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1,), RotationGate(nθ))).v)
+            fa = (nθ)->dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1,), RotationGate(nθ))).v)
             ngrad = ngradient(fa, nθval)
             dg = Qaintessent.backward_density_mixed_add(RotationGate(nθval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.nθ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fs(nθ) = dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1,), RotationGate(nθ))).v)
+            fs = (nθ)->dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1,), RotationGate(nθ))).v)
             ngrad = ngradient(fs, nθval)
             dg = Qaintessent.backward_density_mixed_sub(RotationGate(nθval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.nθ, ngrad[1], rtol=1e-5, atol=1e-5)
@@ -106,17 +106,17 @@ end
         begin
             ϕval = 2π*rand()
 
-            f(ϕ) = dot(Δ.v, apply(ρ, CircuitGate((1,), PhaseShiftGate(ϕ[]))).v)
+            f = (ϕ)->dot(Δ.v, apply(ρ, CircuitGate((1,), PhaseShiftGate(ϕ[]))).v)
             ngrad = ngradient(f, [ϕval])
             dg = Qaintessent.backward_density(PhaseShiftGate(ϕval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fa(ϕ) = dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1,), PhaseShiftGate(ϕ[]))).v)
+            fa = (ϕ)->dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1,), PhaseShiftGate(ϕ[]))).v)
             ngrad = ngradient(fa, [ϕval])
             dg = Qaintessent.backward_density_mixed_add(PhaseShiftGate(ϕval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fs(ϕ) = dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1,), PhaseShiftGate(ϕ[]))).v)
+            fs = (ϕ)->dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1,), PhaseShiftGate(ϕ[]))).v)
             ngrad = ngradient(fs, [ϕval])
             dg = Qaintessent.backward_density_mixed_sub(PhaseShiftGate(ϕval), reshape(kron(ρ.v, Δ.v), 4, 4))
             @test isapprox(dg.ϕ, ngrad[1], rtol=1e-5, atol=1e-5)
@@ -134,17 +134,17 @@ end
         for g in [EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
             θval = 2π*rand()
 
-            f(θ) = dot(Δ.v, apply(ρ, CircuitGate((1, 2), g(θ[]))).v)
+            f = (θ)->dot(Δ.v, apply(ρ, CircuitGate((1, 2), g(θ[]))).v)
             ngrad = ngradient(f, [θval])
             dg = Qaintessent.backward_density(g(θval), reshape(kron(ρ.v, Δ.v), 16, 16))
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fa(θ) = dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1, 2), g(θ[]))).v)
+            fa = (θ)->dot(Δ.v, Qaintessent.apply_mixed_add(ρ, CircuitGate((1, 2), g(θ[]))).v)
             ngrad = ngradient(fa, [θval])
             dg = Qaintessent.backward_density_mixed_add(g(θval), reshape(kron(ρ.v, Δ.v), 16, 16))
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)
 
-            fs(θ) = dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1, 2), g(θ[]))).v)
+            fs = (θ)->dot(Δ.v, Qaintessent.apply_mixed_sub(ρ, CircuitGate((1, 2), g(θ[]))).v)
             ngrad = ngradient(fs, [θval])
             dg = Qaintessent.backward_density_mixed_sub(g(θval), reshape(kron(ρ.v, Δ.v), 16, 16))
             @test isapprox(dg.θ, ngrad[1], rtol=1e-5, atol=1e-5)

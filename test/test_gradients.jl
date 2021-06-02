@@ -44,7 +44,7 @@ end
         Δ = randn(ComplexF64, 2, 2)
 
         for g in [RxGate, RyGate, RzGate]
-            f(θ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(g(θ[]))))
+            f = (θ) -> 2*real(sum(Δ .* Qaintessent.sparse_matrix(g(θ[]))))
             θ = 2π*rand()
             ngrad = ngradient(f, [θ])
             dg = Qaintessent.backward(g(θ), conj(Δ))
@@ -57,7 +57,7 @@ end
         end
 
         begin
-            f(ϕ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(PhaseShiftGate(ϕ[]))))
+            f = (ϕ) -> 2*real(sum(Δ .* Qaintessent.sparse_matrix(PhaseShiftGate(ϕ[]))))
             ϕ = 2π*rand()
             ngrad = ngradient(f, [ϕ])
             dg = Qaintessent.backward(PhaseShiftGate(ϕ), conj(Δ))
@@ -65,7 +65,7 @@ end
         end
 
         begin
-            f(nθ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(RotationGate(nθ))))
+            f = (nθ) -> 2*real(sum(Δ .* Qaintessent.sparse_matrix(RotationGate(nθ))))
             nθ = randn(3)
             ngrad = ngradient(f, nθ)
             dg = Qaintessent.backward(RotationGate(nθ), conj(Δ))
@@ -73,7 +73,7 @@ end
         end
 
         begin
-            f(nθ) = 2*real(sum(Δ .* Qaintessent.sparse_matrix(RotationGate(nθ))))
+            f = (nθ) -> 2*real(sum(Δ .* Qaintessent.sparse_matrix(RotationGate(nθ))))
             # special case: zero vector
             nθ = zeros(3)
             ngrad = ngradient(f, nθ)
