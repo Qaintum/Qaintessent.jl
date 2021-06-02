@@ -5,13 +5,17 @@ on: pull_request
 jobs:
   unittests:
     runs-on: self-hosted
-
+    strategy: 
+      matrix: 
+        julia-version['1.6-nightly', '1.6.0', '1.5.3']
     steps:
       - uses: actions/checkout@v2  
         with:
           # pulls all commits (needed for lerna / semantic release to correctly version)
           fetch-depth: "0"
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v1
+        with: 
+          version: ${{ matrix.julia-version }}
       - uses: julia-actions/julia-runtest@master
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
