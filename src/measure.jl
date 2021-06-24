@@ -25,7 +25,11 @@ function measure(state::Vector{ComplexF64}, shots::Int=1)
         s = sample(Random.GLOBAL_RNG, [0:(2^N)-1 ... ], weights(state))
         return digits(Int(s), base=2, pad=N) |> reverse
     end
-
-    s = sample(Random.GLOBAL_RNG, [0:(2^N)-1 ... ], weights(state), shots)
-    sum(reverse.(digits.(Int.(s), base=2, pad=N))) 
+    
+    # generate samples and count number of measurements of each basis state 
+    s = sample(Random.GLOBAL_RNG, [0:(2^N)-1 ... ], weights(state), shots)     
+    u=unique(s)
+    d=Dict([(i:count(x->x==i,s)) for i in u]) 
+    
+    return d
 end
