@@ -17,7 +17,7 @@ struct MeasurementOperator{M,G}
     iwire::NTuple{M,Int}
     function MeasurementOperator(g::G, iwire::NTuple{M,Integer}) where {M,G <: AbstractGate}
         M == num_wires(g) || error("CircuitGate affecting $(num_wires(g)) wires given, `iwire` of length $(length(iwire)) provided")
-        norm(g - adjoint(g)) < 1e-5 || error("Measurement operator must be Hermitian.")
+        g == adjoint(g) || error("Measurement operator must be Hermitian.")
         new{M,G}(g, iwire)
     end
 
