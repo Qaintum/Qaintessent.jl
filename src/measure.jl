@@ -27,5 +27,5 @@ function measure(state::Vector{ComplexF64}, shots::Int=1)
     end
 
     s = sample(Random.GLOBAL_RNG, [0:(2^N)-1 ... ], weights(state), shots)
-    sum(reverse.(digits.(Int.(s), base=2, pad=N))) ./ shots
+    sum(reverse.(digits.(Int.(s), base=2, pad=N))) 
 end
