@@ -17,14 +17,14 @@ struct MeasurementOperator{M,G}
     iwire::NTuple{M,Int}
     function MeasurementOperator(g::G, iwire::NTuple{M,Integer}) where {M,G <: AbstractGate}
         M == num_wires(g) || error("CircuitGate affecting $(num_wires(g)) wires given, `iwire` of length $(length(iwire)) provided")
-        g == adjoint(g) || error("Measurement operator must be Hermitian.")
+        norm(g - adjoint(g)) < 1e-5 || error("Measurement operator must be Hermitian.")
         new{M,G}(g, iwire)
     end
 
     function MeasurementOperator(m::G, iwire::NTuple{M,Integer}) where {M,G <: AbstractMatrix}
         d = 2
         size(m) == (d^M, d^M) || error("Measurement operator must be a $(d^M) × $(d^M) matrix.")
-        m ≈ adjoint(m) || error("Measurement operator must be Hermitian.")
+        norm(m - adjoint(m)) < 1e-5 || error("Measurement operator must be Hermitian.")
         new{M,SparseMatrixCSC{Complex{Float64},Int}}(sparse(m), iwire)
     end
 
