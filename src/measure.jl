@@ -21,7 +21,7 @@ function measure(state::Vector{ComplexF64}, shots::Int=1)
     norm(state) ≈ 1 || error("Statevector is not a viable statevector (norm is $(norm(state))")
     N = Int(log(2, length(state)))
 
-    if shots == 0 || shots == 1
+    if shots == 0
         s = sample(Random.GLOBAL_RNG, [0:(2^N)-1 ... ], weights(state))
         return digits(Int(s), base=2, pad=N) |> reverse
     end
