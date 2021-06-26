@@ -10,6 +10,7 @@ using StatsBase
 @testset ExtendedTestSet "measurement" begin
     @testset "Measure single instance" begin
         state_a = ComplexF64[1;0;0;0]
+        @test measure(state_a) == Dict("0"=>1)
     end
     
     @testset "Measure multiple instances" begin
