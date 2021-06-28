@@ -19,6 +19,6 @@ using StatsBase
         state_b = apply(state_a, circ)
         samples = measure(state_b, 20000)
         # Measurement result should follow binomial distribution, this should return false ~1 out of a trillion
-        @test samples[0]<10500 && samples[0]>9500
+        @test (samples[0]<10500 && samples[0]>9500)
     end
 end
