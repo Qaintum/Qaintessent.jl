@@ -10,7 +10,11 @@ using StatsBase
 @testset ExtendedTestSet "measurement" begin
     @testset "Measure single instance" begin
         state_a = ComplexF64[1;0;0;0]
+        state_b = ComplexF64[1;0;0]
+        state_c = ComplexF64[0.5;0;0;0]
         @test measure(state_a) == Dict(0=>1)
+        @test_throws ErrorException("Statevector is not a viable quantum state (length $(length(state_b))")  measure(state_b)
+        @test_throws ErrorException("Statevector is not a viable statevector (norm is $(norm(state_c))")  measure(state_c)
     end
     
     @testset "Measure multiple instances" begin
