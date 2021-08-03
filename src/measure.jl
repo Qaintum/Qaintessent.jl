@@ -2,13 +2,6 @@ using StatsBase
 using Random
 using Memoize
 
-using Qaintessent: measure
-using Test
-using TestSetExtensions
-using LinearAlgebra
-using Qaintessent
-using StatsBase
-
 """
     weights(state::Vector{ComplexF64})
 
