@@ -106,6 +106,11 @@ export
     cgc2qasm
 
 include("unitary2circuit.jl")
-export unitary2circuit
+export 
+    unitary2circuit
+
+include("measure.jl")
+export 
+    measure
 
 end
