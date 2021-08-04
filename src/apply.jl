@@ -112,7 +112,7 @@ end
 
 
 """Tailored apply for a general single qubit gate"""
-function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,AbstractGate}, N::Int)
+function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,T}, N::Int) where {T<:AbstractGate}
     i = cg.iwire[1]
     ψs = reshape(ψ, 2^(i-1), 2, 2^(N-i))
     χ = similar(ψs)
