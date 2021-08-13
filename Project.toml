@@ -1,7 +1,7 @@
 name = "Qaintessent"
 uuid = "9e6618a4-6605-11ea-2880-e931cf774ea8"
 authors = ["Christian B. Mendl <christian.b.mendl@gmail.com>"]
-version = "0.1.0"
+version = "0.1.2"
 
 [deps]
 GenericSchur = "c145ed77-6b09-5dd9-b285-bf645a82121e"
@@ -14,13 +14,14 @@ RBNF = "83ef0002-5b9e-11e9-219b-65bac3c6d69c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RandomMatrices = "2576dda1-a324-5b11-aa66-c48ed7e3c618"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-GenericSchur = "0.4.0"
-JLD = "0.10.0"
-MLStyle = "0.4.6"
-Memoize = "0.4.3"
+GenericSchur = "0.5.0"
+JLD = "0.12.3"
+MLStyle = "0.4.10"
+Memoize = "0.4.4"
 PrettyPrint = "0.2.0"
-RBNF = "0.2.0"
+RBNF = "0.2.3"
 RandomMatrices = "0.5.0"
-julia = "1.5.0, 1.5.3, 1.6.0"
+julia = "1.6.0, 1.6.1"

@@ -199,7 +199,7 @@ Base.adjoint(cg::CircuitGate{M,G})
 Construct a `CircuitGate{M,H}` object where `H` is the adjoint of `AbstractGate` `G`
 """
 function Base.adjoint(cg::CircuitGate{M,G}) where {M,G}
-    adj_gate = Base.adjoint(cg.gate)
+    adj_gate = adjoint(cg.gate)
     CircuitGate{M,typeof(adj_gate)}(cg.iwire, adj_gate)
 end
 
@@ -247,13 +247,6 @@ function circuit_gate(iwire1::NTuple{M,Integer}, gate::AbstractGate, control::In
     circuit_gate(iwire1, gate, control)
 end
 
-"""
-single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate{1}, N::Integer)
-
-Construct a `CircuitGate{1,G}` object of basic gate type `gate` affecting wire `iwire`.
-"""
-single_qubit_circuit_gate(iwire::Integer, gate::AbstractGate) =
-CircuitGate((iwire,), gate)
 
 function circuit_gate(iwire::Integer, gate::AbstractGate, control::NTuple{M,Integer}=NTuple{0,Integer}()) where {M}
     if isempty(control)
@@ -262,49 +255,4 @@ function circuit_gate(iwire::Integer, gate::AbstractGate, control::NTuple{M,Inte
     return CircuitGate((iwire, control...), ControlledGate(gate, M))
 end
 
-"""
-    two_qubit_circuit_gate(iwire1, iwire2, gate)
-
-Construct a `CircuitGate{2,G}` object of basic gate type `gate` affecting wires `iwire1` and `iwire2`.
-"""
-two_qubit_circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate) = CircuitGate((iwire1, iwire2), gate)
-
-
 circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::Integer...) = circuit_gate(iwire1, iwire2, gate, control)
-
-# single control and target wire
-"""
-controlled_circuit_gate(itarget::Integer, icntrl::Union{Integer, Expr}, U::AbstractGate{1}, N::Integer)
-
-Construct a `CircuitGate{2,N,G}` object of basic gate type `U` controlled by wire or Expr `icntrl` and affecting wire `itarget`.
-"""
-controlled_circuit_gate(itarget::Integer, icntrl::Integer, U::AbstractGate) = controlled_circuit_gate((itarget,), (icntrl,), U)
-
-# single control wire
-"""
-controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::Integer, U::AbstractGate{M}, N::Integer) where {M}
-
-Construct a `CircuitGate{M+1,N,G}` object of basic gate type `U` controlled by wire or Expr `icntrl` and affecting wires in tuple `itarget`.
-"""
-controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::Integer, U::AbstractGate) where {M} = controlled_circuit_gate(itarget, (icntrl,), U)
-
-# single target wire
-"""
-controlled_circuit_gate(itarget::Integer, icntrl::NTuple{K, Union{Int, Expr}}, U::AbstractGate{1}, N::Integer)  where {K}
-
-Construct a `CircuitGate{K+1,N,G}` object of basic gate type `U` controlled by wires or Expr in tuple `icntrl` and affecting wire `itarget`.
-"""
-controlled_circuit_gate(itarget::Integer, icntrl::NTuple{K,Integer}, U::AbstractGate)  where {K} = controlled_circuit_gate((itarget,), icntrl, U)
-
-"""
-controlled_circuit_gate(itarget::NTuple{M, <:Integer}, icntrl::NTuple{K, <:Union{Integer, Expr}}, U::AbstractGate{M}, N::Integer) where {K,M}
-
-Construct a `CircuitGate{M+K,N,G}` object of basic gate type `U` controlled by wires in tuple `icntrl` and affecting wires in tuple `itarget`.
-"""
-function controlled_circuit_gate(itarget::NTuple{M,<:Integer}, icntrl::NTuple{K,Integer}, U::AbstractGate) where {K,M}
-    # # consistency checks
-    C = length(icntrl)
-    # C + M ≤ N || error("Number of control and target wires must be smaller than overall number of wires.")
-    # length(intersect(itarget, icntrl)) == 0 || error("Control and target wires must be disjoint.")
-    CircuitGate((itarget..., icntrl...), ControlledGate(U, C))
-end

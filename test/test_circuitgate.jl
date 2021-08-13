@@ -3,6 +3,7 @@ using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
 using SparseArrays
+using StatsBase
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
@@ -24,14 +25,10 @@ isunitary(cg::CircuitGate) = (sparse_matrix(cg) * sparse_matrix(Base.adjoint(cg)
             Qaintessent.sparse_matrix(cgadj.gate) == adjoint(Qaintessent.sparse_matrix(cg.gate))
             @test LinearAlgebra.ishermitian(cg) == (Qaintessent.sparse_matrix(cg) == Qaintessent.sparse_matrix(adjoint(cg)))
         end
-    end
 
-    # test sparse_matrix 
-    @testset "single qubit circuit gates" begin
-        cgs = [circuit_gate(1, X), circuit_gate(2, X), circuit_gate(3, X)]
-        m = sparse_matrix(cgs)
+        cgs = circuit_gate.((2,), [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)])
 
-        @test m ≈ sparse([8, 7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7, 8], Float64[1, 1, 1, 1, 1, 1, 1, 1])
+        @test all(sparse_matrix(adjoint(cgs)) .≈ adjoint(sparse_matrix(cgs)))
     end
 
     # two qubit gates
@@ -122,12 +119,45 @@ end
     end
 
     @testset "circuit gate controlled gate helper function" begin
-        cntrl_iwire = rand(1:N)
-        targ_iwire = rand(vcat(1:cntrl_iwire - 1..., cntrl_iwire + 1:N...))
+        cntrl_iwire1, cntrl_iwire2, targ_iwire1, targ_iwire2 = sample(1:N, 4, replace=false)
+
         g = YGate()
-        @test circuit_gate(targ_iwire,    g,  cntrl_iwire)   ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate(g, 1))
-        @test circuit_gate(targ_iwire,    g, (cntrl_iwire,)) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate(g, 1))
-        @test circuit_gate((targ_iwire,), g,  cntrl_iwire)   ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate(g, 1))
-        @test circuit_gate((targ_iwire,), g, (cntrl_iwire,)) ≈ CircuitGate((targ_iwire, cntrl_iwire), ControlledGate(g, 1))
+
+        ref_cg = CircuitGate((targ_iwire1, cntrl_iwire1), ControlledGate(g, 1))
+
+        @test circuit_gate(targ_iwire1,    g,  cntrl_iwire1)   ≈ ref_cg
+        @test circuit_gate(targ_iwire1,    g, (cntrl_iwire1,)) ≈ ref_cg
+        @test circuit_gate((targ_iwire1,), g,  cntrl_iwire1)   ≈ ref_cg
+        @test circuit_gate((targ_iwire1,), g, (cntrl_iwire1,)) ≈ ref_cg
+
+        g = SwapGate()
+
+        ref_cg2 = CircuitGate((targ_iwire1, targ_iwire2, cntrl_iwire1), ControlledGate(g, 1))
+
+        @test circuit_gate(targ_iwire1, targ_iwire2, g,  cntrl_iwire1)   ≈ ref_cg2
+        @test circuit_gate(targ_iwire1, targ_iwire2, g, (cntrl_iwire1,)) ≈ ref_cg2
+        @test circuit_gate((targ_iwire1, targ_iwire2), g,  cntrl_iwire1)   ≈ ref_cg2
+        @test circuit_gate((targ_iwire1, targ_iwire2), g, (cntrl_iwire1,)) ≈ ref_cg2
+
+        ref_cg3 = CircuitGate((targ_iwire1, targ_iwire2, cntrl_iwire1, cntrl_iwire2), ControlledGate(g, 2))
+
+        @test circuit_gate(targ_iwire1, targ_iwire2, g,  cntrl_iwire1, cntrl_iwire2)   ≈ ref_cg3
+        @test circuit_gate(targ_iwire1, targ_iwire2, g, (cntrl_iwire1, cntrl_iwire2)) ≈ ref_cg3
+        @test circuit_gate((targ_iwire1, targ_iwire2), g,  cntrl_iwire1, cntrl_iwire2)   ≈ ref_cg3
+        @test circuit_gate((targ_iwire1, targ_iwire2), g, (cntrl_iwire1, cntrl_iwire2)) ≈ ref_cg3
+    end
+
+    # test sparse_matrix 
+    @testset "circuit gates sparse matrix" begin
+        cgs = [circuit_gate(1, X), circuit_gate(2, X), circuit_gate(3, X)]
+        m = sparse_matrix(cgs)
+
+        @test m ≈ sparse([8, 7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7, 8], Float64[1, 1, 1, 1, 1, 1, 1, 1])
+    end
+
+    # test sparse_matrix 
+    @testset "circuit gates sparse matrix exceptions" begin
+        cgs = [circuit_gate(1, X), circuit_gate(2, X), circuit_gate(3, X)]
+        @test_throws ErrorException("Circuit size `2` too small; vector of CircuitGate requires 3 wires.") sparse_matrix(cgs, 2)
     end
 end

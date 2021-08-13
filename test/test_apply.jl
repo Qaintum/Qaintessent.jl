@@ -22,10 +22,22 @@ using Qaintessent
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
             cg = circuit_gate(i, g)
-            cga = CircuitGate{1,typeof(g)}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
+            cga = CircuitGate{1,AbstractGate}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
 
-            @test apply(cg, ψ) ≈ apply(cga, ψ)
-            @test apply(cg, ψ) ≈ sparse_matrix(cga, N) * ψ
+            @test apply(ψ, cg) ≈ apply(ψ, cga)
+            @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
+        end
+    end
+
+    @testset "apply moments" begin
+        # single qubit gates
+        for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+            i = rand(1:N)
+            cg = Moment([circuit_gate(i, g)])
+            cga = Moment([CircuitGate{1,AbstractGate}(cg[1].iwire, cg[1].gate)]) # generate same gate with type AbstractGate{1}
+
+            @test apply(ψ, cg) ≈ apply(ψ, cga)
+            @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
         end
     end
 
@@ -37,8 +49,8 @@ using Qaintessent
             cg = circuit_gate(i, g, j)
             cga = CircuitGate{2,ControlledGate{typeof(g)}}(cg.iwire, cg.gate)
 
-            @test apply(cg, ψ) ≈ apply(cga, ψ)
-            @test apply(cg, ψ) ≈ sparse_matrix(cga, N) * ψ
+            @test apply(ψ, cg) ≈ apply(ψ, cga)
+            @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
         end
     end
 
@@ -48,8 +60,8 @@ using Qaintessent
         cg = circuit_gate((i, j), SwapGate())
         cga = CircuitGate{2,SwapGate}(cg.iwire, cg.gate)
 
-        @test apply(cg, ψ) ≈ apply(cga, ψ)
-        @test apply(cg, ψ) ≈ sparse_matrix(cga, N) * ψ
+        @test apply(ψ, cg) ≈ apply(ψ, cga)
+        @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
     end
 
     @testset "apply 1-qubit MatrixGate" begin
@@ -63,8 +75,8 @@ using Qaintessent
         cg = circuit_gate(i, g)
         cga = CircuitGate{1,MatrixGate}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
 
-        @test apply(cg, ψ) ≈ apply(cga, ψ)
-        @test apply(cg, ψ) ≈ sparse_matrix(cga, N) * ψ
+        @test apply(ψ, cg) ≈ apply(ψ, cga)
+        @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
     end
 
     @testset "apply k-qubit MatrixGate" begin
@@ -83,6 +95,6 @@ using Qaintessent
         sort!(iwire)
         cga = CircuitGate{k,MatrixGate}((iwire...,), g)
         m = sparse_matrix(cga, N)
-        @test apply(cga, ψ) ≈ m*ψ
+        @test apply(ψ, cga) ≈ m*ψ
     end
 end
