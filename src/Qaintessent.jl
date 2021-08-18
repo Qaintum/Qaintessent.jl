@@ -113,4 +113,19 @@ include("measure.jl")
 export 
     measure
 
+
+include("qaoa/mixer_gates.jl")
+export
+    RNearbyValuesMixerGate,
+    ParityRingMixerGate,
+    PartitionMixerGate
+
+include("qaoa/phase_separator_gates.jl")
+export
+    MaxKColSubgraphPhaseSeparationGate,
+    Graph,
+    max_k_col_subgraph_phase_separation_hamiltonian
+
+include("qaoa/qaoa_gradients.jl")
+
 end
