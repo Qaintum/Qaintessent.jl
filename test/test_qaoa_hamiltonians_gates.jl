@@ -236,7 +236,7 @@ end
         # Test that `MaxKColSubgraphPhaseSeparationGate` has the correct adjoint.
         @testset "adjoint MaxKColSubgraphPhaseSeparationGate" begin
             γs = rand(length(graphs)) * 2π
-            κs = rand(2:3, length(graphs))
+            κs = [3, 2, 2]
 
             gates = MaxKColSubgraphPhaseSeparationGate.(γs, κs, graphs)
             for i ∈ 1:length(gates)

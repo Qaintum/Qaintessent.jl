@@ -46,8 +46,6 @@ end
         θ = 2π*rand()
         ngrad = ngradient(f, [θ])
         dg = Qaintessent.backward(g(θ, κ, graph), conj(Δ))
-        println(dg.γ)
-        println(ngrad[1])
         @test isapprox(dg.γ, ngrad[1], rtol=1e-5, atol=1e-5)
     end
 
