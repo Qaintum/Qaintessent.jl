@@ -68,7 +68,7 @@ end
         # Test that the Hamiltonian which the RNearbyValuesMixerGate is based on
         # maps coloring states to a superposition of their neighboring states
         @testset "Hamiltonian RNearbyValuesMixerGate" begin
-            ds = [2, 5, 9, 12] # different numbers of colors
+            ds = [2, 5, 9, 10] # different numbers of colors
             rs = [1, 2, 5]
             nums_samples = [2, 5, 5, 5]
 
