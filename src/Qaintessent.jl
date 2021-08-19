@@ -113,19 +113,21 @@ include("measure.jl")
 export 
     measure
 
+module MaxKColSubgraphQAOA
+    include("qaoa/mixer_gates.jl")
+    export
+        RNearbyValuesMixerGate,
+        ParityRingMixerGate,
+        PartitionMixerGate,
+        r_nearby_values_hamiltonian_onehot
 
-include("qaoa/mixer_gates.jl")
-export
-    RNearbyValuesMixerGate,
-    ParityRingMixerGate,
-    PartitionMixerGate
+    include("qaoa/phase_separator_gates.jl")
+    export
+        MaxKColSubgraphPhaseSeparationGate,
+        Graph,
+        max_k_col_subgraph_phase_separation_hamiltonian
 
-include("qaoa/phase_separator_gates.jl")
-export
-    MaxKColSubgraphPhaseSeparationGate,
-    Graph,
-    max_k_col_subgraph_phase_separation_hamiltonian
-
-include("qaoa/qaoa_gradients.jl")
+    include("qaoa/qaoa_gradients.jl")
+end
 
 end
