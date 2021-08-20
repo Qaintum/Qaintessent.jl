@@ -7,6 +7,20 @@ using Qaintessent
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
+import LinearAlgebra.BLAS: @blasfunc
+
+
+using LinearAlgebra: BlasInt
+for (s, elty) in (("dlarfg_", Float64),
+                  ("zlarfg_", ComplexF64))
+    @eval begin
+        function RandomMatrices.larfg!(n::Int, α::Ptr{$elty}, x::Ptr{$elty}, incx::Int, τ::Ptr{$elty})
+	    ccall((@blasfunc($s), LAPACK.liblapack), Nothing,
+		  (Ptr{Int}, Ptr{$elty}, Ptr{$elty}, Ptr{Int}, Ptr{$elty}),
+                  Ref(n), α, x, Ref(incx), τ)
+        end
+    end
+end
 
 
 @testset ExtendedTestSet "compilediagonal unitaries helper functions" begin
