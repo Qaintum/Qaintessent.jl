@@ -290,4 +290,59 @@ end
             end
         end
     end
+
+    @testset ExtendedTestSet "max-k-col. subgraph QAOA num wires" begin
+        @testset "num wires MaxKColSubgraphPhaseSeparationGate" begin
+            γs = rand(length(graphs)) * 2π
+            κs = [3, 2, 2]
+
+            gates = MaxKColSubgraphPhaseSeparationGate.(γs, κs, graphs)
+            for (gate, graph, κ) ∈ zip(gates, graphs, κs)
+                @test Qaintessent.num_wires(gate) == graph.n * κ
+            end
+        end
+
+        @testset "num wires ParityRingMixerGate" begin
+            N = 3 # number of test cases
+            βs = rand(N) * 2π
+            ds = rand(2:9, N)
+
+            gates = ParityRingMixerGate.(βs, ds)
+            for (gate, d) ∈ zip(gates, ds)
+                @test Qaintessent.num_wires(gate) == d
+            end
+        end
+
+        @testset "num wires RNearbyValuesMixerGate" begin
+            βs = rand(4) * 2π
+            ds = [2, 3, 6, 9]
+            rs = [1, 2, 1, 5]
+
+            gates = RNearbyValuesMixerGate.(βs, rs, ds)
+            for (gate, d) ∈ zip(gates, ds)
+                @test Qaintessent.num_wires(gate) == d
+            end
+        end
+
+        @testset "num wires PartitionMixerGate" begin
+            ds = [2, 3, 6, 9]
+            nums_partition_layers = [2, 3, 4, 5]
+
+            for (d, num_partition_layers) ∈ zip(ds, nums_partition_layers)
+                # create num_partition_layers partition parts, each of
+                # random length and with random entries
+                partition = [
+                    # create h x 2 matrix with random height 2 from a random permutation of the indices...
+                    (reshape(randperm(d)[1:(2*rand(1:div(d, 2)))], (:, 2))
+                    # ... then map the rows to tuples
+                        |> eachrow .|> Tuple)
+                    for _ ∈ 1:num_partition_layers
+                ]
+
+                β = rand() * 10 + 0.1
+                gate = PartitionMixerGate(β, d, partition)
+                @test Qaintessent.num_wires(gate) == d
+            end
+        end
+    end
 end
