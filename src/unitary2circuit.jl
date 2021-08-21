@@ -1,6 +1,7 @@
 using Memoize
 using GenericSchur
 using JLD
+using LinearAlgebra
 
 """
     greyencode(n::Int) = n ⊻ (n >> 1)
