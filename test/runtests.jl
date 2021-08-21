@@ -3,6 +3,5 @@ using TestSetExtensions
 
 
 @testset "All the tests" begin
-    # @includetests ARGS
-    @includetests ["test_compile"]
+    @includetests ARGS
 end
