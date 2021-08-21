@@ -330,44 +330,22 @@ compiles an arbitrary U(4) matrix into a quantum circuit. Algorithm taken from
 arxiv:quant-ph/0308006, arxiv:quant-ph/0211002
 """
 function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
-    println("M: " * string(m))
     cg = CircuitGate[]
     E = 1 / sqrt(2) .* [1 im 0 0; 0 0 im 1; 0 0 im -1; 1 -im 0 0]
     U = E' * m * E
-    println("U: " * string(U))
     P2 = U * transpose(U)
-    println("P2: " * string(P2))
-    println("P2 type: " * string(typeof(P2)))
     Diag, K_2 = eigen(P2)
-    println("diag: " * string(Diag))
-    println("K2: " * string(K_2))
     
     K_2 = real.(K_2)
-    println("rK2: " * string(K_2))
     K_2 .= gramm_schmidt!(K_2)
-    # ensure that eigenvectors for degenerate eigenvalues are orthogonal
-    # if !(det(K_2) ≈ 1) || !(det(K_2) ≈ -1)
-    #     for i in 1:4
-    #         for j in i+1:4
-    #             if norm(dot(K_2[:,j], K_2[:, i])) > 1e-12
-    #                 K_2[:, [i,j]] .= gramm_schmidt!(K_2[:, [i,j]])
-    #             end
-    #         end
-    #     end
-    # end
-    println("gmK2: " * string(K_2))
     Diag[1] = Diag[1] / det(K_2)^2
     K_2[:,1] = K_2[:,1] * det(K_2)
     
-    println("detK2: " * string(K_2))
     Diag = diagm(sqrt.(Diag))
     Diag[1] = Diag[1] * det(U) / det(Diag)
 
     P = K_2 * Diag * inv(K_2)
-    println("P: " * string(P))
     K_1 = inv(P) * U
-    println("invK2: " * string(inv(K_2)))
-    println("K1: " * string(K_1))
     C, D = decomposeSO4(inv(K_2) * K_1)
 
     # println(norm(E'*kron(C,D)*E - inv(K_2) * K_1))

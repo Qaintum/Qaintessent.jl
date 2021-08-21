@@ -298,11 +298,6 @@ end
             for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
                 
                 nU = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
-                println(typeof(gate))
-                println(RyGate(random_θ[2]))
-                println(random_θ)
-                println(nU)
-                println()
                 cgs = unitary2circuit(nU, N)
 
                 ψ = rand(ComplexF64, 2^N)
