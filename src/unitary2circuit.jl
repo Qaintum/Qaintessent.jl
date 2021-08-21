@@ -360,7 +360,8 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     P = K_2 * Diag * inv(K_2)
     K_1 = inv(P) * U
     K = inv(K_2) * K_1
-
+    println(inv(K_2))
+    println(K_1)
     C, D = decomposeSO4(inv(K_2) * K_1)
 
     # println(norm(E'*kron(C,D)*E - inv(K_2) * K_1))
