@@ -271,7 +271,10 @@ SU(2) via isoclinic decomposition. m ≊ A ⊗ B under the magic basis homomorph
 function decomposeSO4(m::AbstractMatrix{Float64})
     size(m)[1] == size(m)[2] || error("decomposeSO4 only works on square matrices")
     size(m)[1] == 4 || error("decomposeSO4 only works on 4x4 matrices")
-    # isapprox(det(m), 1; rtol=1e-5) || error("matrix `m` is not in SO(4), determinant is not 1")
+    if !isapprox(det(m), 1)
+        println(m)
+    end
+    isapprox(det(m), 1; rtol=1e-5) || error("matrix `m` is not in SO(4), determinant is not 1")
 
     col = zeros(Float64, 4)
     row = zeros(Float64, 4)
