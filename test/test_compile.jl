@@ -297,7 +297,10 @@ end
             random_θ = rand(Float64, 3)
             for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
                 U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
+                println(typeof(gate))
+                println(random_θ)
                 cgs = unitary2circuit(U, N)
+
                 ψ = rand(ComplexF64, 2^N)
                 ψ_ref = U*ψ
                 ψ_compiled = apply(ψ, cgs)
