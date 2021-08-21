@@ -341,6 +341,8 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     println("P2: " * string(P2))
     println("P2 type: " * string(typeof(P2)))
     Diag, K_2 = eigen(P2)
+    println("diag: " * string(Diag))
+    println("K2: " * string(K_2))
     
     K_2 = real.(K_2)
     println("rK2: " * string(K_2))
