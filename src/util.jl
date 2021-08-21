@@ -131,7 +131,7 @@ function gramm_schmidt!(a::Array{ComplexF64})
     a[:, end] = a[:, end] ./ norm(a[:, end])
 
     for i in num_vectors-1:-1:1        
-        for j in num_vectors:-1:i+1
+        for j in i+1:num_vectors
             a[:, i] = a[:, i] - conj(dot(a[:, i], a[:, j]) / dot(a[:, j], a[:, j])) * a[:, j]
         end
         a[:, i] = a[:, i] ./ norm(a[:, i])
