@@ -7,7 +7,7 @@ jobs:
     runs-on: self-hosted
     strategy: 
       matrix:
-        julia-version: ['1.6-nightly', '1.6.0']
+        julia-version: ['1.6.2']
     steps:
       - uses: actions/checkout@v2  
         with:
