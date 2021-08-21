@@ -1,6 +1,4 @@
 using Memoize
-using GenericSchur
-using JLD
 using LinearAlgebra
 
 """
@@ -346,16 +344,17 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     
     K_2 = real.(K_2)
     println("rK2: " * string(K_2))
+    K_2 .= gramm_schmidt!(K_2)
     # ensure that eigenvectors for degenerate eigenvalues are orthogonal
-    if !(det(K_2) ≈ 1) || !(det(K_2) ≈ -1)
-        for i in 1:4
-            for j in i+1:4
-                if norm(dot(K_2[:,j], K_2[:, i])) > 1e-12
-                    K_2[:, [i,j]] .= gramm_schmidt!(K_2[:, [i,j]])
-                end
-            end
-        end
-    end
+    # if !(det(K_2) ≈ 1) || !(det(K_2) ≈ -1)
+    #     for i in 1:4
+    #         for j in i+1:4
+    #             if norm(dot(K_2[:,j], K_2[:, i])) > 1e-12
+    #                 K_2[:, [i,j]] .= gramm_schmidt!(K_2[:, [i,j]])
+    #             end
+    #         end
+    #     end
+    # end
     println("gmK2: " * string(K_2))
     Diag[1] = Diag[1] / det(K_2)^2
     K_2[:,1] = K_2[:,1] * det(K_2)
