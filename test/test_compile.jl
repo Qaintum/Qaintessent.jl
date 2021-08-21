@@ -297,15 +297,16 @@ end
             random_θ = rand(Float64, 3)
             for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
                 
-                U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
+                nU = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
                 println(typeof(gate))
+                println(RyGate(random_θ[2]))
                 println(random_θ)
-                println(U)
+                println(nU)
                 println()
-                cgs = unitary2circuit(U, N)
+                cgs = unitary2circuit(nU, N)
 
                 ψ = rand(ComplexF64, 2^N)
-                ψ_ref = U*ψ
+                ψ_ref = nU*ψ
                 ψ_compiled = apply(ψ, cgs)
                 
                 @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), rtol=1e-5, atol=1e-5)
