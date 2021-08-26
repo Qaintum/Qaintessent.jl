@@ -293,7 +293,7 @@ end
         N = 2
         M = Stewart(ComplexF64, 2^N)
         l = deepcopy(M)
-        for _ in 1:400
+        for _ in 1:40
             random_θ = rand(Float64, 3)
             for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
                 
