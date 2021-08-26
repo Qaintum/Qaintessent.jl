@@ -1,9 +1,8 @@
 using RBNF
+using RBNF: Token
 using MLStyle
 using PrettyPrint
 
-
-@as_record Token
 @as_record Struct_mainprogram
 @as_record Struct_ifstmt
 @as_record Struct_gate
