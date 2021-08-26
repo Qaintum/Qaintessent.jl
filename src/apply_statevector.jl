@@ -1,14 +1,14 @@
 using Base
 using Base: invpermute!!
 
-"""Permutes perm vector in Statevector object, shifting qubit "i" to the fastest running qubit"""
+"""Modifies perm vector in Statevector object to flip qubit at position `wire`"""
 function flipqubit!(ψ::Statevector, wire::Int)
     @simd for i in 1:length(ψ)
         @inbounds ψ.perm[i] = (ψ.perm[i] - 1) ⊻ (2^(wire-1)) + 1
     end
 end
 
-"""Permutes perm vector in Statevector object, shifting qubit "i" to the fastest running qubit"""
+"""Permutes perm vector in Statevector object, shifting qubits in "wires" to the fastest running qubit"""
 function orderbit(n::Int, wires::NTuple{K,Int}, N::Int) where {K}
     result = 0
     l = N-length(wires)-1
@@ -29,13 +29,14 @@ function orderbit(n::Int, wires::NTuple{K,Int}, N::Int) where {K}
     return result
 end
 
-"""Permutes perm vector in Statevector object, shifting qubit "i" to the fastest running qubit"""
-function orderbit!(ψ::Statevector, wires::NTuple{K,Int}) where {K}
+"""Permutes perm vector in Statevector object, shifting qubits in "wires" to the fastest running qubit"""
+function orderqubit!(ψ::Statevector, wires::NTuple{K,Int}) where {K}
     @simd for i in 1:length(ψ)
         @inbounds ψ.perm[orderbit(i-1, wires, ψ.N) + 1] = i
     end
 end
 
+"""Swaps bit at position `p1` and `p2` integer `n`"""
 function swapbit(n::Int, p1::Int, p2::Int)
     # Move p1'th to rightmost side
     bit1 = (n >> p1) & 1
@@ -55,21 +56,13 @@ function swapbit(n::Int, p1::Int, p2::Int)
     return result
 end
 
-"""Permutes perm vector in Statevector object, shifting qubit "i" to the fastest running qubit"""
-function swapbits!(ψ::Statevector, wire1::Int, wire2::Int)
-    # swapbit.(ψ.perm, (wire1,), (wire2,))
+"""Permutes perm vector in Statevector object, swapping qubit at `wire1` and `wire2`"""
+function swapqubit!(ψ::Statevector, wire1::Int, wire2::Int)
     if wire1 == wire2
         return
     end
     @simd for i in 1:length(ψ)
         @inbounds ψ.perm[i] = swapbit(ψ.perm[i]-1, wire1-1, wire2-1) + 1
-    end
-end
-
-"""Permutes perm vector in Statevector object, shifting qubit "i" to the fastest running qubit"""
-function permutebinary!(ψ::Vector, wire::Int)
-    @simd for i in 1:length(ψ)
-        @inbounds ψ[i] = (ψ[i] - 1) ⊻ (2^(wire-1)) + 1
     end
 end
 
@@ -129,7 +122,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,HadamardGate})
     mid = 2^(ψ.N-1)
     ψ.state .*= 1/sqrt(2)
 
-    orderbit!(ψ, cg.iwire)
+    orderqubit!(ψ, cg.iwire)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)  
     @views begin
         @inbounds ψ.state .= ψ.vec
@@ -238,7 +231,7 @@ end
 """Tailored apply for a general single qubit gate"""
 function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
     U = matrix(cg.gate)::Array{ComplexF64,2}
-    orderbit!(ψ, cg.iwire)
+    orderqubit!(ψ, cg.iwire)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
     mid = 2^(ψ.N-length(cg.iwire))
     @views begin
@@ -254,31 +247,11 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
     return
 end
 
-# """Tailored apply for a general single qubit gate"""
-# function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
-#     U = matrix(cg.gate)
-#     orderbit!(ψ, cg.iwire)
-#     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
-#     step = 2^(ψ.N-length(cg.iwire))
-#     # for i in 1:2
-#     #     @inbounds @views mul!(ψ.state[(i-1)*step+1:i*step], U[i,1], ψ.vec[1:step])
-#     # end
-#     # for i in 1:2
-#     #     @inbounds @views mul!(ψ.vec[(i-1)*step+1:i*step], U[i,2], ψ.vec[step+1:end])
-#     #     @inbounds @views ψ.state[(i-1)*step+1:i*step] .+= ψ.vec[(i-1)*step+1:i*step]
-#     # end
-#     # @inbounds invpermute!(ψ.state, ψ.perm)
-#     # @inbounds @views ψ.vec .= ψ.state
-#     # resetpermute!(ψ)
-#     return
-# end
-#
-
 """Tailored apply for SwapGate"""
 function _apply!(ψ::Statevector, cg::CircuitGate{2,SwapGate})
     i, j = cg.iwire
     i, j = i < j ? (i, j) : (j, i) # sort them
-    swapbits!(ψ, i, j)
+    swapqubit!(ψ, i, j)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)
     @inbounds ψ.state .= ψ.vec
     resetpermute!(ψ)
@@ -291,7 +264,7 @@ function _apply(ψ::Statevector, cg::CircuitGate{M,ControlledGate{G}}) where {M,
     T = target_wires(cg.gate)
     C = control_wires(cg.gate)
     U = matrix(cg.gate.U)::Array{ComplexF64,2}
-    orderbit!(ψ, cg.iwire)
+    orderqubit!(ψ, cg.iwire)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
 
     start = 2^ψ.N*(1-2^(-C))
@@ -335,7 +308,7 @@ end
 
 function _apply!(ψ::Statevector, cg::CircuitGate{M,G}) where {M,G}
     U = matrix(cg.gate)::Array{ComplexF64,2}
-    orderbit!(ψ, cg.iwire)
+    orderqubit!(ψ, cg.iwire)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
     step = 2^(ψ.N-length(cg.iwire))
     @views begin
