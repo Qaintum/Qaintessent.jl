@@ -6,7 +6,81 @@ using Qaintessent
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
+@testset ExtendedTestSet "test helper functions to apply statevectors" begin
+    @testset "test flipqubit!" begin
+        N = 5
+        n = rand(1:N)
+        ψ = Statevector(N)
+        ref = zeros(Int, 2^N)
+        for i in 1:2^N
+            bits = digits(i-1, base=2, pad=N)
+            bits[n] = 1 - bits[n]
+            ref[i] = sum(bits .* 2 .^[0:N-1...]) + 1
+        end
 
+        Qaintessent.flipqubit!(ψ, n)
+        @test all(ψ.perm .== ref)
+    end
+
+    @testset "test 1 qubit orderqubit!" begin
+        N = 5
+        n = rand(1:N)
+        ψ = Statevector(N)
+        
+        ref = zeros(Int, 2^N)
+        for i in 1:2^N
+            bits = digits(i-1, base=2, pad=N)
+            temp = bits[n]
+            bits[n:end-1] .= bits[n+1:end]
+            bits[end] = temp
+            ref[sum(bits .* 2 .^[0:N-1...]) + 1] = i
+        end
+
+        Qaintessent.orderqubit!(ψ, (n,))
+        @test all(ψ.perm .== ref)
+    end
+
+    @testset "test n qubit orderqubit!" begin
+        N = 5
+        n1 = rand(1:N-1)
+        n2 = rand(n1+1:N)
+        ψ = Statevector(N)
+        
+        ref = zeros(Int, 2^N)
+        for i in 1:2^N
+            bits = digits(i-1, base=2, pad=N)
+            temp1 = bits[n1]
+            temp2 = bits[n2]
+            bits[n1:n2-1]  .= bits[n1+1:n2]
+            bits[n2-1:end-2] .= bits[n2+1:end]
+            bits[end-1] = temp1
+            bits[end] = temp2
+            ref[sum(bits .* 2 .^[0:N-1...]) + 1] = i
+        end
+
+        Qaintessent.orderqubit!(ψ, (n1, n2))
+        @test all(ψ.perm .== ref)
+    end
+
+    @testset "test swapqubit!" begin
+        N = 5
+        n1 = rand(1:N)
+        n2 = rand(setdiff(1:N, n1))
+        ψ = Statevector(N)
+
+        ref = zeros(Int, 2^N)
+        for i in 1:2^N
+            bits = digits(i-1, base=2, pad=N)
+            temp = bits[n1]
+            bits[n1] = bits[n2]
+            bits[n2] = temp
+            ref[i] = sum(bits .* 2 .^[0:N-1...]) + 1
+        end
+
+        Qaintessent.swapqubit!(ψ, n1, n2)
+        @test all(ψ.perm .== ref)
+    end
+end
 
 """Checks that tailored apply gives same result as general apply"""
 
