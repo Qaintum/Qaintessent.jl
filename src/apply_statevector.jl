@@ -140,7 +140,9 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,HadamardGate})
         ψ.state[mid+1:2mid] .+= ψ.vec[1:mid]
 
         @inbounds invpermute!!(ψ.state, ψ.perm)
+        resetpermute!(ψ)
     end
+    
     return
 end
 
@@ -247,6 +249,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
         @inbounds mul!(ψ.vec[1:mid], U[2,2], ψ.vec[mid+1:end])
         @inbounds ψ.state[mid+1:mid+mid] .+= ψ.vec[1:mid]
         @inbounds invpermute!!(ψ.state, ψ.perm)
+        resetpermute!(ψ)
     end 
     return
 end
@@ -304,6 +307,7 @@ function _apply(ψ::Statevector, cg::CircuitGate{M,ControlledGate{G}}) where {M,
             end
         end
         @inbounds invpermute!!(ψ.state, ψ.perm)
+        resetpermute!(ψ)
     end
     return
 end
@@ -345,6 +349,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{M,G}) where {M,G}
             end
         end
         @inbounds invpermute!!(ψ.state, ψ.perm)
+        resetpermute!(ψ)
     end
 end
 
