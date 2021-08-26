@@ -15,6 +15,7 @@ export
     X,
     Y,
     Z,
+    H,
     XGate,
     YGate,
     ZGate,
