@@ -1,4 +1,5 @@
 using RBNF
+using RBNF: Token
 using MLStyle
 using PrettyPrint
 
@@ -86,10 +87,6 @@ RBNF.@parser QASMLang begin
     space     := r"\G\s+"
     comments  := r"\G//.*"
 end
-
-
-Token = RBNF.Token
-
 
 function lex(src :: String)
     RBNF.runlexer(QASMLang, src)
