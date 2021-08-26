@@ -1,12 +1,11 @@
 using Memoize
-using GenericSchur
-using JLD
+using LinearAlgebra
 
 """
-    greyencode(n::Integer) = n ⊻ (n >> 1)
-returns grey encoding of given integer
+    greyencode(n::Int) = n ⊻ (n >> 1)
+returns grey encoding of given Int
 """
-greyencode(n::Integer) = n ⊻ (n >> 1)
+greyencode(n::Int) = n ⊻ (n >> 1)
 
 """
     inverseM(N)
@@ -14,7 +13,7 @@ finds inverse of M matrix of size 2^(N-1)×2^(N-1) with elements M_{i,j} equal t
 inner product of binary rep of i (classical) and j (grey code), i,j ∈
 [1:2^(N-1)] utilizes algorithm from arxiv:quant-ph/0404089
 """
-@memoize function inverseM(N)
+@memoize function inverseM(N::Int)
     m = 2^(N - 1)
     M = zeros((m, m))
     for i in 1:m
@@ -31,7 +30,7 @@ end
 creates Array of CircuitGate objects preparing state `u` over `N` qubits.. uses
 algorithm from arxiv:quant-ph/0410066
 """
-function stateprep(u, N, n=1)
+function stateprep(u::Vector{ComplexF64}, N::Int, n::Int=1)
     cg = CircuitGate[]
     k = 2
     grey = zeros(Int, 2^(N - n))
@@ -130,7 +129,7 @@ end
 
 performs serial qr decomposition on matrix `m`
 """
-function qr_unblocked!(m::AbstractMatrix{ComplexF64}, n=1::Integer)
+function qr_unblocked!(m::AbstractMatrix{ComplexF64}, n=1::Int)
     N = size(m)[1]
     τ = ComplexF64[]
     for i in n:N - 1
@@ -149,7 +148,7 @@ end
 
 performs serial qr decomposition on matrix `m`
 """
-function qr_unblocked(m::AbstractMatrix{ComplexF64}, n=1::Integer)
+function qr_unblocked(m::AbstractMatrix{ComplexF64}, n=1::Int)
     m = deepcopy(m)
     N = size(m)[1]
     τ = ComplexF64[]
@@ -271,7 +270,7 @@ SU(2) via isoclinic decomposition. m ≊ A ⊗ B under the magic basis homomorph
 function decomposeSO4(m::AbstractMatrix{Float64})
     size(m)[1] == size(m)[2] || error("decomposeSO4 only works on square matrices")
     size(m)[1] == 4 || error("decomposeSO4 only works on 4x4 matrices")
-    det(m) ≈ 1 || error("matrix `m` is not in SO(4), determinant is not 1")
+    isapprox(det(m), 1; rtol=1e-5) || error("matrix `m` is not in SO(4), determinant is not 1")
 
     col = zeros(Float64, 4)
     row = zeros(Float64, 4)
@@ -331,33 +330,19 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
     cg = CircuitGate[]
     E = 1 / sqrt(2) .* [1 im 0 0; 0 0 im 1; 0 0 im -1; 1 -im 0 0]
     U = E' * m * E
-
     P2 = U * transpose(U)
-
     Diag, K_2 = eigen(P2)
-    K_2 = real.(K_2)
     
-    # ensure that eigenvectors for degenerate eigenvalues are orthogonal
-    if !(det(K_2) ≈ 1) || !(det(K_2) ≈ -1)
-        for i in 1:4
-            for j in i+1:4
-                if norm(dot(K_2[:,j], K_2[:, i])) > 1e-12
-                    K_2[:, [i,j]] .= gramm_schmidt!(K_2[:, [i,j]])
-                end
-            end
-        end
-    end
-
+    K_2 = real.(K_2)
+    K_2 .= gramm_schmidt!(K_2)
     Diag[1] = Diag[1] / det(K_2)^2
     K_2[:,1] = K_2[:,1] * det(K_2)
-
+    
     Diag = diagm(sqrt.(Diag))
     Diag[1] = Diag[1] * det(U) / det(Diag)
 
     P = K_2 * Diag * inv(K_2)
     K_1 = inv(P) * U
-    K = inv(K_2) * K_1
-
     C, D = decomposeSO4(inv(K_2) * K_1)
 
     # println(norm(E'*kron(C,D)*E - inv(K_2) * K_1))
@@ -384,21 +369,21 @@ function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
 end
 
 """
-    fillψ!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
+    fillψ!(d::Vector{ComplexF64}, ψ::Vector{Float64}, l::Int)
 
 fills empty vector `ψ`, such that  ψ = −im*[logχ1(d) log χ2(d) ··· logχl−1(U)],
 where χn(d) = d[2n-1]*d[2n+2]/(d[2n]*d[2n+1]) per arxiv:quant-ph/0303039
 """
-function fillψ!(d::AbstractVector{ComplexF64}, ψ::Vector{Float64}, l::Integer)
+function fillψ!(d::AbstractVector{ComplexF64}, ψ::Vector{Float64}, l::Int)
     for i in StepRange(1, 1, l - 1)
         ψ[i] = imag(log(d[2i - 1] * d[2i + 2] / (d[2i] * d[2i + 1])))
     end
 end
 
 """
-    ηcol(l::Integer, n::Integer)
+    ηcol(l::Int, n::Int)
 
-calculates a single flip state for given integer `n` and a column length of `l`,
+calculates a single flip state for given Int `n` and a column length of `l`,
     where 0 <= n <= l. returns a vector of length l, where vec[n] = 1, vec[n+1]
     = -1. if n == 0, vec[1] = -1, if n==l, vec[l] = 1
 # Examples
@@ -416,8 +401,8 @@ julia> ηcol(4, 4)
 [0, 0, 0, 1]
 ```
 """
-@memoize Dict function ηcol(l::Integer, n::Integer)
-    vec = zeros(Integer, l)
+@memoize Dict function ηcol(l::Int, n::Int)
+    vec = zeros(Int, l)
     if n == 0
         vec[1] = -1
         return vec
@@ -432,22 +417,22 @@ julia> ηcol(4, 4)
 end
 
 """
-    flip_state(m::Integer, l::Integer)
+    flip_state(m::Int, l::Int)
 
 calculates the `m`th column of the η⊗ matrix by summing all flip states
 associated with the binary representation of `m` over the span of [1,l-1]
 algorithm taken from arxiv:quant-ph/0303039
 """
-@memoize Dict function flip_state(m::Integer, l::Integer)
-    # calculates flip states of a given integer `x`
+@memoize Dict function flip_state(m::Int, l::Int)
+    # calculates flip states of a given Int `x`
     f = filter(x -> count_ones(x & m) % 2 == 1, 1:l - 1)
     sum(ηcol.((l - 1,), f))
 end
 
 """
-    svalue(i::Integer)
+    svalue(i::Int)
 
-returns tuple of position of 1s in the binary representation of integer `i`
+returns tuple of position of 1s in the binary representation of Int `i`
 starting from least significant digit.
 # Examples
 ```julia-repl
@@ -459,7 +444,7 @@ julia> svalue(7)
 (1,2,3)
 ```
 """
-function svalue(i::Integer)
+function svalue(i::Int)
     b = Int[]
     count = 1
     while i != 0

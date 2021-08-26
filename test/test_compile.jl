@@ -7,6 +7,20 @@ using Qaintessent
 
 
 ##==----------------------------------------------------------------------------------------------------------------------
+import LinearAlgebra.BLAS: @blasfunc
+
+
+using LinearAlgebra: BlasInt
+for (s, elty) in (("dlarfg_", Float64),
+                  ("zlarfg_", ComplexF64))
+    @eval begin
+        function RandomMatrices.larfg!(n::Int, α::Ptr{$elty}, x::Ptr{$elty}, incx::Int, τ::Ptr{$elty})
+	    ccall((@blasfunc($s), LAPACK.liblapack), Nothing,
+		  (Ptr{Int}, Ptr{$elty}, Ptr{$elty}, Ptr{Int}, Ptr{$elty}),
+                  Ref(n), α, x, Ref(incx), τ)
+        end
+    end
+end
 
 
 @testset ExtendedTestSet "compilediagonal unitaries helper functions" begin
@@ -279,13 +293,15 @@ end
         N = 2
         M = Stewart(ComplexF64, 2^N)
         l = deepcopy(M)
-        for _ in 1:100
+        for _ in 1:400
             random_θ = rand(Float64, 3)
             for gate in [X, Y, Z, TGate(), SGate(), RxGate(random_θ[1]), RyGate(random_θ[2]), RzGate(random_θ[3])]
-                U = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
-                cgs = unitary2circuit(U, N)
+                
+                nU = Matrix(sparse_matrix(circuit_gate(1, gate, 2)))
+                cgs = unitary2circuit(nU, N)
+
                 ψ = rand(ComplexF64, 2^N)
-                ψ_ref = U*ψ
+                ψ_ref = nU*ψ
                 ψ_compiled = apply(ψ, cgs)
                 
                 @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), rtol=1e-5, atol=1e-5)
