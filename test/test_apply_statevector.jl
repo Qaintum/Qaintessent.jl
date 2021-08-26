@@ -17,7 +17,7 @@ using Qaintessent
     n = randn(3); n /= norm(n)
     ψ = rand(ComplexF64, 2^N)
 
-    @testset "apply basic gates" begin
+    @testset "apply basic gates to statevector" begin
         # single qubit gates
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
@@ -36,7 +36,7 @@ using Qaintessent
         end
     end
 
-    @testset "apply moments" begin
+    @testset "apply moments to statevector" begin
         # single qubit gates
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
@@ -52,7 +52,7 @@ using Qaintessent
         end
     end
 
-    @testset "apply basic controlled gates" begin
+    @testset "apply basic controlled gates to statevector" begin
         # control gate
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
@@ -69,7 +69,7 @@ using Qaintessent
         end
     end
 
-    @testset "apply swap gate" begin
+    @testset "apply swap gate to statevector" begin
         i = rand(1:N)
         j = rand([1:i-1; i+1:N])
         cg = circuit_gate((i, j), SwapGate())
@@ -84,7 +84,7 @@ using Qaintessent
         @test s1.state ≈ sparse_matrix(cga, N) * ψ
     end
 
-    @testset "apply 1-qubit MatrixGate" begin
+    @testset "apply 1-qubit MatrixGate to statevector" begin
         # MatrixGate: one qubit
         d = 2
         A = rand(ComplexF64, d, d)
@@ -105,7 +105,7 @@ using Qaintessent
 
     end
 
-    @testset "apply k-qubit MatrixGate" begin
+    @testset "apply k-qubit MatrixGate to statevector" begin
         # MatrixGate: k qubits
         k = rand(1:N)
         A = rand(ComplexF64, 2^k, 2^k)
