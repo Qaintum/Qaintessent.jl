@@ -193,10 +193,10 @@ end
 function _apply!(ψ::Statevector, cg::CircuitGate{1,TdagGate})
     wire = cg.iwire[1]
     bin = 2^(wire-1)
-    eπ4 = Base.exp(im*π/4)
+    eπ4 = Base.exp(-im*π/4)
     for x in 1:2^ψ.N
         if (x-1) & bin == bin
-            ψ[x] = -eπ4*ψ[x]
+            ψ[x] = eπ4*ψ[x]
         end
     end
     return

@@ -19,17 +19,14 @@ using Qaintessent
 
     @testset "apply basic gates to statevector" begin
         # single qubit gates
-        for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
             cg = circuit_gate(i, g)
             cga = CircuitGate{1,AbstractGate}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
             s1 = Statevector(deepcopy(ψ))
             s2 = Statevector(deepcopy(ψ))
-
             apply!(s1, cg)
             apply!(s2, cga)            
-            # println(s2.state)
-            # println(sparse_matrix(cga, N) * ψ)
             @test s1.state ≈ s2.state
             @test s1.state ≈ sparse_matrix(cga, N) * ψ
             
@@ -38,7 +35,7 @@ using Qaintessent
 
     @testset "apply moments to statevector" begin
         # single qubit gates
-        for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
             i = rand(1:N)
             cg = Moment([circuit_gate(i, g)])
             cga = Moment([CircuitGate{1,AbstractGate}(cg[1].iwire, cg[1].gate)]) # generate same gate with type AbstractGate{1}
@@ -131,4 +128,35 @@ using Qaintessent
         @test s1.state ≈ s2.state
         @test s1.state ≈ sparse_matrix(cga, N) * ψ
     end
+
+    @testset "apply controlled k-qubit MatrixGate to statevector" begin
+        # MatrixGate: k qubits
+        k = rand(1:N-2)
+        A = rand(ComplexF64, 2^k, 2^k)
+        U, R = qr(A)
+        U = Array(U);
+        g = MatrixGate(U)
+        iwire = [rand(1:N)]
+        for j in 1:k-1
+            l = rand(1:N-j)
+            i = setdiff([1:N...], iwire)[l]
+            push!(iwire, i)
+        end
+
+        cntrl = (rand(setdiff([1:N...], iwire)),)
+        
+        sort!(iwire)
+        cg = circuit_gate((iwire...,), g, cntrl)
+        cga = CircuitGate{k+1,ControlledGate{typeof(g)}}(cg.iwire, cg.gate)
+        m = sparse_matrix(cga, N)
+
+        s1 = Statevector(deepcopy(ψ))
+        s2 = Statevector(deepcopy(ψ))
+
+        apply!(s1, cg)
+        apply!(s2, cga)
+        @test s1.state ≈ s2.state
+        @test s1.state ≈ sparse_matrix(cga, N) * ψ
+    end
+
 end
