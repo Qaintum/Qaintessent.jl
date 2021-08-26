@@ -155,6 +155,22 @@ end
         @test s1.state ≈ sparse_matrix(cga, N) * ψ
     end
 
+    @testset "apply controlled swap gate to statevector" begin
+        i = rand(1:N)
+        j = rand([1:i-1; i+1:N])
+        k = rand(setdiff(1:N, [i,j]))
+        cg = circuit_gate((i, j), SwapGate(), k)
+        cga = CircuitGate{3,ControlledGate{SwapGate}}(cg.iwire, cg.gate)
+
+        s1 = Statevector(deepcopy(ψ))
+        s2 = Statevector(deepcopy(ψ))
+
+        apply!(s1, cg)
+        apply!(s2, cga)
+        @test s1.state ≈ s2.state
+        @test s1.state ≈ sparse_matrix(cga, N) * ψ
+    end
+
     @testset "apply 1-qubit MatrixGate to statevector" begin
         # MatrixGate: one qubit
         d = 2
