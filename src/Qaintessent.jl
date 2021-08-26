@@ -61,6 +61,10 @@ export
     add_measurement!,
     distribution
 
+include("statevector.jl")
+export 
+    Statevector
+
 include("density_matrix.jl")
 export
     DensityMatrix,
@@ -79,6 +83,10 @@ export
 include("apply_density.jl")
 export
     apply
+
+include("apply_statevector.jl")
+export
+    apply!
 
 include("gradients.jl")
 include("gradients_density.jl")
