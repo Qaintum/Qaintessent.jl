@@ -393,7 +393,7 @@ end
 
 function _apply!(ψ::Statevector, m::Moment)
     for gate in m
-        ψ = _apply!(ψ, gate)
+        _apply!(ψ, gate)
     end
 end
 
@@ -403,7 +403,7 @@ function apply!(ψ::Statevector, m::Vector{Moment})
     Nmoment = maximum(req_wires.(m))
     Nmoment <= ψ.N || error("Moment affecting $Nmoment qubits applied to $N qubits")
     for moment in m
-        ψ = _apply!(ψ, moment)
+        _apply!(ψ, moment)
     end
 end
 
@@ -427,18 +427,20 @@ function apply!(ψ::Statevector, m::MeasurementOperator{M,G}) where {M,G<:Abstra
     apply!(ψ, m.operator)   
 end
 
+
+
 """
     apply(ψ::Statevector, c::Circuit{N}) where {N}
 
 returns list of expectation values from measurement operators in `c.meas` after applying circuit gates in `c.cgc` on state vector of `N` qubits `ψ`
 """
-function apply(ψ::Statevector, c::Circuit{N}) where {N}
+function apply!(ψ::Statevector, c::Circuit{N}) where {N}
     N == ψ.N || error("Size of vector `ψ` must match Circuit size of $(2^N)")
     length(c) != 0 || error("Circuit does not contain any gates")
     length(c.meas) != 0 || error("Circuit does not contain any measurement operators")
     for moment in c.moments
         _apply!(ψ, moment)
     end
-    ψr = apply.((ψ,), c.meas) 
-    return real.(dot.((ψl,), ψr))
+    ψr = apply.((ψ.state,), c.meas)
+    return real.(dot.((ψ.state,), ψr))
 end
