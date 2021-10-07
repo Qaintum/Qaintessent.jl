@@ -41,9 +41,11 @@ RBNF.@parser QASMLang begin
     reset       := ["reset", arg=argument, ';'] # not impl
     measure     := ["measure", arg1=argument, "->", arg2=argument, ';'] # not impl
 
-    uop         = (u | cx | h | x | y | z | s | sdg | t | tdg | rx | ry | rz | crx | cry | crz | iduop)
+    uop         = (u | cu | cx | h | x | y | z | s | sdg | t | tdg | rx | ry | rz | p | crx | cry | crz | cp | ccx | iduop )
     u          := ['U', '(', in1=nnexp, ',', in2=nnexp, ',', in3=nnexp, ')', out=argument, ';']
-    cx         := ["CX", out1=argument, ',', out2=argument, ';']
+    cu         := ["cu", '(', in1=nnexp, ',', in2=nnexp, ',', in3=nnexp, ',', in4=nnexp, ')', out1=argument, ',', out2=argument, ';']
+    cx         := ["cx", out1=argument, ',', out2=argument, ';']
+    ccx        := ["ccx", out1=argument, ',', out2=argument, ',', out3=argument, ';']
     ch         := ["ch", out1=argument, ',', out2=argument, ';']
     h          := ['h',  out=argument, ';']
     x          := ['x',  out=argument, ';']
@@ -56,6 +58,7 @@ RBNF.@parser QASMLang begin
     rx         := ["rx",  '(', in=nnexp, ')', out=argument, ';']
     ry         := ["ry",  '(', in=nnexp, ')', out=argument, ';']
     rz         := ["rz",  '(', in=nnexp, ')', out=argument, ';']
+    p          := ["p",  '(', in=nnexp, ')', out=argument, ';']
     crx        := ["crx",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
     cry        := ["cry",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
     crz        := ["crz",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
@@ -82,7 +85,7 @@ RBNF.@parser QASMLang begin
     # define tokens
     @token
     includes  := r"\Ginclude .*;"
-    id        := r"\G[a-z]{1}[A-Za-z0-9_]*"
+    id        := r"\G[A-Za-z]{1}[A-Za-z0-9_\*]*"
     nnreal    := r"\G([0-9]+\.[0-9]*|[0-9]*\.[0.9]+)([eE][-+]?[0-9]+)?"
     nninteger := r"\G([1-9]+[0-9]*|0)"
     space     := r"\G\s+"

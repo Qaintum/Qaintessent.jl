@@ -14,6 +14,7 @@ using PrettyPrint
 @as_record Struct_measure
 @as_record Struct_iduop
 @as_record Struct_u
+@as_record Struct_cu
 @as_record Struct_cx
 @as_record Struct_h
 @as_record Struct_x
@@ -26,11 +27,13 @@ using PrettyPrint
 @as_record Struct_rx
 @as_record Struct_ry
 @as_record Struct_rz
+@as_record Struct_p
 @as_record Struct_ch
 @as_record Struct_crx
 @as_record Struct_cry
 @as_record Struct_crz
 @as_record Struct_cp
+@as_record Struct_ccx
 @as_record Struct_idlist
 @as_record Struct_mixedlist
 @as_record Struct_argument
@@ -139,79 +142,97 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
         Struct_cx(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
-                :(append!($qasm_cgc, [circuit_gate(($ref2), X, ($ref1))]))
+                :(append!($qasm_cgc, circuit_gate(($ref2), X, ($ref1))))
             end
 
         Struct_ch(out1=out1, out2=out2) =>
             let ref1 = rec(out1),
                 ref2 = rec(out2)
-                :(append!($qasm_cgc, [circuit_gate(($ref2), HadamardGate(), ($ref1))]))
+                :(append!($qasm_cgc, circuit_gate(($ref2), HadamardGate(), ($ref1))))
             end
 
         Struct_u(in1=in1, in2=in2, in3=in3, out=out) =>
             let (a, b, c) = map(rec, (in1, in2, in3)),
                 ref = :($(rec(out))[1])
-                :(append!($qasm_cgc, [circuit_gate(($ref), RzGate($a)),
-                   circuit_gate(($ref), RyGate($b)),
-                   circuit_gate(($ref), RzGate($c)),]))
+                :(append!($qasm_cgc, circuit_gate(($ref), UGate($a, $b, $c))))
+            end
+        
+        Struct_cu(in1=in1, in2=in2, in3=in3, in4=in4, out1=out1, out2=out2) =>
+            let (a, b, c, d) = map(rec, (in1, in2, in3, in4)),
+                cntrl = :($(rec(out1))[1])
+                out = :($(rec(out2))[1])
+                :(
+                  append!($qasm_cgc, circuit_gate(($cntrl), PhaseShiftGate($d)));
+                  append!($qasm_cgc, circuit_gate(($cntrl), PhaseShiftGate(($b + $c)/2)));
+                  append!($qasm_cgc, circuit_gate(($out), PhaseShiftGate(($b - $c)/2)));
+                  append!($qasm_cgc, circuit_gate(($out), X, ($cntrl)));
+                  append!($qasm_cgc, circuit_gate(($out), UGate(-$a/2, 0, -($b+$c)/2)));
+                  append!($qasm_cgc, circuit_gate(($out), X, ($cntrl)));
+                  append!($qasm_cgc, circuit_gate(($out), UGate($a/2, $b, 0))))
             end
 
         Struct_x(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), X)]))
+                :(append!($qasm_cgc, circuit_gate(($ref), X)))
             end
 
         Struct_y(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), Y)]))
+                :(append!($qasm_cgc, circuit_gate(($ref), Y)))
             end
 
         Struct_z(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), Z)]))
+                :(append!($qasm_cgc, circuit_gate(($ref), Z)))
             end
 
         Struct_h(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), HadamardGate())]))
+                :(append!($qasm_cgc, circuit_gate(($ref), HadamardGate())))
             end
 
         Struct_t(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), TGate())]))
+                :(append!($qasm_cgc, circuit_gate(($ref), TGate())))
             end
 
         Struct_tdg(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), TdagGate())]))
+                :(append!($qasm_cgc, circuit_gate(($ref), TdagGate())))
             end
 
         Struct_s(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), SGate())]))
+                :(append!($qasm_cgc, circuit_gate(($ref), SGate())))
             end
 
         Struct_sdg(out=out) =>
             let ref = :($(rec(out)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), SdagGate())]))
+                :(append!($qasm_cgc, circuit_gate(($ref), SdagGate())))
             end
 
         Struct_rx(in=in, out=out) =>
             let ref = :($(rec(out))),
                 arg = :($(rec(in)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), RxGate($arg))]))
+                :(append!($qasm_cgc, circuit_gate(($ref), RxGate($arg))))
             end
 
         Struct_ry(in=in, out=out) =>
             let ref = :($(rec(out))),
                 arg = :($(rec(in)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), RyGate($arg))]))
+                :(append!($qasm_cgc, circuit_gate(($ref), RyGate($arg))))
             end
 
         Struct_rz(in=in, out=out) =>
             let ref = :($(rec(out))),
                 arg = :($(rec(in)))
-                :(append!($qasm_cgc, [circuit_gate(($ref), RzGate($arg))]))
+                :(append!($qasm_cgc, circuit_gate(($ref), RzGate($arg))))
+            end
+
+        Struct_p(in=in, out=out) =>
+            let ref = :($(rec(out))),
+                arg = :($(rec(in)))
+                :(append!($qasm_cgc, circuit_gate(($ref), PhaseShiftGate($arg))))
             end
             
         Struct_crx(in=in, out1=out1, out2=out2) =>
@@ -219,7 +240,7 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 cntrl = :($(rec(out1))),
                 arg = :($(rec(in)))
 
-                :(append!($qasm_cgc, [circuit_gate(($out), RxGate($arg), ($cntrl))]))
+                :(append!($qasm_cgc, circuit_gate(($out), RxGate($arg), ($cntrl))))
             end
 
         Struct_cry(in=in, out1=out1, out2=out2) =>
@@ -227,7 +248,7 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 cntrl = :($(rec(out1))),
                 arg = :($(rec(in)))
 
-                :(append!($qasm_cgc, [circuit_gate(($out), RyGate($arg), ($cntrl))]))
+                :(append!($qasm_cgc, circuit_gate(($out), RyGate($arg), ($cntrl))))
             end
 
         Struct_crz(in=in, out1=out1, out2=out2) =>
@@ -235,7 +256,7 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 cntrl = :($(rec(out1))),
                 arg = :($(rec(in)))
 
-                :(append!($qasm_cgc, [circuit_gate(($out), RzGate($arg), ($cntrl))]))
+                :(append!($qasm_cgc, circuit_gate(($out), RzGate($arg), ($cntrl))))
             end
 
         Struct_cp(in=in, out1=out1, out2=out2) =>
@@ -243,7 +264,16 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 cntrl = :($(rec(out1))),
                 arg = :($(rec(in)))
 
-                :(append!($qasm_cgc, [circuit_gate(($out), PhaseShiftGate($arg), ($cntrl))]))
+                :(append!($qasm_cgc, circuit_gate(($out), PhaseShiftGate($arg), ($cntrl))))
+            end
+
+        Struct_ccx(out1=out1, out2=out2, out3=out3) =>
+            let out = :($(rec(out3))),
+                cntrl2 = :($(rec(out2))),
+                cntrl1 = :($(rec(out1))),
+                arg = :($(rec(in)))
+
+                :(append!($qasm_cgc, circuit_gate(($out), X, ($cntrl1, $cntrl2))))
             end
 
         Struct_gate(
@@ -337,7 +367,7 @@ end
 
 
 function transform_qasm(ctx_tokens)
-
+    global i = 1
     qregs = Qaintessent.QRegister[]
     reg_declr = trans_reg(ctx_tokens, Ref(qregs))
     eval.(reg_declr)
@@ -347,13 +377,19 @@ function transform_qasm(ctx_tokens)
     N = num_wires(qasm_cgc)
 
     gates_declr = trans_gates(ctx_tokens, Ref(qasm_cgc), Ref(N))
-
-    eval.(gates_declr)
-
+    l = length(gates_declr)
+    i = 1
+    for statement in gates_declr
+        println("Parsing statement $(i)/$(l)")
+        eval(statement)
+        i = i+1
+    end
+    println("Evaluated gates")
     measure_declr = trans_measure(ctx_tokens, Ref(meas), Ref(N))
     eval.(measure_declr)
+    println("Parsing measurements")
     add_measurement!(qasm_cgc, meas)
-    
+    println("Evaluated measurements")
     qasm_cgc
 end
 
