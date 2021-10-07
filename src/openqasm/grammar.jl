@@ -59,6 +59,7 @@ RBNF.@parser QASMLang begin
     crx        := ["crx",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
     cry        := ["cry",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
     crz        := ["crz",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
+    cp         := ["cp",  '(', in=nnexp, ')', out1=argument, ',', out2=argument, ';']
 
     iduop      := [gate_name=id, ['(', [args=explist].?, ')'].?, outs=mixedlist, ';']
 

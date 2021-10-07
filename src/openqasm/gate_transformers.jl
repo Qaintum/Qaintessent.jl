@@ -23,6 +23,7 @@ function custom_gate_cz(args, outs...; qasm_cgc=nothing, N=nothing)
     end
 end
 
+
 function custom_gate_u(args, outs...; qasm_cgc=nothing, N=nothing)
     if length(outs) == 1
         append!(qasm_cgc, [circuit_gate(outs[1], RzGate(args[1])),

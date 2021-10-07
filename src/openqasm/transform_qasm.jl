@@ -30,6 +30,7 @@ using PrettyPrint
 @as_record Struct_crx
 @as_record Struct_cry
 @as_record Struct_crz
+@as_record Struct_cp
 @as_record Struct_idlist
 @as_record Struct_mixedlist
 @as_record Struct_argument
@@ -235,6 +236,14 @@ function trans_gates(ctx_tokens, qasm_cgc,  N)
                 arg = :($(rec(in)))
 
                 :(append!($qasm_cgc, [circuit_gate(($out), RzGate($arg), ($cntrl))]))
+            end
+
+        Struct_cp(in=in, out1=out1, out2=out2) =>
+            let out = :($(rec(out2))),
+                cntrl = :($(rec(out1))),
+                arg = :($(rec(in)))
+
+                :(append!($qasm_cgc, [circuit_gate(($out), PhaseShiftGate($arg), ($cntrl))]))
             end
 
         Struct_gate(
