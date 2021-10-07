@@ -340,6 +340,38 @@ num_wires(::RzGate)::Int = 1
 
 
 """
+    U gate
+
+``U(\\theta,\\phi,\\lambda) = \\begin{pmatrix}\\cos(\\frac{\\theta}{2}}) & -e^{i\\lambda}\\sin(\\frac{\\theta}{2}}) \\\\ e^{i\\phi}\\sin(\\frac{\\theta}{2}}) & e^{i(\\phi+\\lambda)}\\cos(\\frac{\\theta}{2}}) \\end{pmatrix}``
+"""
+struct UGate <: AbstractGate
+    # use a reference type (array with 1 entry) for compatibility with Flux
+    θ::Vector{Float64}
+    function UGate(θ::Real, ϕ::Real, λ::Real)
+        new([θ, ϕ, λ])
+    end
+end
+
+function matrix(g::UGate)
+    m = zeros(ComplexF64, (2,2))
+    c = cos(g.θ[1]/2)
+    s = sin(g.θ[1]/2)
+    m[1,1] = c
+    m[1,2] = -exp(im*g.θ[3])*s
+    m[2,1] = exp(im*g.θ[2])*s
+    m[2,2] = exp(im*(g.θ[2]+g.θ[3]))*c
+    m
+end
+
+sparse_matrix(g::UGate) = sparse(matrix(g))
+
+LinearAlgebra.ishermitian(g::UGate) = norm(sparse_matrix(g)-adjoint(sparse_matrix(g))) < 4 * eps()
+
+# wires
+num_wires(::UGate)::Int = 1
+
+
+"""
     General rotation operator gate: rotation by angle `θ` around unit vector `n`.
 
 ``R_{\\vec v}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec v \\sigma, \\\\ \\sigma = [X, Y, Z]``
