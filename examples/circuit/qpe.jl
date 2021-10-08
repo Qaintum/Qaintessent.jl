@@ -2,7 +2,6 @@ using Qaintessent
 using Random
 using LinearAlgebra
 using JLD2
-using BenchmarkTools
 
 
 # Adding random comments and spacings in src1 to test robustness of lexer
