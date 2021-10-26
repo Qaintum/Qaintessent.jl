@@ -13,28 +13,38 @@ using Qaintessent
     ψ = randn(ComplexF64, 2^N)
     ψ /= norm(ψ)
     # @code_warntype(density_from_statevector(ψ))
-    ρ = density_from_statevector(ψ)
+    
 
     @testset "density matrix apply single qubit gates" begin
 
         for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(-1.1), RyGate(0.7), RzGate(0.4), RotationGate([-0.3, 0.1, 0.23]), PhaseShiftGate(0.9), Qaintessent.Proj1Gate()]
             cg = circuit_gate(rand(1:N), g)
+            
             ψs = apply(ψ, cg)
-
+            
+            ρ = density_from_statevector(ψ)
             ρsref = density_from_statevector(ψs)
-            ρs = apply(ρ, cg)
+            ρs1 = apply(ρ, cg)
+            ρs2 = apply!(ρ, cg)
             # @code_warntype(apply(cg, ρ))
-            @test ρs.v ≈ ρsref.v
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v            
 
+            ρ = density_from_statevector(ψ)
             ρsref = density_from_matrix(reshape(0.5 * (kron(conj(ψ), ψs) + kron(conj(ψs), ψ)), 2^N, 2^N))
-            ρs = Qaintessent.apply_mixed_add(ρ, cg)
+            ρs1 = Qaintessent.apply_mixed_add(ρ, cg)            
+            ρs2 = Qaintessent.apply_mixed_add!(ρ, cg)
             # @code_warntype(Qaintessent.apply_mixed_add(cg, ρ))
-            @test ρs.v ≈ ρsref.v
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v
 
+            ρ = density_from_statevector(ψ)
             ρsref = density_from_matrix(reshape(0.5im * (kron(conj(ψ), ψs) - kron(conj(ψs), ψ)), 2^N, 2^N))
-            ρs = Qaintessent.apply_mixed_sub(ρ, cg)
+            ρs1 = Qaintessent.apply_mixed_sub(ρ, cg)
+            ρs2 = Qaintessent.apply_mixed_sub!(ρ, cg)
             # @code_warntype(Qaintessent.apply_mixed_sub(cg, ρ))
-            @test ρs.v ≈ ρsref.v
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v
         end
     end
 
@@ -44,20 +54,32 @@ using Qaintessent
             cg = CircuitGate((i, j), g)
             ψs = apply(ψ, cg)
 
+            ρ = density_from_statevector(ψ)
             ρsref = density_from_statevector(ψs)
-            ρs = apply(ρ, cg)
-            #@code_warntype(apply(cg, ρ))
-            @test ρs.v ≈ ρsref.v
+            ρs1 = apply(ρ, cg)
+            ρs2 = apply!(ρ, cg)
 
+            # @code_warntype(apply(cg, ρ))
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v     
+
+            ρ = density_from_statevector(ψ)
             ρsref = density_from_matrix(reshape(0.5 * (kron(conj(ψ), ψs) + kron(conj(ψs), ψ)), 2^N, 2^N))
-            ρs = Qaintessent.apply_mixed_add(ρ, cg)
+            ρs1 = Qaintessent.apply_mixed_add(ρ, cg)            
+            ρs2 = Qaintessent.apply_mixed_add!(ρ, cg)
             # @code_warntype(Qaintessent.apply_mixed_add(cg, ρ))
-            @test ρs.v ≈ ρsref.v
 
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v
+
+            ρ = density_from_statevector(ψ)
             ρsref = density_from_matrix(reshape(0.5im * (kron(conj(ψ), ψs) - kron(conj(ψs), ψ)), 2^N, 2^N))
-            ρs = Qaintessent.apply_mixed_sub(ρ, cg)
+            ρs1 = Qaintessent.apply_mixed_sub(ρ, cg)
+            ρs2 = Qaintessent.apply_mixed_sub!(ρ, cg)
             # @code_warntype(Qaintessent.apply_mixed_sub(cg, ρ))
-            @test ρs.v ≈ ρsref.v
+
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v
         end
     end
 
@@ -68,32 +90,39 @@ using Qaintessent
 
         ψs = apply(ψ, cg)
         ρsref = density_from_statevector(ψs)
-
-        ρs = apply(ρ, cg)
+        ρ = density_from_statevector(ψ)
+        ρs1 = apply(ρ, cg)
+        ρs2 = apply!(ρ, cg)
         # @code_warntype(apply(cg, ρ))
-        @test ρs.v ≈ ρsref.v
+        @test ρs1.v ≈ ρsref.v
+        @test ρs2.v ≈ ρsref.v
 
         # two target qubits
         iwperm = randperm(N)
         cg = circuit_gate((iwperm[1], iwperm[2]), EntanglementYYGate(2π*rand()), (iwperm[3], iwperm[4]))
 
         ψs = apply(ψ, cg)
-        ρsref = density_from_statevector(ψs)
 
-        ρs = apply(ρ, cg)
+        ρsref = density_from_statevector(ψs)
+        ρ = density_from_statevector(ψ)
+        ρs1 = apply(ρ, cg)
+        ρs2 = apply!(ρ, cg)
         # @code_warntype(apply(cg, ρ))
-        @test ρs.v ≈ ρsref.v
-    
+        @test ρs1.v ≈ ρsref.v
+        @test ρs2.v ≈ ρsref.v
     end
 
     @testset "density matrix apply general unitary gate" begin
         # matrix gate (general unitary gate)
         cg = CircuitGate(NTuple{3,Int64}(randperm(N)[1:3]), MatrixGate(Matrix(qr(randn(ComplexF64, 8, 8)).Q)))
         ψs = apply(ψ, cg)
+        ρ = density_from_statevector(ψ)
         ρsref = density_from_statevector(ψs)
-        ρs = apply(ρ, cg)
+        ρs1 = apply(ρ, cg)
+        ρs2 = apply!(ρ, cg)
         # @code_warntype(apply(cg, ρ))
-        @test ρs.v ≈ ρsref.v
+        @test ρs1.v ≈ ρsref.v
+        @test ρs2.v ≈ ρsref.v
     end
 
     
@@ -107,9 +136,11 @@ using Qaintessent
         ψs = apply(ψ, cgs)
 
         ρsref = density_from_statevector(ψs)
-        
-        ρs = apply(ρ, cgs)
+        ρ = density_from_statevector(ψ)
+        ρs1 = apply(ρ, cgs)
+        ρs2 = apply!(ρ, cgs)
         # @code_warntype(apply(cg, ρ))
-        @test ρs.v ≈ ρsref.v
+        @test ρs1.v ≈ ρsref.v
+        @test ρs2.v ≈ ρsref.v
     end
 end

@@ -10,6 +10,10 @@ struct DensityMatrix
     v::Vector{Float64}
     "number of qubits"
     N::Int
+    "index used for permutation"
+    perm::BaseIndex
+    "scratch space for memory efficient permutation"
+    scratch::Vector{Float64}
 
     @doc """
         DensityMatrix(v::AbstractVector{<:Real}, N::Integer)
@@ -18,7 +22,7 @@ struct DensityMatrix
     """
     function DensityMatrix(v::AbstractVector{<:Real}, N::Integer)
         length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N`.")
-        new(v, N)
+        new(v, N, BaseIndex(4, N), similar(v))
     end
 
     @doc """
@@ -29,7 +33,7 @@ struct DensityMatrix
     function DensityMatrix(v::AbstractVector{<:Real})
         N = intlog2(length(v)) ÷ 2
         length(v) == 4^N || error("Expected length of coefficient vector for density matrix is `4^N` for some integer `N`.")
-        new(v, N)
+        new(v, N, BaseIndex(4, N), similar(v))
     end
 end
 
