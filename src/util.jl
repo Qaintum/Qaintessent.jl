@@ -1,11 +1,11 @@
 using LinearAlgebra
+using Memoize
 
 """
     pauli_vector(x, y, z)
 
 Assemble the "Pauli vector" matrix.
 """
-
 pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
 
 
@@ -139,6 +139,9 @@ function gramm_schmidt!(a::Array{ComplexF64})
     return a
 end
 
+@memoize function stride_memory(j::Int)
+    [d^(j-1) for j in 1:N]
+end
 
 """
     rdm(N, iwire, ψ, χ, d=2)
@@ -146,7 +149,7 @@ end
 Compute the reduced density matrix ``tr_B[|ψ⟩⟨χ|]``, where the trace runs over
 the subsystem complementary to the qubits specified by `iwire`.
 """
-function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::AbstractVector, d::Int=2) where {M}
+@views function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::Vector{T}, χ::Vector{T}, d::Int=2) where {M,T}
     M ≥ 1 || error("Need at least one wire to act on.")
     M ≤ N || error("Number of gate wires cannot be larger than total number of wires.")
     length(unique(iwire)) == M || error("Wire indices must be unique.")
@@ -162,9 +165,8 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
     @assert length(iwire) + length(iwcompl) == N
 
     ρ = zeros(eltype(ψ), d^M, d^M)
-
-    # Note: following the ordering convention of `kron` here, i.e.,
-    # last qubit corresponds to fastest varying index
+    # # Note: following the ordering convention of `kron` here, i.e.,
+    # # last qubit corresponds to fastest varying index
     strides = [d^(j-1) for j in 1:N]
     wstrides = strides[iwire]
     cstrides = strides[iwcompl]
@@ -183,7 +185,7 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
                     binary_digits!(jw, j - 1)
                     rowind = koffset + dot(iw, wstrides) + 1
                     colind = koffset + dot(jw, wstrides) + 1
-                    ρ[i, j] += ψ[rowind] * conj(χ[colind])
+                    @inbounds ρ[i, j] += ψ[rowind] * conj(χ[colind])
                 end
             end
         end
@@ -201,7 +203,7 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::AbstractVector, χ::Abs
                     quaternary_digits!(jw, j - 1)
                     rowind = koffset + dot(iw, wstrides) + 1
                     colind = koffset + dot(jw, wstrides) + 1
-                    ρ[i, j] += ψ[rowind] * conj(χ[colind])
+                    @inbounds ρ[i, j] += ψ[rowind] * conj(χ[colind])
                 end
             end
         end
