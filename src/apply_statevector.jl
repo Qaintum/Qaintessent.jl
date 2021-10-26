@@ -294,8 +294,9 @@ Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
 
 ```jldoctest
 julia> cg = circuit_gate(1, HadamardGate());
-julia> ψ = [1 0];
-julia> apply(ψ, cg)
+julia> ψ = Statevector(ComplexF64[1 0]);
+julia> apply!(ψ, cg)
+julia> ψ.state
 2-element Array{Complex{Float64},1}:
  0.7071067811865475 + 0.0im
  0.7071067811865475 + 0.0im
@@ -338,8 +339,9 @@ Apply a sequence of [`CircuitGate`](@ref)(s) to a quantum state vector `ψ`.
 julia> cgs = [circuit_gate(1, HadamardGate()),
                 circuit_gate(1, X),
                 circuit_gate(1, Y)];
-julia> ψ = [1 0];
-julia> apply(ψ, cgs)
+julia> ψ = Statevector(ComplexF64[1 0]);
+julia> apply!(ψ, cgs)
+julia> ψ.state
 2-element Array{Complex{Float64},1}:
  0.0 - 0.7071067811865475im
  0.0 + 0.7071067811865475im
@@ -351,7 +353,6 @@ function apply!(ψ::Statevector, cgs::Vector{<:CircuitGate})
         _apply!(ψ, cg)
     end
 end
-
 
 """
     apply(ψ::Statevector, m::Moment)
@@ -370,7 +371,6 @@ function _apply!(ψ::Statevector, m::Moment)
     end
 end
 
-
 function apply!(ψ::Statevector, m::Vector{Moment})
     length(m) != 0 || error("Vector of length 0 cannot be applied")
     Nmoment = maximum(req_wires.(m))
@@ -379,28 +379,6 @@ function apply!(ψ::Statevector, m::Vector{Moment})
         _apply!(ψ, moment)
     end
 end
-
-
-"""
-    apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractGate}
-
-returns state vector of `N` qubits after applying a `Moment{N}` object to a quantum state vector of `N` qubits `ψ`
-"""
-
-function apply!(ψ::Statevector, m::MeasurementOperator{M,G}) where {M,G<:AbstractGate}
-    Nmoment = num_wires(m)
-    Nmoment <= ψ.N || error("MeasurementOperator affecting $Nmoment qubits applied to $N qubits")
-    c = circuit_gate((m.iwire...), m.operator)
-    _apply!(ψ, c)
-end
-
-function apply!(ψ::Statevector, m::MeasurementOperator{M,G}) where {M,G<:AbstractMatrix}
-    Nmoment = num_wires(m)
-    Nmoment <= ψ.N || error("MeasurementOperator affecting $Nmoment qubits applied to $N qubits")
-    apply!(ψ, m.operator)   
-end
-
-
 
 """
     apply(ψ::Statevector, c::Circuit{N}) where {N}
