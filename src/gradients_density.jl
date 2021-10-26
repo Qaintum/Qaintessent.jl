@@ -305,10 +305,10 @@ function backward_density(m::Moment, ρ::DensityMatrix, Δ::DensityMatrix)
     dgates = CircuitGate[]
     for cg in reverse(m.gates)
         Udag = Base.adjoint(cg)
-        ρ = apply(ρ, Udag)
+        apply!(ρ, Udag)
         # backward step of quantum state
         pushfirst!(dgates, backward_density(cg, ρ, Δ))
-        Δ = apply(Δ, Udag)
+        apply!(Δ, Udag)
     end
     return Moment(dgates), ρ, Δ
 end
@@ -338,11 +338,33 @@ function gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real})
     # length of circuit output vector must match gradient vector
     @assert(length(Δ) == length(c.meas))
     # forward pass through unitary gates
-    ρ = apply(ρ, c.moments)
+    apply!(ρ, c.moments)
     # gradient of cost function with respect to ρ
     ρbar = density_from_matrix(0.5^N * sum([Δ[i] * sparse_matrix(c.meas[i], N) for i in 1:length(Δ)]))
     # backward pass through unitary gates
-    dcgc, ρbar = backward_density(c.moments, ρ, ρbar)
     dmeas = MeasurementOperator.([Δ[i] * matrix(ρ) for i in 1:length(Δ)], (Tuple(1:N),))
+    dcgc, ρbar = backward_density(c.moments, ρ, ρbar)
     return Circuit{N}(dcgc, dmeas), ρbar
 end
+
+"""
+    gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
+
+Perform a backward pass to compute gradients of a (fictitious) cost function with
+respect to the circuit parameters of `c` and input density matrix `ρ`. `Δ` contains
+the cost function gradients with respect to the circuit outputs (measurement operator averages).
+The gradients with respect to the circuit parameters are returned in a duplicate circuit;
+the overall return value is the tuple (dc::Circuit{N}, dρ::DensityMatrix).
+"""
+function gradients!(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
+    @assert(ρ.N == N)
+    # length of circuit output vector must match gradient vector
+    @assert(length(Δ) == length(c.meas))
+    # gradient of cost function with respect to ρ
+    ρbar = density_from_matrix(0.5^N * sum([Δ[i] * sparse_matrix(c.meas[i], N) for i in 1:length(Δ)]))
+    # backward pass through unitary gates
+    dmeas = MeasurementOperator.([Δ[i] * matrix(ρ) for i in 1:length(Δ)], (Tuple(1:N),))
+    dcgc, ρbar = backward_density(c.moments, ρ, ρbar)
+    return Circuit{N}(dcgc, dmeas), ρbar
+end
+
