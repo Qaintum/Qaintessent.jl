@@ -83,7 +83,8 @@ export
     
 include("apply_density.jl")
 export
-    apply
+    apply,
+    apply!
 
 include("apply_statevector.jl")
 export

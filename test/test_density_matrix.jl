@@ -24,7 +24,10 @@ using Qaintessent
         N = 3
 
         v = randn(Float64, 4^N)
-        @test DensityMatrix(v) == DensityMatrix(v, N)
+        d1 = DensityMatrix(v)
+        d2 = DensityMatrix(v, N)
+        @test d1.v ≈ d2.v
+        @test d1.N == d2.N
     end
 
     @testset "density matrix constructor helper function" begin
