@@ -24,6 +24,5 @@ Memoize = "0.4.4"
 PrettyPrint = "0.2.0"
 RBNF = "0.2.3"
 RandomMatrices = "0.5.0"
-julia = "1.6.2"
 StatsBase = "0.33.2"
-
+julia = "1.6.2"

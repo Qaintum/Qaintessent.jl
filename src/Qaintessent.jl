@@ -124,6 +124,16 @@ include("measure.jl")
 export 
     measure
 
+
+module QAOAHelperDataStructs
+    include("qaoa/qaoa_helper_data_structs.jl")
+    export
+        Graph,
+        EdgeWeightedGraph,
+        to_edge_weighted_graph,
+        adjacency_matrix
+end
+
 module MaxKColSubgraphQAOA
     include("qaoa/mixer_gates.jl")
     export
@@ -135,10 +145,29 @@ module MaxKColSubgraphQAOA
     include("qaoa/phase_separator_gates.jl")
     export
         MaxKColSubgraphPhaseSeparationGate,
-        Graph,
         max_k_col_subgraph_phase_separation_hamiltonian
 
     include("qaoa/qaoa_gradients.jl")
 end
+
+module MaxCutWSQAOA
+    include("qaoa/phase_separator_gates.jl")
+    export
+        MaxCutPhaseSeparationGate,
+        max_cut_phase_separation_hamiltonian
+    
+    include("qaoa/mixer_gates.jl")
+    export
+        WSQAOAMixerGate,
+        wsqaoa_mixer_hamiltonian,
+        RxMixerGate,
+        rx_mixer_hamiltonian
+
+    include("qaoa/qaoa_gradients.jl")
+end
+
+using .QAOAHelperDataStructs
+using .MaxKColSubgraphQAOA
+using .MaxCutWSQAOA
 
 end

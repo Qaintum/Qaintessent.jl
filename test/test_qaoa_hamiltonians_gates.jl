@@ -3,6 +3,7 @@ using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
 using Random
+using Qaintessent.QAOAHelperDataStructs
 using Qaintessent.MaxKColSubgraphQAOA
 
 graphs = [
@@ -24,6 +25,16 @@ function ψ_from_coloring(n::Int, κ::Int, colors::Vector{Int})::Vector{ComplexF
 
     # Create ψ with |1> entries in the indices corresponding to the given colors, |0> elsewhere
     ψ = kron((color == colors[vertex] ? [0.0im, 1] : [1, 0.0im] for vertex ∈ 1:n for color ∈ 1:κ)...)
+    ψ
+end
+
+# Create a state ψ that corresponds to a given partitioning
+function ψ_from_partitioning(n::Int, partitioning::Vector{Int})::Vector{ComplexF64}
+    (n > 0) || throw(DomainError("Parameter n must be positive integers."))
+    partitioning ⊆ 0:1 || throw(ArgumentError("Parameter `partitioning` may only contain values in the range 0:1."))
+
+    # Create ψ with |1> entries corresponding to the given partitioning
+    ψ = kron((1 == partitioning[vertex] ? [0.0im, 1] : [1, 0.0im] for vertex ∈ 1:n)...)
     ψ
 end
 
@@ -232,7 +243,7 @@ end
         end
     end
 
-    @testset ExtendedTestSet "max-k-col. subgraph QAOA adjoints" begin
+    @testset ExtendedTestSet "QAOA gates adjoints" begin
         # Test that `MaxKColSubgraphPhaseSeparationGate` has the correct adjoint.
         @testset "adjoint MaxKColSubgraphPhaseSeparationGate" begin
             γs = rand(length(graphs)) * 2π
