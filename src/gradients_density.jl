@@ -348,7 +348,7 @@ function gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real})
 end
 
 """
-    gradients(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
+    gradients!(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
 
 Perform a backward pass to compute gradients of a (fictitious) cost function with
 respect to the circuit parameters of `c` and input density matrix `ρ`. `Δ` contains
