@@ -10,6 +10,11 @@
 # ignore Jupyter notebook checkpoints
 .ipynb_checkpoints/
 
+# ignore Manifest
+Manifest.toml
+
 obsolete/
 
 doc/build/
+
+.idea
