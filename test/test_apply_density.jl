@@ -19,7 +19,6 @@ using Qaintessent
 
         for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(-1.1), RyGate(0.7), RzGate(0.4), RotationGate([-0.3, 0.1, 0.23]), PhaseShiftGate(0.9), Qaintessent.Proj1Gate()]
             cg = circuit_gate(rand(1:N), g)
-            
             ψs = apply(ψ, cg)
             
             ρ = density_from_statevector(ψ)
@@ -68,7 +67,6 @@ using Qaintessent
             ρs1 = Qaintessent.apply_mixed_add(ρ, cg)            
             ρs2 = Qaintessent.apply_mixed_add!(ρ, cg)
             # @code_warntype(Qaintessent.apply_mixed_add(cg, ρ))
-
             @test ρs1.v ≈ ρsref.v
             @test ρs2.v ≈ ρsref.v
 
@@ -83,33 +81,40 @@ using Qaintessent
         end
     end
 
-    @testset "density matrix apply controlled gate" begin
+    @testset "density matrix apply controlled single qubit gate" begin
         # one target qubit
-        iwperm = randperm(N)
-        cg = circuit_gate(iwperm[1], RotationGate(rand(3) .- 0.5), (iwperm[2], iwperm[3], iwperm[4]))
+        for g in [X, Y, Z, HadamardGate(), SGate(), SdagGate(), TGate(), TdagGate(), RxGate(2π*rand()), RyGate(2π*rand()), RzGate(2π*rand()), RotationGate([2π*rand(), 2π*rand(), 2π*rand()]), PhaseShiftGate(2π*rand()), Qaintessent.Proj1Gate()]
+            iwperm = randperm(N)
+            cg = circuit_gate(iwperm[1], g, (iwperm[2], iwperm[3], iwperm[4]))
 
-        ψs = apply(ψ, cg)
-        ρsref = density_from_statevector(ψs)
-        ρ = density_from_statevector(ψ)
-        ρs1 = apply(ρ, cg)
-        ρs2 = apply!(ρ, cg)
-        # @code_warntype(apply(cg, ρ))
-        @test ρs1.v ≈ ρsref.v
-        @test ρs2.v ≈ ρsref.v
+            ψs = apply(ψ, cg)
+            ρsref = density_from_statevector(ψs)
+            ρ = density_from_statevector(ψ)
+            ρs1 = apply(ρ, cg)
+            ρs2 = apply!(ρ, cg)
+            # @code_warntype(apply(cg, ρ))
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v
+        end
+    end
 
-        # two target qubits
-        iwperm = randperm(N)
-        cg = circuit_gate((iwperm[1], iwperm[2]), EntanglementYYGate(2π*rand()), (iwperm[3], iwperm[4]))
+    @testset "density matrix apply controlled two qubit gate" begin
 
-        ψs = apply(ψ, cg)
+        for g in [SwapGate(), EntanglementXXGate(2π*rand()), EntanglementYYGate(2π*rand()), EntanglementZZGate(2π*rand())]
+            # two target qubits
+            iwperm = randperm(N)
+            cg = circuit_gate((iwperm[1], iwperm[2]), g, (iwperm[3], iwperm[4]))
 
-        ρsref = density_from_statevector(ψs)
-        ρ = density_from_statevector(ψ)
-        ρs1 = apply(ρ, cg)
-        ρs2 = apply!(ρ, cg)
-        # @code_warntype(apply(cg, ρ))
-        @test ρs1.v ≈ ρsref.v
-        @test ρs2.v ≈ ρsref.v
+            ψs = apply(ψ, cg)
+
+            ρsref = density_from_statevector(ψs)
+            ρ = density_from_statevector(ψ)
+            ρs1 = apply(ρ, cg)
+            ρs2 = apply!(ρ, cg)
+            # @code_warntype(apply(cg, ρ))
+            @test ρs1.v ≈ ρsref.v
+            @test ρs2.v ≈ ρsref.v
+        end
     end
 
     @testset "density matrix apply general unitary gate" begin
