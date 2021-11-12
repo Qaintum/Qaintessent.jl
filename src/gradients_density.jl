@@ -354,7 +354,8 @@ Perform a backward pass to compute gradients of a (fictitious) cost function wit
 respect to the circuit parameters of `c` and input density matrix `ρ`. `Δ` contains
 the cost function gradients with respect to the circuit outputs (measurement operator averages).
 The gradients with respect to the circuit parameters are returned in a duplicate circuit;
-the overall return value is the tuple (dc::Circuit{N}, dρ::DensityMatrix).
+the overall return value is the tuple (dc::Circuit{N}, dρ::DensityMatrix). Custom helper function
+works for backpropagation for in-place apply! method.
 """
 function gradients!(c::Circuit{N}, ρ::DensityMatrix, Δ::AbstractVector{<:Real}) where {N}
     @assert(ρ.N == N)

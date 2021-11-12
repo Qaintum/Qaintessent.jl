@@ -166,3 +166,60 @@ end
         dc.moments[4][1].gate.nθ,
         sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
 end
+
+
+@testset ExtendedTestSet "circuit gradients with moments" begin
+
+    # construct parametrized circuit
+    N = 4
+     cgc(θ, ϕ, χ, ωn) = Moment[
+         Moment([
+             circuit_gate(3, HadamardGate()),
+             circuit_gate(2, RzGate(θ), (1, 4)),
+         ]),
+         Moment(circuit_gate(2, 3, SwapGate())),
+         Moment(circuit_gate(3, PhaseShiftGate(ϕ))),
+         Moment([
+             circuit_gate(3, RotationGate(ωn)),
+             circuit_gate(1, RyGate(χ)),
+         ]),
+     ]
+     
+    # measurement operators
+    meas(M) = MeasurementOperator.([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)], (Tuple(1:N),))
+ 
+    # parameter values
+    θ = 1.5π
+    ϕ = 0.3
+    χ = √2
+    n = randn(Float64, 3)
+    n /= norm(n)
+    ωn = 0.2π * n
+    M = randn(ComplexF64, 2^N, 2^N)
+    M = 0.5*(M + adjoint(M))
+    
+    c = Circuit{N}(cgc(θ, ϕ, χ, ωn), meas(M))
+ 
+    # input quantum state
+    ψ = Statevector(randn(ComplexF64, 2^N))
+    ψl = deepcopy(ψ)
+    # fictitious gradients of cost function with respect to circuit output
+    Δ = [0.3, -1.2]
+ 
+ 
+    f(rθ, rϕ, rχ, ωn, M) = dot(Δ, apply!(copy!(ψl, ψ), Circuit{N}(cgc(rθ[], rϕ[], rχ[], ωn), meas(M))))
+    # numeric gradients
+    ngrad = ngradient(f, [θ], [ϕ], [χ], ωn, M)
+    # symmetrize gradient with respect to measurement operator
+    ngrad[end][:] = 0.5*(ngrad[end] + adjoint(ngrad[end]))
+
+    dc = Qaintessent.gradients!(c, apply!(ψ, c), Δ)[1]
+    
+    @test all(isapprox.(ngrad,
+        (dc.moments[1][2].gate.U.θ,
+         dc.moments[3][1].gate.ϕ,
+         dc.moments[4][2].gate.θ,
+         dc.moments[4][1].gate.nθ,
+         sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
+ end
+ 
