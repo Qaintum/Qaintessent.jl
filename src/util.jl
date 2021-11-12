@@ -31,14 +31,6 @@ function binary_digits!(m::BitArray{1}, x::Integer=0)
     return m
 end
 
-function Base.iseven(m::BitArray{1})
-    return m[end] == 0
-end
-
-function Base.isodd(m::BitArray{1})
-    return m[end] == 0
-end
-
 """
     binary_to_int(m::BitArray{1}, s=0)
 
@@ -145,10 +137,6 @@ function gramm_schmidt!(a::Array{ComplexF64})
         a[:, i] = a[:, i] ./ norm(a[:, i])
     end
     return a
-end
-
-@memoize function stride_memory(j::Int)
-    [d^(j-1) for j in 1:N]
 end
 
 """
