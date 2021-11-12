@@ -4,15 +4,15 @@ using SparseArrays: sparse
 using Memoize
 
 # Pauli X and Y matrices
-X = [0 1; 1 0]
-Y = [0 -im; im 0]
+x = matrix(X)
+y = matrix(Y)
 
 # Utility function for a XY mixer
 # Implements X_a X_{a+1} + Y_a Y_{a+1}, or more generally (⊗_{i ∈ xy_indices} X_i) + (⊗_{i ∈ xy_indices} Y_i)
 function XY_sum(xy_indices::Vector{Int64}, d::Int64)::Matrix{ComplexF64}
     # passing generator into kron via varargs syntax
-    return kron((i ∈ xy_indices ? X : I(2) for i ∈ 1:d)...
-        ) + kron((i ∈ xy_indices ? Y : I(2) for i ∈ 1:d)...)
+    return kron((i ∈ xy_indices ? x : I(2) for i ∈ 1:d)...
+        ) + kron((i ∈ xy_indices ? y : I(2) for i ∈ 1:d)...)
 end
 
 """
