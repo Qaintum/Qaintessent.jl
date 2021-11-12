@@ -103,8 +103,26 @@ end
             apply!(s2, cga)            
             @test s1.state ≈ s2.state
             @test s1.state ≈ sparse_matrix(cga, N) * ψ
-            
         end
+    end
+
+    @testset "apply multiple basic gates to statevector" begin
+        # single qubit gates
+        g = [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        i = randperm(N)[1:3]
+        j = randperm(N)[1:3]
+        cgs = circuit_gate.(j, g[i])
+        cga = CircuitGate[]
+        for cg in cgs
+            push!(cga, CircuitGate{1,AbstractGate}(cg.iwire, cg.gate))
+        end
+
+        s1 = Statevector(deepcopy(ψ))
+        s2 = Statevector(deepcopy(ψ))
+        apply!(s1, cgs)
+        apply!(s2, cga)            
+        @test s1.state ≈ s2.state
+        @test s1.state ≈ sparse_matrix(cga, N) * ψ
     end
 
     @testset "apply moments to statevector" begin
@@ -121,6 +139,25 @@ end
             @test s1.state ≈ s2.state
             @test s1.state ≈ sparse_matrix(cga, N) * ψ
         end
+    end
+
+    @testset "apply multiple moments to statevector" begin
+        # single qubit gates
+        g = [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        i = randperm(N)[1:3]
+        j = randperm(N)[1:3]
+        cgs = circuit_gate.(j, g[i])
+        cga = CircuitGate[]
+        for cg in cgs
+            push!(cga, CircuitGate{1,AbstractGate}(cg.iwire, cg.gate))
+        end
+        s1 = Statevector(deepcopy(ψ))
+        s2 = Statevector(deepcopy(ψ))
+
+        apply!(s1, Moment(cgs))
+        apply!(s2, Moment(cga))
+        @test s1.state ≈ s2.state
+        @test s1.state ≈ sparse_matrix(cga, N) * ψ
     end
 
     @testset "apply basic controlled gates to statevector" begin
