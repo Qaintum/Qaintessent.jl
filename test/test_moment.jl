@@ -60,7 +60,7 @@ using Qaintessent
         @test CircuitGate((2,), ZGate()) ≈ pop!(m)
         @test isempty(m) == true
         @test firstindex(m) == 1
-        @test lastindex(m) == 4
+        @test lastindex(m) == 2
         @test_throws ArgumentError("array must be non-empty") pop!(m)
     end
 
