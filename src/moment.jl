@@ -45,6 +45,7 @@ end
 returns matrix representation of a `Moment{M}` object that can applied to a state vector of `N` qubits.
 """
 function sparse_matrix(m::Moment, N::Int=0)
+    length(m) != 0 || error("Moment with no gates cannot be converted to matrix")
     if N == 0
         N = req_wires(m)
     end
@@ -56,6 +57,7 @@ function sparse_matrix(m::Moment, N::Int=0)
 end
 
 function sparse_matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{Float64},Int}
+    length(m) != 0 || error("Vector of length 0 cannot be converted to matrix")
     if N == 0
         N = maximum(req_wires.(m))
     end
