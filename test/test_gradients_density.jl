@@ -319,4 +319,67 @@ end
          dc.moments[8][1].gate.nθ,
          sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
     end
+
+    @testset "full circuit for apply!" begin
+
+        N = 4
+        A = randn(ComplexF64, 2 ,2)
+        U, R = qr(A)
+        U = Array(U)
+        i = rand(1:N)
+    
+        cgc(θ, ϕ, χ, κ, ωn) = CircuitGate[
+            circuit_gate(3, HadamardGate()),
+            circuit_gate(2, RzGate(θ), (1, 4)),
+            circuit_gate(2, TGate()),
+            circuit_gate(2, 3, SwapGate()),
+            circuit_gate(2, SdagGate(), 1),
+            circuit_gate(3, PhaseShiftGate(ϕ)),
+            circuit_gate(1, RyGate(χ)),
+            circuit_gate(4, HadamardGate(), 2),
+            circuit_gate(3, X, 1),
+            circuit_gate(2, Z, 4),
+            circuit_gate(4, Y),
+            circuit_gate(3, 1, EntanglementYYGate(κ)),
+            circuit_gate(3, RotationGate(ωn)),
+            circuit_gate(4, SGate()),
+            circuit_gate(2, TdagGate()),
+            circuit_gate(i, MatrixGate(U)),
+        ]
+        # measurement operators
+        meas(M) = MeasurementOperator.([Matrix{Float64}(I, 2^N, 2^N), Hermitian(M)], (Tuple(1:N),))
+    
+        # parameter values
+        θval = 1.5π
+        ϕval  = 0.3
+        χval  = √2
+        κval  = exp(-0.4)
+        ωnval = 0.1π * randn(Float64, 3)
+        Mval = randn(ComplexF64, 2^N, 2^N)
+        Mval = 0.5*(Mval + adjoint(Mval))
+    
+        c = Circuit{N}(cgc(θval, ϕval, χval, κval, ωnval), meas(Mval))
+    
+        # input density matrix
+        ρ = DensityMatrix(randn(Float64, 4^N), N)
+        # fictitious gradients of cost function with respect to circuit output
+        Δ = [0.3, -0.2]
+    
+        f(rθ, rϕ, rχ, rκ, ωn, M) = dot(Δ, apply(ρ, Circuit{N}(cgc(rθ[], rϕ[], rχ[], rκ[], ωn), meas(M))))
+        # numeric gradients
+        ngrad = ngradient(f, [θval], [ϕval], [χval], [κval], ωnval, Mval)
+        # symmetrize gradient with respect to measurement operator
+        ngrad[end][:] = 0.5*(ngrad[end] + adjoint(ngrad[end]))
+        dc = Qaintessent.gradients!(c, apply!(ρ, c.moments), Δ)[1]
+    
+        @test all(isapprox.(ngrad,
+        (dc.moments[1][2].gate.U.θ,
+         dc.moments[4][2].gate.ϕ,
+         dc.moments[5][1].gate.θ,
+         dc.moments[7][2].gate.θ,
+         dc.moments[8][1].gate.nθ,
+         sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
+    end
 end
+
+
