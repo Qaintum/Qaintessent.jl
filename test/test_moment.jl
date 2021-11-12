@@ -84,4 +84,10 @@ using Qaintessent
         @test m[1] ≈ h
         @test m[2] ≈ g
     end
+
+    @testset "moments exceptions" begin
+        @testset "sparse_matrix for empty Moments" begin
+            @test_throws ErrorException("Vector of length 0 cannot be converted to matrix") sparse_matrix(Moment[])
+        end
+    end
 end
