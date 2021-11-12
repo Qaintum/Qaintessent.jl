@@ -59,15 +59,19 @@ using Qaintessent
         @test isempty(m) == false
         @test CircuitGate((2,), ZGate()) ≈ pop!(m)
         @test isempty(m) == true
+        @test firstindex(m) == 1
+        @test lastindex(m) == 4
         @test_throws ArgumentError("array must be non-empty") pop!(m)
     end
 
     @testset "moments sparse_matrix" begin
         g = CircuitGate((2,), ZGate())
         h = CircuitGate((1,), SGate())
-        m = Moment([g, h])        
+        m = Moment([g, h])
+        ms = Moment[Moment([g]), Moment([h])]
         
         @test sparse_matrix(m) ≈ sparse_matrix(g, 2) * sparse_matrix(h, 2)
+        @test sparse_matrix(ms) ≈ sparse_matrix(g, 2) * sparse_matrix(h, 2)
     end
 
     @testset "moments reverse" begin
