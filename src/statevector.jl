@@ -85,24 +85,6 @@ function rdm(N::Integer, iwire::NTuple{M,<:Integer}, ψ::Statevector, χ::Statev
                 end
             end
         end
-    elseif d == 4
-        iw = Vector{Int}(undef, M)
-        jw = Vector{Int}(undef, M)
-        kw = Vector{Int}(undef, N - M)
-        # TODO: optimize memory access pattern
-        for k in 0:4^(N-M)-1
-            quaternary_digits!(kw, k)
-            koffset = dot(kw, cstrides)
-            for i in 1:4^M
-                quaternary_digits!(iw, i - 1)
-                for j in 1:4^M
-                    quaternary_digits!(jw, j - 1)
-                    rowind = koffset + dot(iw, wstrides) + 1
-                    colind = koffset + dot(jw, wstrides) + 1
-                    ρ[i, j] += ψ[rowind] * conj(χ[colind])
-                end
-            end
-        end
     else
         error("d = $d not supported yet.")
     end
