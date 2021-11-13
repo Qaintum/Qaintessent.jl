@@ -54,13 +54,13 @@ using Qaintessent
 
         @test all(m[:] .≈ m.gates)
         @test all(m[1:2] .≈ m.gates)
+        @test lastindex(m) == length(m.gates)
         @test isempty(m) == false
         @test CircuitGate((1,), SGate()) ≈ pop!(m)
         @test isempty(m) == false
         @test CircuitGate((2,), ZGate()) ≈ pop!(m)
         @test isempty(m) == true
         @test firstindex(m) == 1
-        @test lastindex(m) == 2
         @test_throws ArgumentError("array must be non-empty") pop!(m)
     end
 
