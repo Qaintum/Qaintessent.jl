@@ -132,6 +132,7 @@ julia> sparse_matrix(cgs)
 ```
 """
 function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
+    length(cgs) != 0 || error("Vector of length 0 cannot be converted to matrix")
     Nmin = maximum(req_wires.(cgs))
     if N == 0
         N = Nmin

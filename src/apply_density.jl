@@ -60,18 +60,18 @@ end
 end
 
 """Tailored implementation of 1/2 (X ρ + ρ X)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,XGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,XGate}, factor::Float64=0.0)
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
 
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0
+            @inbounds ρ.scratch[i+1] = 0 + factor*ρ.v[i+1]
         elseif (i >> l) & 1 == 0
-            @inbounds ρ.scratch[i+1] = ρ.v[i+1+shift]
+            @inbounds ρ.scratch[i+1] = ρ.v[i+1+shift] + factor*ρ.v[i+1]
         else
-            @inbounds ρ.scratch[i+1] = ρ.v[i+1-shift]
+            @inbounds ρ.scratch[i+1] = ρ.v[i+1-shift] + factor*ρ.v[i+1]
         end
     end
 
@@ -161,18 +161,18 @@ end
 end
 
 """Tailored implementation of 1/2 (Y ρ + ρ Y)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,YGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,YGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^k
     for i in 0:4^ρ.N-1
         if (i >> l) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0
+            @inbounds ρ.scratch[i+1] = 0 + factor*ρ.v[i+1]
         elseif (i >> k) & 1 == 0
-            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1]
+            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1] + factor*ρ.v[i+1]
         else
-            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1]
+            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1] + factor*ρ.v[i+1]
         end
     end    
     @inbounds ρ.v .= ρ.scratch
@@ -260,7 +260,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Z ρ + ρ Z)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,ZGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,ZGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -268,11 +268,11 @@ end
     shift = 2^k + 2^l
     for i in 0:4^ρ.N-1
         if ((i >> l) ⊻ (i >> k)) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0
+            @inbounds ρ.scratch[i+1] = 0 + factor*ρ.v[i+1]
         elseif (i >> l) & 1 == 0
-            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1]
+            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1] + factor*ρ.v[i+1]
         else
-            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1]
+            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1] + factor*ρ.v[i+1]
         end
     end
 
@@ -374,7 +374,7 @@ end
 end
 
 """Tailored implementation of 1/2 (H ρ + ρ H)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -383,11 +383,11 @@ end
     for i in 0:4^ρ.N-1
         if (i >> l) & 1 == 1
             bit = (i >> k) & 1
-            @inbounds ρ.scratch[i+1] = ρ.v[i-(1+2bit)*shift+1] / sqrt(2)
+            @inbounds ρ.scratch[i+1] = ρ.v[i-(1+2bit)*shift+1] / sqrt(2) + factor * ρ.v[i+1]
         elseif (i >> k) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0
+            @inbounds ρ.scratch[i+1] = 0 + factor * ρ.v[i+1]
         else
-            @inbounds ρ.scratch[i+1] = (ρ.v[i+3shift+1] + ρ.v[i+shift+1]) / sqrt(2)
+            @inbounds ρ.scratch[i+1] = (ρ.v[i+3shift+1] + ρ.v[i+shift+1]) / sqrt(2) + factor * ρ.v[i+1]
         end
     end
     @inbounds ρ.v .= ρ.scratch
@@ -490,27 +490,26 @@ end
 end
 
 """Tailored implementation of 1/2 (S ρ + ρ S†)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
-    ρ.v .= 0.5 .* ρ.v
     @inbounds ρ.scratch .= ρ.v
     
     for i in 0:4^ρ.N-1
         if (i >> l) & 1 == 0
             if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += ρ.v[i+3shift+1]
+                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i+3shift+1] + (factor+0.5) * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i-shift+1] + (factor+0.5) * ρ.v[i+1]
             end
         else
             if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] = -0.5ρ.v[i+shift+1] + (factor+0.5) * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += ρ.v[i-3shift+1]
+                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i-3shift+1] + (factor+0.5) * ρ.v[i+1]
             end
         end
     end
@@ -620,7 +619,7 @@ end
 end
 
 """Tailored implementation of 1/2 (S† ρ + ρ S)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -632,15 +631,15 @@ end
     for i in 0:4^ρ.N-1
         if (i >> l) & 1 == 0
             if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += ρ.v[i+3shift+1]
+                @inbounds ρ.scratch[i+1] += ρ.v[i+3shift+1] + 2factor * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] -= ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] -= ρ.v[i-shift+1] - 2factor * ρ.v[i+1]
             end
         else
             if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1] + 2factor * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += ρ.v[i-3shift+1]
+                @inbounds ρ.scratch[i+1] += ρ.v[i-3shift+1] + 2factor * ρ.v[i+1]
             end
         end
     end
@@ -749,31 +748,29 @@ end
 end
 
 """Tailored implementation of 1/2 (T ρ + ρ T†)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
 
-    n1 = (0.5 * (1 + 1/sqrt(2)))
+    n1 = (0.5 * (1 + 1/sqrt(2))) + factor
     n2 = (0.5 * (1 - 1/sqrt(2)))
     n3 = 0.5/sqrt(2)
-
-    @inbounds ρ.scratch .= n1 .* ρ.v
 
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i+3shift+1]
+                @inbounds ρ.scratch[i+1] = n2 * ρ.v[i+3shift+1] + n1 * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] -= n3 * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] = -n3 * ρ.v[i+shift+1] + n1 * ρ.v[i+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += n3 * ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] = n3 * ρ.v[i-shift+1] + n1 * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i-3shift+1]
+                @inbounds ρ.scratch[i+1] = n2 * ρ.v[i-3shift+1] + n1 * ρ.v[i+1]
             end
         end
     end
@@ -888,7 +885,7 @@ end
 end
 
 """Tailored implementation of 1/2 (T† ρ + ρ T)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -904,15 +901,15 @@ end
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i+3shift+1]
+                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i+3shift+1] + factor * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += n3 * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] += n3 * ρ.v[i+shift+1] + factor * ρ.v[i+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= n3 * ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] -= n3 * ρ.v[i-shift+1] - factor * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i-3shift+1]
+                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i-3shift+1] + factor * ρ.v[i+1]
             end
         end
     end
@@ -1034,7 +1031,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rx(θ) ρ + ρ Rx(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RxGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RxGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1049,10 +1046,12 @@ end
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 1
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1] - factor * ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1] + factor * ρ.v[i+1]
             end
+        else
+            @inbounds ρ.scratch[i+1] += factor * ρ.v[i+1]
         end
     end
 
@@ -1163,7 +1162,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Ry(θ) ρ + ρ Ry(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RyGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RyGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1178,10 +1177,12 @@ end
     for i in 0:4^ρ.N-1
         if (i >> l) & 1 == 1
             if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i+shift+1] + factor*ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i-shift+1] - factor*ρ.v[i+1]
             end
+        else
+            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
         end
     end
 
@@ -1293,7 +1294,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rz(θ) ρ + ρ Rz(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RzGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RzGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1308,10 +1309,12 @@ end
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 != (i >> l) & 1
             if (i >> l) & 1 == 1
-                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1] - factor*ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1] + factor*ρ.v[i+1]
             end
+        else
+            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
         end
     end
 
@@ -1463,7 +1466,7 @@ end
 
 
 """Tailored implementation of 1/2 (Rn(θ) ρ + ρ Rn(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate}, factor::Float64=0.0)
     θ = norm(cg.gate.nθ)
     if θ == 0
         # for consistency, we return a copy here
@@ -1485,13 +1488,15 @@ end
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 1
-                @inbounds ρ.scratch[i+1] += sn[2] * ρ.v[i+2shift+1] - sn[3] * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] += sn[2] * ρ.v[i+2shift+1] - sn[3] * ρ.v[i+shift+1] + factor*ρ.v[i+1]
+            else
+                @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sn[3] * ρ.v[i-shift+1] - sn[1] * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] += sn[3] * ρ.v[i-shift+1] - sn[1] * ρ.v[i+shift+1] + factor*ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += sn[1] * ρ.v[i-shift+1] - sn[2] * ρ.v[i-2shift+1]
+                @inbounds ρ.scratch[i+1] += sn[1] * ρ.v[i-shift+1] - sn[2] * ρ.v[i-2shift+1] + factor*ρ.v[i+1]
             end
         end
     end
@@ -1624,7 +1629,7 @@ end
 end
 
 """Tailored implementation of 1/2 (P(ϕ) ρ + ρ P(-ϕ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1640,15 +1645,15 @@ end
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i+3shift+1]
+                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i+3shift+1] + factor*ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] -= sinϕ2cosϕ2 * ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] -= sinϕ2cosϕ2 * ρ.v[i+shift+1] - factor*ρ.v[i+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sinϕ2cosϕ2 * ρ.v[i-shift+1]
+                @inbounds ρ.scratch[i+1] += sinϕ2cosϕ2 * ρ.v[i-shift+1] + factor*ρ.v[i+1]
             else
-                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i-3shift+1]
+                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i-3shift+1] + factor*ρ.v[i+1]
             end
         end
     end
@@ -1823,7 +1828,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate})
 end
 
 """Tailored implementation of 1/2 (SWAP ρ + ρ SWAP)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate}, factor::Float64=0.0)
     # qubit indices the gate acts on
     n, o = cg.iwire
     n, o = n < o ? (n, o) : (o, n)  # sort them
@@ -1849,15 +1854,15 @@ end
         if index1 == index3 && index2 == index4
             if index1 == 0 
                 if index2 == 0
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i+shift2+shift4+1] + ρ.v[i+2shift2+2shift4+1] + ρ.v[i+3shift2+3shift4+1])
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i+shift2+shift4+1] + ρ.v[i+2shift2+2shift4+1] + ρ.v[i+3shift2+3shift4+1]) + factor*ρ.v[i+1]
                 else
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1] - ρ.v[i+2shift2+2shift4+1])
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1] - ρ.v[i+2shift2+2shift4+1]) + factor*ρ.v[i+1]
                 end
             else
                 if index2 == 0
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1])
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1]) + factor*ρ.v[i+1]
                 else
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-3shift2-3shift4+1] - ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1])
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-3shift2-3shift4+1] - ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1]) + factor*ρ.v[i+1]
                 end
             end
         else
@@ -1872,7 +1877,7 @@ end
                 index += (index2 - index4)*shift4
             end
 
-            @inbounds ρ.scratch[i+1] += 0.5 * ρ.v[index+1]
+            @inbounds ρ.scratch[i+1] += 0.5 * ρ.v[index+1] + factor*ρ.v[i+1]
         end
     end
 
@@ -2096,7 +2101,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate
 end
 
 """Tailored implementation of 1/2 (Rxx(θ) ρ + ρ Rxx(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate}, factor::Float64=0.0)
     # qubit indices the gate acts on
 
     cosθ2 = cos(0.5*cg.gate.θ[])
@@ -2127,6 +2132,7 @@ end
         b = index3 * 2 + index4
 
         if a == b || index1 == index3
+            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             continue
         else
             index = i 
@@ -2147,7 +2153,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1]
+            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1] + factor*ρ.v[i+1]
         end
     end
 
@@ -2361,7 +2367,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate
 end
 
 """Tailored implementation of 1/2 (Ryy(θ) ρ + ρ Ryy(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate}, factor::Float64=0.0)
     # qubit indices the gate acts on
     cosθ2 = cos(0.5*cg.gate.θ[])
     sinθ2 = sin(0.5*cg.gate.θ[])
@@ -2391,6 +2397,7 @@ end
         b = index3 * 2 + index4
 
         if a == b || index2 == index4
+            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             continue
         else
             index = i 
@@ -2411,7 +2418,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1]
+            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1] + factor*ρ.v[i+1]
         end
     end
 
@@ -2630,7 +2637,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate
 end
 
 """Tailored implementation of 1/2 (Rzz(θ) ρ + ρ Rzz(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate}, factor::Float64=0.0)
     # qubit indices the gate acts on
     cosθ2 = cos(0.5*cg.gate.θ[])
     sinθ2 = sin(0.5*cg.gate.θ[])
@@ -2660,6 +2667,7 @@ end
         b = index3 * 2 + index4
 
         if a == b || xor(index1, index3) & xor(index2, index4) == 1
+            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             continue
         else
             index = i 
@@ -2688,7 +2696,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1]
+            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1] + factor*ρ.v[i+1]
         end
     end
 
@@ -2796,9 +2804,10 @@ Base.kron(a::AbstractMatrix{T}) where {T} = a
 Projection |1><1| (auxiliary "gate" required for implementing controlled gates)
 """
 struct Proj1Gate <: AbstractGate end
-
-matrix(::Proj1Gate) = ComplexF64[0 0; 0 1]
-sparse_matrix(::Proj1Gate) = sparse(matrix(Proj1Gate()))
+const proj1GateMatrix = ComplexF64[0 0; 0 1]
+const sproj1GateMatrix = sparse(proj1GateMatrix)
+matrix(::Proj1Gate) = proj1GateMatrix
+sparse_matrix(::Proj1Gate) = sproj1GateMatrix
 
 LinearAlgebra.ishermitian(::Proj1Gate) = true
 
@@ -2867,20 +2876,20 @@ end
 end
 
 """Tailored implementation of 1/2 (|1><1| ρ + ρ |1><1|)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate})
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate}, factor::Float64=0.0)
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
 
-    @inbounds ρ.scratch .= 0.5 .* ρ.v
-
+    n = factor + 0.5
     for i in 0:4^ρ.N-1
         index1 = (i >> k) & 1
         index2 = (i >> l) & 1
 
         if xor(index1, index2) == 1
+            @inbounds ρ.scratch[i+1] = n*ρ.v[i+1]
             continue
         else
             if index1 == 1
@@ -2888,7 +2897,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] -= 0.5 * ρ.v[i+sign*3shift+1]
+            @inbounds ρ.scratch[i+1] = n*ρ.v[i+1] - 0.5 * ρ.v[i+sign*3shift+1]
         end
     end
 
@@ -2988,7 +2997,7 @@ function apply(ρ::DensityMatrix, cg::CircuitGate{M,ControlledGate{G}}) where {M
 end
 
 """Tailored conjugation of density matrix by a general ControlledGate"""
-function apply!(ρ::DensityMatrix, cg::CircuitGate{M,ControlledGate{G}}) where {M,G}
+@views function apply!(ρ::DensityMatrix, cg::CircuitGate{M,ControlledGate{G}}) where {M,G}
 
     # number of target wires
     T = target_wires(cg.gate)
@@ -3001,39 +3010,43 @@ function apply!(ρ::DensityMatrix, cg::CircuitGate{M,ControlledGate{G}}) where {
     # (generalizes to several control qubits)
 
     # identity term
-    ρs = deepcopy(ρ)
-
+    ρs = deepcopy(ρ.v)
+    τ = deepcopy(ρ)
     cgU = CircuitGate{T,G}(cg.iwire[1:T], cg.gate.U)
 
     # mixed term |1><1| x (U - I) ρ + ρ |1><1| x (U† - I)
     eo = binary_digits(C, 0)
+    # TODO: exploit sparsity
     for p in 0:2^C-1
         binary_digits!(eo, p)
-        τ = ρs
+        @inbounds τ.v .= ρs
         for j in 1:C
             if eo[j] == 0
-                τ = apply_mixed_add(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
+                apply_mixed_add!(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
             else
-                τ = apply_mixed_sub(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
+                apply_mixed_sub!(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
             end
         end
         nodd::Int = sum(eo)
         if iseven(nodd)
-            τ.v .= apply_mixed_add(τ, cgU).v .- τ.v
+            apply_mixed_add!(τ, cgU, -1.0)
         else
-            τ = apply_mixed_sub(τ, cgU)
+            apply_mixed_sub!(τ, cgU)
         end
         # sign factor from even powers of i
         signfac = 1 - 2*(((nodd + 1) ÷ 2) % 2)
-        ρ.v .+= (2.0*signfac) .* τ.v
+        @inbounds ρ.v .+= (2.0*signfac) .* τ.v
     end
 
     # conjugate by |1><1| x (U - I)
-    τ = ρs
+    τ.v .= ρs
     for j in 1:C
-        τ = apply(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
+        apply!(τ, CircuitGate((cg.iwire[T + j],), Proj1Gate()))
     end
-    ρ.v .+= apply(τ, cgU).v .- 2.0.*apply_mixed_add(τ, cgU).v .+ τ.v
+    @inbounds ρs .= τ.v
+    @inbounds ρ.v .+= apply!(τ, cgU).v
+    @inbounds τ.v .= ρs
+    @inbounds ρ.v .-= 2.0.*apply_mixed_add!(τ, cgU, -0.5).v
 
     return ρ
 end

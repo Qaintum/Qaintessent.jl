@@ -46,7 +46,7 @@ end
         θ = 2π*rand()
         ngrad = ngradient(f, [θ])
         dg = Qaintessent.backward(g(θ, κ, graph), conj(Δ))
-        @test isapprox(dg.γ, ngrad[1], rtol=1e-5, atol=1e-5)
+        @test isapprox(dg.γ, ngrad[1], rtol=1e-4, atol=1e-4)
     end
 
     @testset "RNearbyValuesMixerGate gates" begin
@@ -88,6 +88,6 @@ end
         θ = 2π*rand()
         ngrad = ngradient(f, [θ])
         dg = Qaintessent.backward(g(θ, κ, partition), conj(Δ))
-        @test isapprox(dg.β, ngrad[1], rtol=1e-5, atol=1e-5)
+        @test isapprox(dg.β, ngrad[1], rtol=1e-4, atol=1e-4)
     end
 end

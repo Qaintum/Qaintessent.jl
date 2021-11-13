@@ -216,6 +216,7 @@ julia> apply(ψ, cgs)
 ```
 """
 function apply(ψ::Vector{<:Complex}, cgs::Vector{<:CircuitGate})
+    length(cgs) != 0 || error("Vector of length 0 cannot be applied")
     l = length(ψ)
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")

@@ -259,33 +259,6 @@ function _apply!(ψ::Statevector, cg::CircuitGate{2,SwapGate})
 end
 
 
-"""Tailored apply for a general ControlledGate"""
-function _apply(ψ::Statevector, cg::CircuitGate{M,ControlledGate{G}}) where {M,G}
-    T = target_wires(cg.gate)
-    C = control_wires(cg.gate)
-    U = matrix(cg.gate.U)::Array{ComplexF64,2}
-    orderqubit!(ψ, cg.iwire)
-    @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
-
-    start = 2^ψ.N*(1-2^(-C))
-    step = 2^(ψ.N-T-C)
-    @views begin
-        for i in 1:2^T
-            @inbounds mul!(ψ.state[start+(i-1)*step+1:start+i*step], U[i,1], ψ.vec[start+1:start+step])
-        end
-        for j in 2:2^T
-            for i in 1:2^T
-                @inbounds mul!(ψ.vec[start+1:start+step], U[i,j], ψ.vec[start+(j-1)*step+1:start+j*step])
-                @inbounds ψ.state[start+(i-1)*step+1:start+i*step] .+= ψ.vec[start+1:start+step]
-            end
-        end
-        @inbounds invpermute!!(ψ.state, ψ.perm)
-        resetpermute!(ψ)
-    end
-    return
-end
-
-
 """
     apply(ψ::Statevector, cg::CircuitGate{M,G}) where {M,G}
 
@@ -348,7 +321,7 @@ julia> ψ.state
 ```
 """
 function apply!(ψ::Statevector, cgs::Vector{<:CircuitGate})
-    req <= N || error("CircuitGates require a minimum of $req qubits, input vector `ψ` has $N qubits")
+    maximum(req_wires.(cgs)) <= ψ.N || error("CircuitGates require a minimum of $req qubits, input vector `ψ` has $N qubits")
     for cg in cgs 
         _apply!(ψ, cg)
     end

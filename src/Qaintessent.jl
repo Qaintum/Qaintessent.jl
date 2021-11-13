@@ -92,6 +92,7 @@ export
 
 include("gradients.jl")
 include("gradients_density.jl")
+include("gradients_statevector.jl")
 
 include("view.jl")
 

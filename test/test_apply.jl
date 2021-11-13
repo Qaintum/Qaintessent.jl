@@ -3,7 +3,7 @@ using TestSetExtensions
 using LinearAlgebra
 using Random
 using Qaintessent
-
+using Random
 
 ##==----------------------------------------------------------------------------------------------------------------------
 
@@ -29,6 +29,25 @@ using Qaintessent
         end
     end
 
+    @testset "apply multiple basic gates" begin
+        g = [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        i = randperm(N)[1:3]
+        j = randperm(N)[1:3]
+        cgs = circuit_gate.(j, g[i])
+        cga = CircuitGate[]
+        for cg in cgs
+            push!(cga, CircuitGate{1,AbstractGate}(cg.iwire, cg.gate))
+        end
+
+        @test apply(ψ, cgs) ≈ apply(ψ, cga)
+        @test apply(ψ, cgs) ≈ sparse_matrix(cga, N) * ψ
+    end
+
+    @testset "apply basic gates exceptions" begin
+        cg = CircuitGate[]
+        @test_throws ErrorException("Vector of length 0 cannot be applied") apply(ψ, cg)
+    end
+
     @testset "apply moments" begin
         # single qubit gates
         for g in [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
@@ -40,6 +59,27 @@ using Qaintessent
             @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
         end
     end
+
+    @testset "apply multiple moments" begin
+        g = [X, Y, Z, HadamardGate(), SGate(), TGate(), RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
+        i = randperm(N)[1:3]
+        j = randperm(N)[1:3]
+        cgs = circuit_gate.(j, g[i])
+        cga = CircuitGate[]
+        for cg in cgs
+            push!(cga, CircuitGate{1,AbstractGate}(cg.iwire, cg.gate))
+        end
+
+        @test apply(ψ, Moment(cgs)) ≈ apply(ψ, Moment(cga))
+        @test apply(ψ, Moment(cgs)) ≈ sparse_matrix(cga, N) * ψ
+    end
+
+
+    @testset "apply moments exceptions" begin
+        m = Moment[]
+        @test_throws ErrorException("Vector of length 0 cannot be applied") apply(ψ, m)
+    end
+
 
     @testset "apply basic controlled gates" begin
         # control gate

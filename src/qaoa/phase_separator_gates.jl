@@ -48,12 +48,12 @@ struct MaxKColSubgraphPhaseSeparationGate <: AbstractGate
 end
 
 @memoize function max_k_col_subgraph_phase_separation_hamiltonian(graph::Graph, κ::Int)
-    Z = [1 0; 0 -1]
+    z = matrix(Z)
     
     # Implementation of Eq. (17)
     # one-hot encoding: n * κ vector. Index (a-1)*n + (b-1) corresponds to vertex a, color b.
     H_P_enc = sum(
-        kron((color == a && vertex ∈ edge ? Z : I(2) for vertex ∈ 1:graph.n for color ∈ 1:κ)...) # Z_{u,a} Z_{v,a}
+        kron((color == a && vertex ∈ edge ? z : I(2) for vertex ∈ 1:graph.n for color ∈ 1:κ)...) # Z_{u,a} Z_{v,a}
         for a ∈ 1:κ for edge ∈ graph.edges # Σ_{(u,v) = edge ∈ E} Σ_{a=1..κ}
     )
     return Diagonal(H_P_enc)
