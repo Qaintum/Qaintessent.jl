@@ -237,7 +237,7 @@ end
     l = 2*cg.iwire[1]-2
     for i in 0:4^ρ.N-1
         if ((i >> l) & 1 ⊻ (i >> k) & 1) == 1
-            ρ.v[i+1] = -ρ.v[i+1]
+            @inbounds ρ.v[i+1] = -ρ.v[i+1]
         end
     end    
 
