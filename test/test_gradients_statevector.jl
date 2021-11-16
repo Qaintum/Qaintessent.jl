@@ -45,7 +45,7 @@ end
     U = Array(U)
     i = rand(1:N)
 
-    cgc(θ, ϕ, χ, κ, ωn) = CircuitGate[
+    cgc(θ, ϕ, χ, κ, ωn, η, ι, λ) = CircuitGate[
         circuit_gate(3, HadamardGate()),
         circuit_gate(2, RzGate(θ), (1, 4)),
         circuit_gate(2, TGate(), 4),
@@ -59,6 +59,9 @@ end
         circuit_gate(4, Y, 1),
         circuit_gate(3, 1, EntanglementYYGate(κ)),
         circuit_gate(3, RotationGate(ωn)),
+        circuit_gate(3, RxGate(η), (1, 4)),
+        circuit_gate(2, 3, EntanglementXXGate(ι)),
+        circuit_gate(4, 1, EntanglementZZGate(λ)),
         circuit_gate(4, SGate()),
         circuit_gate(2, TdagGate(), 3),
         circuit_gate(i, MatrixGate(U)),
@@ -79,13 +82,16 @@ end
     ϕ = 0.3
     χ = √2
     κ = exp(-0.4)
+    η = √3
+    ι = 3.33π
+    λ = exp(-0.11)
     n = randn(Float64, 3)
     n /= norm(n)
     ωn = 0.2π * n
     M = randn(ComplexF64, 2^N, 2^N)
     M = 0.5*(M + adjoint(M))
 
-    c = Circuit{N}(cgc(θ, ϕ, χ, κ, ωn), meas(M))
+    c = Circuit{N}(cgc(θ, ϕ, χ, κ, ωn, η, ι, λ), meas(M))
     # input quantum state
     ψ = Statevector(randn(ComplexF64, 2^N))
     ψl = deepcopy(ψ)
@@ -94,18 +100,21 @@ end
 
     dc = Qaintessent.gradients(c, ψ, Δ)[1]
 
-    f(rθ, rϕ, rχ, rκ, ωn, M) = dot(Δ, apply!(copy!(ψl, ψ), Circuit{N}(cgc(rθ[], rϕ[], rχ[], rκ[], ωn), meas(M))))
+    f(rθ, rϕ, rχ, rκ, ωn, rη, rι, rλ, M) = dot(Δ, apply!(copy!(ψl, ψ), Circuit{N}(cgc(rθ[], rϕ[], rχ[], rκ[], ωn, rη[], rι[], rλ[]), meas(M))))
     # numeric gradients
-    ngrad = ngradient(f, [θ], [ϕ], [χ], [κ], ωn, M)
+    ngrad = ngradient(f, [θ], [ϕ], [χ], [κ], ωn, [η], [ι], [λ], M)
     # symmetrize gradient with respect to measurement operator
-    ngrad[end][:] = 0.5*(ngrad[end] + adjoint(ngrad[end]))
 
+    ngrad[end][:] = 0.5*(ngrad[end] + adjoint(ngrad[end]))
     @test all(isapprox.(ngrad,
         (dc.moments[1][2].gate.U.θ,
          dc.moments[4][2].gate.ϕ,
          dc.moments[5][1].gate.θ,
          dc.moments[8][1].gate.θ,
          dc.moments[9][1].gate.nθ,
+         dc.moments[10][1].gate.U.θ,
+         dc.moments[11][1].gate.θ,
+         dc.moments[11][2].gate.θ,
          sparse_matrix(dc.meas[2])), rtol=1e-5, atol=1e-5))
 end
 

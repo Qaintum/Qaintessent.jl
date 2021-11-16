@@ -30,7 +30,7 @@ function backward!(dg::RxGate, g::RxGate, Δ::AbstractMatrix)
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
     # using conjugated derivative matrix; factor 2 cancels 1/2 from θ/2
-    dg.θ = sum(real([-s im * c; im * c -s] .* Δ))
+    dg.θ .= sum(real([-s im * c; im * c -s] .* Δ))
     return
 end
 
