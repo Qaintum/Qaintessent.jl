@@ -65,13 +65,12 @@ end
     l = 2*cg.iwire[1]-2
     shift = 2^l
 
+    @inbounds ρ.scratch .= factor .* ρ.v
     for i in 0:4^ρ.N-1
-        if (i >> k) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0 + factor*ρ.v[i+1]
-        elseif (i >> l) & 1 == 0
-            @inbounds ρ.scratch[i+1] = ρ.v[i+1+shift] + factor*ρ.v[i+1]
-        else
-            @inbounds ρ.scratch[i+1] = ρ.v[i+1-shift] + factor*ρ.v[i+1]
+        if (i >> l) & 3 == 0
+            @inbounds ρ.scratch[i+1] += ρ.v[i+1+shift]
+        elseif (i >> l) & 3 == 1
+            @inbounds ρ.scratch[i+1] += ρ.v[i+1-shift]
         end
     end
 
@@ -166,13 +165,12 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^k
+    @inbounds ρ.scratch .= factor * ρ.v
     for i in 0:4^ρ.N-1
-        if (i >> l) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0 + factor*ρ.v[i+1]
-        elseif (i >> k) & 1 == 0
-            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1] + factor*ρ.v[i+1]
-        else
-            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1] + factor*ρ.v[i+1]
+        if (i >> l) & 3 == 0
+            @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1]
+        elseif (i >> l) & 3 == 2
+            @inbounds ρ.scratch[i+1] += ρ.v[i-shift+1]
         end
     end    
     @inbounds ρ.v .= ρ.scratch
@@ -236,7 +234,7 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     for i in 0:4^ρ.N-1
-        if ((i >> l) & 1 ⊻ (i >> k) & 1) == 1
+        if (i >> l) & 3 == 2 || (i >> l) & 3 == 1
             @inbounds ρ.v[i+1] = -ρ.v[i+1]
         end
     end    
@@ -266,13 +264,14 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^k + 2^l
+
+    @inbounds ρ.scratch .= factor * ρ.v
+
     for i in 0:4^ρ.N-1
-        if ((i >> l) ⊻ (i >> k)) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0 + factor*ρ.v[i+1]
-        elseif (i >> l) & 1 == 0
-            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1] + factor*ρ.v[i+1]
-        else
-            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1] + factor*ρ.v[i+1]
+        if (i >> l) & 3 == 0
+            @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1]
+        elseif (i >> l) & 3 == 3
+            @inbounds ρ.scratch[i+1] += ρ.v[i-shift+1]
         end
     end
 
@@ -340,15 +339,20 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^k
+
     for i in 0:4^ρ.N-1
-        if (i >> k) & 1 == 1 && (i >> l) & 1 == 0
-            @inbounds ρ.scratch[i+1] = -ρ.v[i+1]
-        elseif (i >> k) & 1 == 0 && (i >> l) & 1 == 1
-            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1]
-        elseif (i >> k) & 1 == 1 && (i >> l) & 1 == 1
-            @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1]
+        if (i >> k) & 1 == 0
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] = ρ.v[i+1]
+            else
+                @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1]
+            end
         else
-            @inbounds ρ.scratch[i+1] = ρ.v[i+1]
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] = -ρ.v[i+1]
+            else
+                @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1]
+            end
         end
     end
     @inbounds ρ.v .= ρ.scratch
@@ -380,19 +384,19 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
+    @inbounds ρ.scratch .= factor .* ρ.v
     for i in 0:4^ρ.N-1
         if (i >> l) & 1 == 1
             bit = (i >> k) & 1
-            @inbounds ρ.scratch[i+1] = ρ.v[i-(1+2bit)*shift+1] / sqrt(2) + factor * ρ.v[i+1]
-        elseif (i >> k) & 1 == 1
-            @inbounds ρ.scratch[i+1] = 0 + factor * ρ.v[i+1]
-        else
-            @inbounds ρ.scratch[i+1] = (ρ.v[i+3shift+1] + ρ.v[i+shift+1]) / sqrt(2) + factor * ρ.v[i+1]
+            @inbounds ρ.scratch[i+1] += ρ.v[i-(1+2bit)*shift+1] / sqrt(2)
+        elseif (i >> k) & 1 == 0
+            @inbounds ρ.scratch[i+1] += (ρ.v[i+3shift+1] + ρ.v[i+shift+1]) / sqrt(2)
         end
     end
     @inbounds ρ.v .= ρ.scratch
     return ρ
 end
+
 
 """Tailored implementation of i/2 (H ρ - ρ H)"""
 @views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate})
@@ -419,17 +423,17 @@ end
     l = 2*cg.iwire[1]-2
     shift = 2^l
     for i in 0:4^ρ.N-1
-        if (i >> l) & 1 == 1
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1] / sqrt(2)
-            else
-                @inbounds ρ.scratch[i+1] = -ρ.v[i-shift+1] / sqrt(2)
-            end
-        else
-            if (i >> k) & 1 == 0
+        if (i >> k) & 1 == 0
+            if (i >> l) & 1 == 0
                 @inbounds ρ.scratch[i+1] = 0
             else
+                @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1] / sqrt(2)
+            end
+        else
+            if (i >> l) & 1 == 0
                 @inbounds ρ.scratch[i+1] = (ρ.v[i+shift+1] - ρ.v[i-shift+1]) / sqrt(2)
+            else
+                @inbounds ρ.scratch[i+1] = -ρ.v[i-shift+1] / sqrt(2)
             end
         end
     end
@@ -461,9 +465,9 @@ end
     l = 2*cg.iwire[1]-2
     shift = 2^l
     for i in 0:4^ρ.N-1
-        if (i >> k) & 1 == 0 && (i >> l) & 1 == 1
+        if (i >> l) & 3 == 1
             @inbounds ρ.scratch[i+1] = -ρ.v[i+shift+1]
-        elseif (i >> k) & 1 == 1 && (i >> l) & 1 == 0
+        elseif (i >> l) & 3 == 2
             @inbounds ρ.scratch[i+1] = ρ.v[i-shift+1]
         else
             @inbounds ρ.scratch[i+1] = ρ.v[i+1]
@@ -496,20 +500,20 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
-    @inbounds ρ.scratch .= ρ.v
-    
+    factor = factor + 0.5
+    @inbounds ρ.scratch .= factor .* ρ.v
     for i in 0:4^ρ.N-1
-        if (i >> l) & 1 == 0
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i+3shift+1] + (factor+0.5) * ρ.v[i+1]
+        if (i >> k) & 1 == 0
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i+3shift+1]
             else
-                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i-shift+1] + (factor+0.5) * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] -= 0.5ρ.v[i+shift+1]
             end
         else
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] = -0.5ρ.v[i+shift+1] + (factor+0.5) * ρ.v[i+1]
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i-shift+1]
             else
-                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i-3shift+1] + (factor+0.5) * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i-3shift+1]
             end
         end
     end
@@ -540,21 +544,20 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
-    @inbounds ρ.v .= 0.5 .* ρ.v
-    @inbounds ρ.scratch .= -ρ.v
-    
+
+    @inbounds ρ.scratch .= -0.5 .* ρ.v
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += ρ.v[i+3shift+1]
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i+3shift+1]
             else
-                @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1]
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i+shift+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= ρ.v[i-shift+1]
-            else
-                @inbounds ρ.scratch[i+1] += ρ.v[i-3shift+1]
+                @inbounds ρ.scratch[i+1] -= 0.5ρ.v[i-shift+1]
+            else        
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i-3shift+1]
             end
         end
     end
@@ -587,12 +590,10 @@ end
     shift = 2^l
 
     for i in 0:4^ρ.N-1
-        if ((i >> k) & 1) ⊻ ((i >> l) & 1) == 1
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1]
-            else
+        if (i >> l) & 3 == 1
+            @inbounds ρ.scratch[i+1] = ρ.v[i+shift+1]
+        elseif (i >> l) & 3 == 2
                 @inbounds ρ.scratch[i+1] = -ρ.v[i-shift+1]
-            end
         else
             @inbounds ρ.scratch[i+1] = ρ.v[i+1]
         end
@@ -625,21 +626,21 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
-    @inbounds ρ.v .= ρ.v .* 0.5
-    @inbounds ρ.scratch .= ρ.v
-    
+
+    factor = factor + 0.5
+    @inbounds ρ.scratch .= factor .* ρ.v
     for i in 0:4^ρ.N-1
-        if (i >> l) & 1 == 0
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += ρ.v[i+3shift+1] + 2factor * ρ.v[i+1]
+        if (i >> k) & 1 == 0
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i+3shift+1]
             else
-                @inbounds ρ.scratch[i+1] -= ρ.v[i-shift+1] - 2factor * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i+shift+1]
             end
         else
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1] + 2factor * ρ.v[i+1]
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] -= 0.5ρ.v[i-shift+1]
             else
-                @inbounds ρ.scratch[i+1] += ρ.v[i-3shift+1] + 2factor * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += 0.5ρ.v[i-3shift+1]
             end
         end
     end
@@ -647,6 +648,7 @@ end
     @inbounds ρ.v .= ρ.scratch
     return ρ
 end
+
 
 """Tailored implementation of i/2 (S† ρ - ρ S)"""
 @views function apply_mixed_sub(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
@@ -664,15 +666,14 @@ end
 end
 
 """Tailored implementation of i/2 (S† ρ - ρ S)"""
-@views function apply_mixed_sub!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
+@views function apply_mixed_sub2!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
-    @inbounds ρ.v .= 0.5 .* ρ.v
-    @inbounds ρ.scratch .= ρ.v
-    
+
+    @inbounds ρ.scratch .= 0.5.*ρ.v
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
@@ -685,6 +686,34 @@ end
                 @inbounds ρ.scratch[i+1] -= ρ.v[i-shift+1]
             else
                 @inbounds ρ.scratch[i+1] -= ρ.v[i-3shift+1]
+            end
+        end
+    end
+
+    @inbounds ρ.v .= ρ.scratch
+    return ρ
+end
+
+"""Tailored implementation of i/2 (S† ρ - ρ S)"""
+@views function apply_mixed_sub!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
+    # qubit index the gate acts on
+    j = cg.iwire[1]
+    k = 2*cg.iwire[1]-1
+    l = 2*cg.iwire[1]-2
+    shift = 2^l
+    
+    for i in 0:4^ρ.N-1
+        if (i >> k) & 1 == 0
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] = -0.5ρ.v[i+3shift+1] + 0.5ρ.v[i+1]
+            else
+                @inbounds ρ.scratch[i+1] = 0.5ρ.v[i+shift+1] + 0.5ρ.v[i+1]
+            end
+        else
+            if (i >> l) & 1 == 0
+                @inbounds ρ.scratch[i+1] = -0.5ρ.v[i-shift+1] + 0.5ρ.v[i+1]
+            else
+                @inbounds ρ.scratch[i+1] = -0.5ρ.v[i-3shift+1] + 0.5ρ.v[i+1]
             end
         end
     end
@@ -717,12 +746,10 @@ end
     shift = 2^l
 
     for i in 0:4^ρ.N-1
-        if xor((i >> k) & 1, (i >> l) & 1) == 1
-            if (i >> l) & 1 == 1
-                @inbounds ρ.scratch[i+1] = (ρ.v[i+1] - ρ.v[i+shift+1]) / sqrt(2)
-            else
-                @inbounds ρ.scratch[i+1] = (ρ.v[i+1] + ρ.v[i-shift+1]) / sqrt(2)
-            end
+        if (i >> l) & 3 == 1
+            @inbounds ρ.scratch[i+1] = (ρ.v[i+1] - ρ.v[i+shift+1]) / sqrt(2)
+        elseif (i >> l) & 3 == 2
+            @inbounds ρ.scratch[i+1] = (ρ.v[i+1] + ρ.v[i-shift+1]) / sqrt(2)
         else
             @inbounds ρ.scratch[i+1] = ρ.v[i+1]
         end
@@ -759,18 +786,20 @@ end
     n2 = (0.5 * (1 - 1/sqrt(2)))
     n3 = 0.5/sqrt(2)
 
+    @inbounds ρ.scratch .= n1 .* ρ.v
+
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] = n2 * ρ.v[i+3shift+1] + n1 * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i+3shift+1]
             else
-                @inbounds ρ.scratch[i+1] = -n3 * ρ.v[i+shift+1] + n1 * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] -= n3 * ρ.v[i+shift+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] = n3 * ρ.v[i-shift+1] + n1 * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += n3 * ρ.v[i-shift+1]
             else
-                @inbounds ρ.scratch[i+1] = n2 * ρ.v[i-3shift+1] + n1 * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i-3shift+1]
             end
         end
     end
@@ -829,6 +858,7 @@ end
 end
 
 
+
 """Tailored conjugation of density matrix by TdagGate"""
 @views function apply(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate})
     # qubit index the gate acts on
@@ -853,7 +883,7 @@ end
     shift = 2^l
     
     for i in 0:4^ρ.N-1
-        if (i >> k) & 1 ⊻ (i >> l) & 1 == 1
+        if (i >> k) & 1 != (i >> l) & 1
             if (i >> l) & 1 == 1
                 @inbounds ρ.scratch[i+1] = (ρ.v[i+1] + ρ.v[i+shift+1]) / sqrt(2)
             else
@@ -892,7 +922,7 @@ end
     l = 2*cg.iwire[1]-2
     shift = 2^l
 
-    n1 = 0.5 * (1 + 1/sqrt(2))
+    n1 = 0.5 * (1 + 1/sqrt(2)) + factor
     n2 = 0.5 * (1 - 1/sqrt(2))
     n3 = 0.5/sqrt(2)
 
@@ -901,15 +931,15 @@ end
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i+3shift+1] + factor * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i+3shift+1]
             else
-                @inbounds ρ.scratch[i+1] += n3 * ρ.v[i+shift+1] + factor * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += n3 * ρ.v[i+shift+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= n3 * ρ.v[i-shift+1] - factor * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] -= n3 * ρ.v[i-shift+1]
             else
-                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i-3shift+1] + factor * ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += n2 * ρ.v[i-3shift+1]
             end
         end
     end
@@ -1041,17 +1071,13 @@ end
     cosθ2 = cos(0.5*cg.gate.θ[])
     sinθ2 = sin(0.5*cg.gate.θ[])
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v
     
     for i in 0:4^ρ.N-1
-        if (i >> k) & 1 == 1
-            if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1] - factor * ρ.v[i+1]
-            else
-                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1] + factor * ρ.v[i+1]
-            end
-        else
-            @inbounds ρ.scratch[i+1] += factor * ρ.v[i+1]
+        if (i >> l) & 3 == 2
+            @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1]
+        elseif (i >> l) & 3 == 3
+            @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1]
         end
     end
 
@@ -1173,16 +1199,12 @@ end
 
     shift = 2^k
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v    
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v    
     for i in 0:4^ρ.N-1
-        if (i >> l) & 1 == 1
-            if (i >> k) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i+shift+1] + factor*ρ.v[i+1]
-            else
-                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i-shift+1] - factor*ρ.v[i+1]
-            end
-        else
-            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
+        if (i >> l) & 3 == 1
+            @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i+shift+1]
+        elseif (i >> l) & 3 == 3
+            @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i-shift+1]
         end
     end
 
@@ -1304,17 +1326,13 @@ end
 
     shift = 2^l    
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v
 
     for i in 0:4^ρ.N-1
-        if (i >> k) & 1 != (i >> l) & 1
-            if (i >> l) & 1 == 1
-                @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1] - factor*ρ.v[i+1]
-            else
-                @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1] + factor*ρ.v[i+1]
-            end
-        else
-            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
+        if (i >> l) & 3 == 1
+            @inbounds ρ.scratch[i+1] -= sinθ2 * ρ.v[i+shift+1]
+        elseif (i >> l) & 3 == 2
+            @inbounds ρ.scratch[i+1] += sinθ2 * ρ.v[i-shift+1]
         end
     end
 
@@ -1484,19 +1502,17 @@ end
 
     shift = 2^l
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 1
-                @inbounds ρ.scratch[i+1] += sn[2] * ρ.v[i+2shift+1] - sn[3] * ρ.v[i+shift+1] + factor*ρ.v[i+1]
-            else
-                @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += sn[2] * ρ.v[i+2shift+1] - sn[3] * ρ.v[i+shift+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sn[3] * ρ.v[i-shift+1] - sn[1] * ρ.v[i+shift+1] + factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += sn[3] * ρ.v[i-shift+1] - sn[1] * ρ.v[i+shift+1]
             else
-                @inbounds ρ.scratch[i+1] += sn[1] * ρ.v[i-shift+1] - sn[2] * ρ.v[i-2shift+1] + factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += sn[1] * ρ.v[i-shift+1] - sn[2] * ρ.v[i-2shift+1]
             end
         end
     end
@@ -1640,20 +1656,20 @@ end
     cosϕ2cosϕ2 = cos(0.5*cg.gate.ϕ[]) * cos(0.5*cg.gate.ϕ[])
 
     shift = 2^l
-    @inbounds ρ.scratch .= cosϕ2cosϕ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosϕ2cosϕ2+factor) .* ρ.v
 
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i+3shift+1] + factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i+3shift+1]
             else
-                @inbounds ρ.scratch[i+1] -= sinϕ2cosϕ2 * ρ.v[i+shift+1] - factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] -= sinϕ2cosϕ2 * ρ.v[i+shift+1]
             end
         else
             if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] += sinϕ2cosϕ2 * ρ.v[i-shift+1] + factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += sinϕ2cosϕ2 * ρ.v[i-shift+1]
             else
-                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i-3shift+1] + factor*ρ.v[i+1]
+                @inbounds ρ.scratch[i+1] += sinϕ2sinϕ2 * ρ.v[i-3shift+1]
             end
         end
     end
@@ -1692,6 +1708,7 @@ end
 
     sinϕ2cosϕ2 = cos(0.5*cg.gate.ϕ[]) * sin(0.5*cg.gate.ϕ[])
     sinϕ2sinϕ2 = sin(0.5*cg.gate.ϕ[]) * sin(0.5*cg.gate.ϕ[])
+
     @inbounds ρ.scratch .= -sinϕ2cosϕ2 .* ρ.v
 
     for i in 0:4^ρ.N-1
@@ -1838,7 +1855,7 @@ end
     k2 = 2o-1
     l2 = 2o-2
 
-    @inbounds ρ.scratch .= 0.5 .* ρ.v
+    @inbounds ρ.scratch .= (0.5+factor) .* ρ.v
 
     shift1 = 2^k1
     shift2 = 2^l1
@@ -1854,15 +1871,15 @@ end
         if index1 == index3 && index2 == index4
             if index1 == 0 
                 if index2 == 0
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i+shift2+shift4+1] + ρ.v[i+2shift2+2shift4+1] + ρ.v[i+3shift2+3shift4+1]) + factor*ρ.v[i+1]
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i+shift2+shift4+1] + ρ.v[i+2shift2+2shift4+1] + ρ.v[i+3shift2+3shift4+1])
                 else
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1] - ρ.v[i+2shift2+2shift4+1]) + factor*ρ.v[i+1]
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1] - ρ.v[i+2shift2+2shift4+1])
                 end
             else
                 if index2 == 0
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1]) + factor*ρ.v[i+1]
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1] - ρ.v[i+shift2+shift4+1])
                 else
-                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-3shift2-3shift4+1] - ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1]) + factor*ρ.v[i+1]
+                    @inbounds ρ.scratch[i+1] += 0.5 * (ρ.v[i-3shift2-3shift4+1] - ρ.v[i-2shift2-2shift4+1] - ρ.v[i-shift2-shift4+1])
                 end
             end
         else
@@ -1877,7 +1894,7 @@ end
                 index += (index2 - index4)*shift4
             end
 
-            @inbounds ρ.scratch[i+1] += 0.5 * ρ.v[index+1] + factor*ρ.v[i+1]
+            @inbounds ρ.scratch[i+1] += 0.5 * ρ.v[index+1]
         end
     end
 
@@ -1931,8 +1948,6 @@ end
     l1 = 2i-2
     k2 = 2j-1
     l2 = 2j-2
-
-    @inbounds ρ.scratch .= 0.5 .* ρ.v
 
     shift1 = 2^k1
     shift2 = 2^l1
@@ -2116,7 +2131,7 @@ end
     k2 = 2j-1
     l2 = 2j-2
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v
 
     shift1 = 2^k1
     shift2 = 2^l1
@@ -2132,7 +2147,6 @@ end
         b = index3 * 2 + index4
 
         if a == b || index1 == index3
-            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             continue
         else
             index = i 
@@ -2153,7 +2167,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1] + factor*ρ.v[i+1]
+            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1]
         end
     end
 
@@ -2204,8 +2218,6 @@ end
     shift3 = 2^k2
     shift4 = 2^l2
 
-    @inbounds ρ.scratch .= 0
-
     for i in 0:4^ρ.N-1
         index1 = (i >> k1) & 1
         index2 = (i >> l1) & 1
@@ -2235,7 +2247,7 @@ end
             end
             @inbounds ρ.scratch[i+1] = sign * sinθ2 * ρ.v[index+1]
         else
-            continue
+            @inbounds ρ.scratch[i+1] = 0
         end
     end
 
@@ -2381,7 +2393,7 @@ end
     k2 = 2j-1
     l2 = 2j-2
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v
 
     shift1 = 2^k1
     shift2 = 2^l1
@@ -2397,7 +2409,6 @@ end
         b = index3 * 2 + index4
 
         if a == b || index2 == index4
-            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             continue
         else
             index = i 
@@ -2418,7 +2429,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1] + factor*ρ.v[i+1]
+            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1]
         end
     end
 
@@ -2651,7 +2662,7 @@ end
     k2 = 2j-1
     l2 = 2j-2
 
-    @inbounds ρ.scratch .= cosθ2 .* ρ.v
+    @inbounds ρ.scratch .= (cosθ2+factor) .* ρ.v
 
     shift1 = 2^k1
     shift2 = 2^l1
@@ -2667,7 +2678,6 @@ end
         b = index3 * 2 + index4
 
         if a == b || xor(index1, index3) & xor(index2, index4) == 1
-            @inbounds ρ.scratch[i+1] += factor*ρ.v[i+1]
             continue
         else
             index = i 
@@ -2696,7 +2706,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1] + factor*ρ.v[i+1]
+            @inbounds ρ.scratch[i+1] += sign * sinθ2 * ρ.v[index+1]
         end
     end
 
@@ -2883,13 +2893,13 @@ end
     l = 2*cg.iwire[1]-2
     shift = 2^l
 
-    n = factor + 0.5
+    factor = factor + 0.5
+    @inbounds ρ.scratch .= factor .* ρ.v
     for i in 0:4^ρ.N-1
         index1 = (i >> k) & 1
         index2 = (i >> l) & 1
 
         if xor(index1, index2) == 1
-            @inbounds ρ.scratch[i+1] = n*ρ.v[i+1]
             continue
         else
             if index1 == 1
@@ -2897,7 +2907,7 @@ end
             else
                 sign = 1
             end
-            @inbounds ρ.scratch[i+1] = n*ρ.v[i+1] - 0.5 * ρ.v[i+sign*3shift+1]
+            @inbounds ρ.scratch[i+1] -= 0.5 * ρ.v[i+sign*3shift+1]
         end
     end
 
