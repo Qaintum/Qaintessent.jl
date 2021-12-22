@@ -5,7 +5,7 @@ using SparseArrays
 using Memoize
 using CUDA
 
-if false
+if CUDA.functional()
     const FloatQ = Float32
     const ComplexQ = ComplexF32
     to_gpu(x) = CuArray(x)
