@@ -1,20 +1,3 @@
-"""Modifies perm vector in Density Matrix object to flip qubit at position `wire`"""
-function flipstate!(ρ::DensityMatrix, wire::Int, state1::Int, state2::Int)
-    flipstate!(ρ.perm, wire, state1, state2)
-end
-
-function swapbits(num::Int, p1::Int, p2::Int, n::Int)
-    set1 = (num >> p1) & ((1 << n)-1)
-    set2 = (num >> p2) & ((1 << n)-1)
-    x = set1 ⊻ set2
-    x = (x << p1)| (x << p2)
-    return num ⊻ x
-end
-
-function reset!(ρ::DensityMatrix)
-    reset!(ρ.perm)
-    return
-end
 
 """Tailored conjugation of density matrix by XGate"""
 @views function apply(ρ::DensityMatrix, cg::CircuitGate{1,XGate})
