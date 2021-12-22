@@ -83,7 +83,7 @@ returns matrix representation of a [CircuitGate](@ref) object that can applied t
 ```jldoctest
 julia> cg = circuit_gate(2, Y, 1);
 julia> sparse_matrix(cg)
-4×4 SparseArrays.SparseMatrixCSC{Complex{Float64},Int64} with 4 stored entries:
+4×4 SparseArrays.SparseMatrixCSC{Complex{FloatQ},Int64} with 4 stored entries:
   [1, 1]  =  1.0+0.0im
   [4, 2]  =  0.0+1.0im
   [3, 3]  =  1.0+0.0im
@@ -120,7 +120,7 @@ julia> cgs = CircuitGate[
                 circuit_gate(1, HadamardGate())
                 ];
 julia> sparse_matrix(cgs)
-4×4 SparseArrays.SparseMatrixCSC{Complex{Float64},Int64} with 8 stored entries:
+4×4 SparseArrays.SparseMatrixCSC{Complex{FloatQ},Int64} with 8 stored entries:
   [1, 1]  =  0.707107+0.0im
   [2, 1]  =  0.707107+0.0im
   [3, 2]  =  0.0-0.707107im
@@ -140,18 +140,19 @@ function sparse_matrix(cgs::Vector{<:CircuitGate}, N::Integer=0)
         N >= Nmin || error("Circuit size `$N` too small; vector of CircuitGate requires $Nmin wires.")
     end
 
-    gmat = sparse(one(ComplexF64)*I, 2^N, 2^N)
+    gmat = sparse(one(ComplexQ)*I, 2^N, 2^N)
     for cg in cgs
         iwire = collect(cg.iwire)
         gmat = distribute_to_wires(sparse_matrix(cg.gate), iwire, N, num_wires(cg.gate)) * gmat
     end
-    
     return gmat
 end
 
 
-function distribute_to_wires(gmat::SparseMatrixCSC{Complex{Float64},Int}, iwire::Vector{Int}, N::Int, M::Int)
-
+function distribute_to_wires(gmat::SparseMatrixCSC{Complex{F},Int}, iwire::Vector{Int}, N::Int, M::Int) where {F<:AbstractFloat}
+    if F != FloatQ
+        gmat = convert(SparseMatrixCSC{Complex{FloatQ},Int}, gmat)
+    end
     # complementary wires
     iwcompl = setdiff(1:N, iwire)
     @assert length(iwire) + length(iwcompl) == N
@@ -164,7 +165,7 @@ function distribute_to_wires(gmat::SparseMatrixCSC{Complex{Float64},Int}, iwire:
     cstrides = strides[iwcompl]
     b = BitArray{1}(undef, M)
 
-    values = Vector{ComplexF64}(undef, length(gmat.nzval) * 2^(N - M))
+    values = Vector{ComplexQ}(undef, length(gmat.nzval) * 2^(N - M))
     nnz = length(gmat.nzval)
     rowind = Vector{Int}(undef, length(values))
     colind = Vector{Int}(undef, length(values))
@@ -257,3 +258,5 @@ function circuit_gate(iwire::Integer, gate::AbstractGate, control::NTuple{M,Inte
 end
 
 circuit_gate(iwire1::Integer, iwire2::Integer, gate::AbstractGate, control::Integer...) = circuit_gate(iwire1, iwire2, gate, control)
+
+data(cg::CircuitGate) = data(cg.gate)
