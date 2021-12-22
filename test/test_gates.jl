@@ -24,6 +24,9 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
                 g1 = g(θ)
                 @test θ ≈ Qaintessent.data(g1)
             end
+            r = rand(FloatQ, 3)
+            g = RotationGate(r)
+            @test data(g) == g
             @test isnothing(Qaintessent.data(X))
         end
 
@@ -102,7 +105,7 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
             @test Qaintessent.matrix(RotationGate(θ, [1, 0, 0])) ≈ Qaintessent.matrix(RxGate(θ))
             @test Qaintessent.matrix(RotationGate(θ, [0, 1, 0])) ≈ Qaintessent.matrix(RyGate(θ))
             @test Qaintessent.matrix(RotationGate(θ, [0, 0, 1])) ≈ Qaintessent.matrix(RzGate(θ))
-
+            @test Qaintessent.matrix(RotationGate(0, [1, 0, 0])) ≈ ComplexQ[1 0; 0 1]
             @test RotationGate(θ * n) ≈ RotationGate(θ, n)
             @test Qaintessent.matrix(RotationGate(0.3*θ, n)) * Qaintessent.matrix(RotationGate(0.7*θ, n)) ≈ Qaintessent.matrix(RotationGate(θ, n))
             @test Qaintessent.sparse_matrix(RotationGate(θ, n)) ≈ Qaintessent.matrix(RotationGate(θ, n))
