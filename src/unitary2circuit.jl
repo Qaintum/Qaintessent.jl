@@ -30,7 +30,7 @@ end
 creates Array of CircuitGate objects preparing state `u` over `N` qubits.. uses
 algorithm from arxiv:quant-ph/0410066
 """
-function stateprep(u::Vector{ComplexF64}, N::Int, n::Int=1)
+function stateprep(u::Vector{<:Complex}, N::Int, n::Int=1)
     cg = CircuitGate[]
     k = 2
     grey = zeros(Int, 2^(N - n))
@@ -62,8 +62,12 @@ M = Stewart(ComplexF64, 4);
 cgc = unitary2circuit(M)
 ```
 """
+function unitary2circuit(m::AbstractMatrix{ComplexF32}, N::Union{Int, Nothing}=nothing, wires=nothing)
+    unitary2circuit(convert(Matrix{ComplexF64}, m), N, wires)
+end
+
 function unitary2circuit(m::AbstractMatrix{ComplexF64}, N::Union{Int, Nothing}=nothing, wires=nothing)
-    m * m' ≈ I || error("Only unitary matrices can be compiled into a quantum circuit")
+    isapprox(m * m', I, atol=1e2*eps(FloatQ)) || error("Only unitary matrices can be compiled into a quantum circuit")
     s = size(m)
     
     if isnothing(N)
@@ -92,7 +96,7 @@ function unitary2circuit(m::AbstractMatrix{ComplexF64}, N::Union{Int, Nothing}=n
     
     for i in 2^(N) - 1:-1:1
         prepd = CircuitGate[]
-        u = zeros(ComplexF64, (2^N))
+        u = zeros(ComplexQ, (2^N))
         u[i + 1:end] = QR[i + 1:end, i]
         u[i] = 1
         u = u ./ norm(u)
@@ -168,7 +172,7 @@ end
 
 compiles a U(2) matrix into quantum gates
 """
-function compile1qubit(m::AbstractMatrix{ComplexF64}, wires=nothing)
+function compile1qubit(m::AbstractMatrix{<:Complex}, wires=nothing)
     if isnothing(wires)
         wires = [1]
     end
@@ -326,7 +330,7 @@ end
 compiles an arbitrary U(4) matrix into a quantum circuit. Algorithm taken from
 arxiv:quant-ph/0308006, arxiv:quant-ph/0211002
 """
-function compile2qubit(m::AbstractMatrix{ComplexF64}, N, wires=nothing)
+function compile2qubit(m::AbstractMatrix{<:Complex}, N, wires=nothing)
     cg = CircuitGate[]
     E = 1 / sqrt(2) .* [1 im 0 0; 0 0 im 1; 0 0 im -1; 1 -im 0 0]
     U = E' * m * E
@@ -374,7 +378,7 @@ end
 fills empty vector `ψ`, such that  ψ = −im*[logχ1(d) log χ2(d) ··· logχl−1(U)],
 where χn(d) = d[2n-1]*d[2n+2]/(d[2n]*d[2n+1]) per arxiv:quant-ph/0303039
 """
-function fillψ!(d::AbstractVector{ComplexF64}, ψ::Vector{Float64}, l::Int)
+function fillψ!(d::AbstractVector{<:Complex}, ψ::Vector{<:Real}, l::Int)
     for i in StepRange(1, 1, l - 1)
         ψ[i] = imag(log(d[2i - 1] * d[2i + 2] / (d[2i] * d[2i + 1])))
     end
@@ -464,7 +468,7 @@ recursively compiles an arbitrary diagonal unitary matrix D_{2^N} ∈ C^(2^N×2^
 into a quantum circuit. algorithm taken from arxiv:quant-ph/0303039 D_{2^N} can
 be decomposed into D_{2^(N-1)} ∈ C^(2^(N-1)×2^(N-1)) ⊗ exp(i*ϕ)*RzGate(θ)
 """
-function compilediag(d::AbstractVector{ComplexF64}, N, cg=nothing, j=0)
+function compilediag(d::Vector{<:Complex}, N, cg=nothing, j=0)
     cgs = CircuitGate[]
     # single qubit diagonal matrix can be split into a phase shift + RzGate
     if length(d) == 2
