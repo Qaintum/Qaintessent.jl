@@ -667,7 +667,8 @@ using Qaintessent
         cx qregister[2],qregister[1];
         t qregister[1];
         s qregister[3];
-        h qregister[0];"""
+        h qregister[0];
+        tdg qregister[3];"""
 
         src_ref32 = """
         OPENQASM 2.0;
@@ -689,7 +690,8 @@ using Qaintessent
         cx qregister[2],qregister[1];
         t qregister[1];
         s qregister[3];
-        h qregister[0];"""
+        h qregister[0];
+        tdg qregister[3];"""
 
 
         d1 = qreg(3)
@@ -715,6 +717,7 @@ using Qaintessent
             circuit_gate(2, TGate()),
             circuit_gate(4, SGate()),
             circuit_gate(1, HadamardGate()),
+            circuit_gate(4, TdagGate()),
         ]
         append!(cgc_ref, gates_ref)
 
