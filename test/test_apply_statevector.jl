@@ -234,7 +234,7 @@ using Qaintessent
                 s1 = Statevector(deepcopy(ψ))
                 s2 = Statevector(deepcopy(ψ))
 
-                Qaintessent.gpu.apply!(s1, cg)
+                apply!(s1, cg)
                 apply!(s2, cga)
                 @test s1.state ≈ s2.state
                 @test s1.state ≈ sparse_matrix(cga, N) * ψ
@@ -255,7 +255,7 @@ using Qaintessent
                 s1 = Statevector(deepcopy(ψ))
                 s2 = Statevector(deepcopy(ψ))
 
-                Qaintessent.gpu.apply!(s1, cg)
+                apply!(s1, cg)
                 apply!(s2, cga)
                 @test s1.state ≈ s2.state
                 @test s1.state ≈ sparse_matrix(cga, N) * ψ
