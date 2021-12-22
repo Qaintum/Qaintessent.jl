@@ -1,10 +1,5 @@
 
-function apply(ψ::Vector{<:Complex}, m::AbstractMatrix, N::Int=0, M::Int=0)
-    if N == 0
-        return m*ψ
-    end
-end 
-
+apply(ψ::Vector{<:Complex}, m::AbstractMatrix) = m*ψ
 
 """Tailored apply for XGate"""
 function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,XGate}, N::Int) 
