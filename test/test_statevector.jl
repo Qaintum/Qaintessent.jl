@@ -23,6 +23,16 @@ using Qaintessent
         s = Statevector(ψ)
         @test s.N == N
         @test s.state == ψ
+
+        if ComplexQ == ComplexF64
+            ComplexTest = ComplexF32
+        else
+            ComplexTest = ComplexF64
+        end
+
+        ψ = randn(ComplexTest, 2^N)
+        s = Statevector(ψ)
+        @test typeof(s.state) == ComplexQ
     end
 
     @testset "test statevector indexing" begin
