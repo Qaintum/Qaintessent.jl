@@ -1,42 +1,57 @@
 using Memoize
+using CUDA
 """
     Statevector
 
 Represents a pure state.
 """
-struct Statevector <: AbstractArray{ComplexF64,1}
-    state::Vector{ComplexF64}
-    vec::Vector{ComplexF64}
+struct Statevector{M} <: AbstractArray{M,1}
+    state::Vector{M}
+    vec::Vector{M}
     perm::Vector{Int}
     N::Int
 
     @doc """
-        Statevector(v::Vector{ComplexF64})
+        Statevector{M}(v::Vector{ComplexQ}) where {M<:Complex}
 
     Create a `Statevector` object representing a pure quantum state.
     """
-    function Statevector(v::Vector{ComplexF64})
+    function Statevector(v::Vector{M}) where {M<:Complex}
         ispow2(length(v)) || error("Statevector must have length which is a power of 2")
         N = intlog2(length(v))
-        new(v, zeros(ComplexF64, 2^N), collect(1:2^N), N)
+        new{ComplexQ}(v, zeros(ComplexQ, 2^N), collect(1:2^N), N)
     end
     @doc """
-    Statevector(v::Vector{ComplexF64})
+    Statevector(v::Vector{ComplexQ})
 
     Create a `Statevector` object representing a pure quantum state with 'N' qubits.
     """
     function Statevector(N::Int)
-        new(zeros(ComplexF64, 2^N), zeros(ComplexF64, 2^N), collect(1:2^N), N)
+        new{ComplexQ}(zeros(ComplexQ, 2^N), zeros(ComplexQ, 2^N), collect(1:2^N), N)
+    end
+
+    @doc """
+    Statevector{M}(v::Vector{ComplexQ})
+
+    Create a `Statevector` object representing a pure quantum state with 'N' qubits.
+    """
+    function Statevector{M}(v::Vector{M}) where {M<:Complex}
+        if CUDA.functional()
+            if M != ComplexQ
+                @warn "Using CUDA support defaults base types to $ComplexQ, using $M may result in undefined behavior"
+            end
+        end
+        new{M}(zeros(ComplexQ, 2^N), zeros(ComplexQ, 2^N), collect(1:2^N), N)
     end
 end
 
 
 
-Base.setindex!(ψ::Statevector, v, i::Int64) = setindex!(ψ.state, v, i)
+Base.setindex!(ψ::Statevector, v, i::Int) = setindex!(ψ.state, v, i)
 Base.getindex(ψ::Statevector, i::Int) = getindex(ψ.state, i)
 Base.size(ψ::Statevector) = size(ψ.state)
 Base.length(ψ::Statevector) = length(ψ.state)
-Base.IndexStyle(ψ::Type{Statevector}) = IndexLinear()
+Base.IndexStyle(::Type{<:Statevector}) = IndexLinear()
 
 """
     rdm(N, iwire, ψ, χ, d=2)

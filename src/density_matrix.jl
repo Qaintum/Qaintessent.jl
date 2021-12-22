@@ -7,11 +7,11 @@ Density matrix, represented with respect to identity and Pauli basis (σ_j/2) by
 """
 mutable struct DensityMatrix
     "coefficients with respect to identity and Pauli basis"
-    v::Vector{Float64}
+    v::Vector{FloatQ}
     "number of qubits"
     N::Int
     "scratch space for memory efficient permutation"
-    scratch::Vector{Float64}
+    scratch::Vector{FloatQ}
 
     @doc """
         DensityMatrix(v::AbstractVector{<:Real}, N::Integer)
@@ -43,13 +43,13 @@ Matrix representation of density matrix `ρ`.
 """
 function matrix(ρ::DensityMatrix)
     # Pauli matrix basis (including identity matrix)
-    halfpauli = SparseMatrixCSC{ComplexF64,Int}[
-        0.5 * sparse(one(ComplexF64)*I, 2, 2),
+    halfpauli = SparseMatrixCSC{ComplexQ,Int}[
+        0.5 * sparse(one(ComplexQ)*I, 2, 2),
         0.5 * sparse_matrix(X),
         0.5 * sparse_matrix(Y),
         0.5 * sparse_matrix(Z),
     ]
-    mat = zeros(ComplexF64, 2^ρ.N, 2^ρ.N)
+    mat = zeros(ComplexQ, 2^ρ.N, 2^ρ.N)
     m = quaternary_digits(ρ.N, 0)
     for i in 1:4^ρ.N
         mat += ρ.v[i] * kron([halfpauli[p + 1] for p in reverse(quaternary_digits!(m, i - 1))]...)
@@ -71,8 +71,8 @@ DensityMatrix([0.9999999999999998, -0.9999999999999998, 0.0, 0.0], 1)
 function density_from_statevector(ψ::Vector)
     N = intlog2(length(ψ))
     2^N == length(ψ) || error("Length of input vector must be a power to 2.")
-    pauli = SparseMatrixCSC{ComplexF64,Int}[
-        sparse(one(ComplexF64)*I, 2, 2),
+    pauli = SparseMatrixCSC{ComplexQ,Int}[
+        sparse(one(ComplexQ)*I, 2, 2),
         sparse_matrix(X),
         sparse_matrix(Y),
         sparse_matrix(Z),
@@ -99,8 +99,8 @@ DensityMatrix([1.0, 0.39999999999999997, 0.0, 0.0], 1)
 function density_from_matrix(ρmat::AbstractMatrix)
     N = intlog2(size(ρmat, 1))
     (2^N == size(ρmat, 1) && 2^N == size(ρmat, 2)) || error("Input must be a square `2^N × 2^N` matrix.")
-    pauli = SparseMatrixCSC{ComplexF64,Int}[
-        sparse(one(ComplexF64)*I, 2, 2),
+    pauli = SparseMatrixCSC{ComplexQ,Int}[
+        sparse(one(ComplexQ)*I, 2, 2),
         sparse_matrix(X),
         sparse_matrix(Y),
         sparse_matrix(Z),
