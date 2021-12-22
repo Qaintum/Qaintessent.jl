@@ -26,7 +26,7 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
             end
             r = rand(FloatQ, 3)
             g = RotationGate(r)
-            @test data(g) == g
+            @test Array(data(g)) ≈ matrix(g)
             @test isnothing(Qaintessent.data(X))
         end
 
