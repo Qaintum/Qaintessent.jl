@@ -6,7 +6,7 @@ using Memoize
 
 Assemble the "Pauli vector" matrix.
 """
-pauli_vector(x, y, z) = ComplexF64[z x - im * y; x + im * y -z]
+pauli_vector(x, y, z) = ComplexQ[z x - im * y; x + im * y -z]
 
 
 """
@@ -101,11 +101,11 @@ end
 
 
 """
-    gramm_schmidt(a::Array{Float64})
+    gramm_schmidt(a::Array{FloatQ})
 
 Compute orthogonalized real vectors.
 """
-function gramm_schmidt!(a::Array{Float64})
+function gramm_schmidt!(a::Array{<:Real})
     num_vectors = size(a,2)
     
     a[:, end] = a[:, end] ./ norm(a[:, end])
@@ -121,11 +121,11 @@ function gramm_schmidt!(a::Array{Float64})
 end
 
 """
-    gramm_schmidt(a::Array{ComplexF64})
+    gramm_schmidt(a::Array{ComplexQ})
 
 Compute orthogonalized complex vectors.
 """
-function gramm_schmidt!(a::Array{ComplexF64})
+function gramm_schmidt!(a::Array{<:Complex})
     num_vectors = size(a,2)
 
     a[:, end] = a[:, end] ./ norm(a[:, end])
@@ -209,3 +209,5 @@ the subsystem complementary to the qubits specified by `iwire`.
 
     return ρ
 end
+
+data(::AbstractMatrix) = nothing
