@@ -18,6 +18,15 @@ isunitary(g::AbstractGate) = Qaintessent.matrix(g) * Qaintessent.matrix(Base.adj
             @test kron(I,Z) ≈  kron(Matrix(I, (2,2)), matrix(Z))
         end
 
+        @testset "gate Qaintessent.data helper function" begin
+            for g in [RxGate, RyGate, RzGate, PhaseShiftGate, EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
+                θ = convert(FloatQ, 2π*rand())
+                g1 = g(θ)
+                @test θ ≈ Qaintessent.data(g1)
+            end
+            @test isnothing(Qaintessent.data(X))
+        end
+
         @testset "gate addition rotation gates" begin
             for g in [RxGate, RyGate, RzGate, PhaseShiftGate, EntanglementXXGate, EntanglementYYGate, EntanglementZZGate]
                 θ = 2π*rand()
