@@ -306,7 +306,7 @@ end
                     ψ = rand(ComplexQ, 2^N)
                     ψ_ref = nU*ψ
                     ψ_compiled = apply(ψ, cgs)
-                    @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), atol=tol)
+                    @test isapprox(ψ_ref'*(M*ψ_ref), ψ_compiled'*(M*ψ_compiled), rtol=tol, atol=tol)
                 end
             end
         end

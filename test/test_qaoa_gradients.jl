@@ -3,6 +3,13 @@ using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
 using Qaintessent.MaxKColSubgraphQAOA
+using CUDA
+
+if CUDA.functional()
+    tol = 5e-2
+else
+    tol = 1e-4
+end
 
 ##==----------------------------------------------------------------------------------------------------------------------
 
