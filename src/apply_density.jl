@@ -649,7 +649,7 @@ end
 end
 
 """Tailored implementation of i/2 (S† ρ - ρ S)"""
-@views function apply_mixed_sub2!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
+@views function apply_mixed_sub!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
