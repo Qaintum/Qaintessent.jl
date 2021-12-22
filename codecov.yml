@@ -1,0 +1,23 @@
+coverage:
+  status:
+    project:
+      default:
+        # basic
+        target: auto
+        threshold: 5%
+        base: auto 
+        flags: 
+          - unit
+        paths: 
+          - "src"
+        ignore:
+          - "src/gpu"
+          - "src/Qaintessent.jl"
+       # advanced settings
+        branches: 
+          - master
+        if_ci_failed: error #success, failure, error, ignore
+        informational: false
+        only_pulls: false
+
+
