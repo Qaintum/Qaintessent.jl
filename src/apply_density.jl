@@ -655,35 +655,6 @@ end
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
-
-    @inbounds ρ.scratch .= 0.5.*ρ.v
-    for i in 0:4^ρ.N-1
-        if (i >> k) & 1 == 0
-            if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= ρ.v[i+3shift+1]
-            else
-                @inbounds ρ.scratch[i+1] += ρ.v[i+shift+1]
-            end
-        else
-            if (i >> l) & 1 == 0
-                @inbounds ρ.scratch[i+1] -= ρ.v[i-shift+1]
-            else
-                @inbounds ρ.scratch[i+1] -= ρ.v[i-3shift+1]
-            end
-        end
-    end
-
-    ρ.v, ρ.scratch = ρ.scratch, ρ.v
-    return ρ
-end
-
-"""Tailored implementation of i/2 (S† ρ - ρ S)"""
-@views function apply_mixed_sub!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate})
-    # qubit index the gate acts on
-    j = cg.iwire[1]
-    k = 2*cg.iwire[1]-1
-    l = 2*cg.iwire[1]-2
-    shift = 2^l
     
     for i in 0:4^ρ.N-1
         if (i >> k) & 1 == 0
