@@ -9,9 +9,9 @@ using StatsBase
 ##==----------------------------------------------------------------------------------------------------------------------
 @testset ExtendedTestSet "measurement" begin
     @testset "Measure single instance" begin
-        state_a = ComplexF64[1;0;0;0]
-        state_b = ComplexF64[1;0;0]
-        state_c = ComplexF64[0.5;0;0;0]
+        state_a = ComplexQ[1;0;0;0]
+        state_b = ComplexQ[1;0;0]
+        state_c = ComplexQ[0.5;0;0;0]
         @test measure(state_a) == Dict(0=>1)
         @test_throws ErrorException("Shots has to be a natural integer above 0.")  measure(state_a, 0)
         @test_throws ErrorException("Statevector is not a viable quantum state (length $(length(state_b))")  measure(state_b)
@@ -19,7 +19,7 @@ using StatsBase
     end
     
     @testset "Measure multiple instances" begin
-        state_a = ComplexF64[1;0;0;0]
+        state_a = ComplexQ[1;0;0;0]
         circ = [circuit_gate(1, HadamardGate())]
         state_b = apply(state_a, circ)
         samples = measure(state_b, 20000)

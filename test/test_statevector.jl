@@ -14,12 +14,12 @@ using Qaintessent
         N = rand(1:10)
         s = Statevector(N)
         @test s.N == N
-        @test s.state == zeros(ComplexF64, 2^N)
+        @test s.state == zeros(ComplexQ, 2^N)
     end
 
     @testset "test statevector vector constructor" begin
         N = rand(1:10)
-        ψ = randn(ComplexF64, 2^N)
+        ψ = randn(ComplexQ, 2^N)
         s = Statevector(ψ)
         @test s.N == N
         @test s.state == ψ
@@ -27,7 +27,7 @@ using Qaintessent
 
     @testset "test statevector indexing" begin
         N = rand(1:10)
-        ψ = randn(ComplexF64, 2^N)
+        ψ = randn(ComplexQ, 2^N)
         s = Statevector(ψ)
         r = rand(1:2^N)
         @test s[r] == ψ[r]
@@ -35,7 +35,7 @@ using Qaintessent
 
     @testset "test statevector attributes" begin
         N = rand(1:10)
-        ψ = randn(ComplexF64, 2^N)
+        ψ = randn(ComplexQ, 2^N)
         s = Statevector(ψ)
         @test size(s) == size(ψ)
         @test length(s) == length(ψ)
@@ -44,13 +44,13 @@ using Qaintessent
 
     @testset ExtendedTestSet "util reduced density matrix for statevector" begin
         N = 4
-        ψ = Statevector(randn(ComplexF64, 2^N))
-        χ = Statevector(randn(ComplexF64, 2^N))
+        ψ = Statevector(randn(ComplexQ, 2^N))
+        χ = Statevector(randn(ComplexQ, 2^N))
         # full density matrix |ψ⟩⟨χ|
         ρ = reshape(kron(conj(χ.state), ψ.state), 2^N, 2^N)
-        id = Matrix{ComplexF64}(I, 2, 2)
-        A = randn(ComplexF64, 2, 2)
-        B = randn(ComplexF64, 2, 2)
+        id = Matrix{ComplexQ}(I, 2, 2)
+        A = randn(ComplexQ, 2, 2)
+        B = randn(ComplexQ, 2, 2)
         @testset ExtendedTestSet "reduced density matrix correctness" begin
             @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(B, id, A, id) .* ρ)
         end
@@ -66,13 +66,13 @@ using Qaintessent
 
     @testset ExtendedTestSet "util reduced density matrix for statevector" begin
         N = 4
-        ψ = Statevector(randn(ComplexF64, 2^N))
-        χ = Statevector(randn(ComplexF64, 2^N))
+        ψ = Statevector(randn(ComplexQ, 2^N))
+        χ = Statevector(randn(ComplexQ, 2^N))
         # full density matrix |ψ⟩⟨χ|
         ρ = reshape(kron(conj(χ.state), ψ.state), 2^N, 2^N)
-        id = Matrix{ComplexF64}(I, 2, 2)
-        A = randn(ComplexF64, 2, 2)
-        B = randn(ComplexF64, 2, 2)
+        id = Matrix{ComplexQ}(I, 2, 2)
+        A = randn(ComplexQ, 2, 2)
+        B = randn(ComplexQ, 2, 2)
         @testset ExtendedTestSet "reduced density matrix correctness" begin
             @test sum(kron(A, B) .* rdm(N, (4, 2), ψ, χ)) ≈ sum(kron(B, id, A, id) .* ρ)
         end
