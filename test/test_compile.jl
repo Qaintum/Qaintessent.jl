@@ -288,7 +288,6 @@ end
 
             ψ_ref = U*ψ
             ψ_compiled = apply(ψ, cgs)
-            println(norm(ψ_ref'*M*ψ_ref - ψ_compiled'*M*ψ_compiled))
             @test isapprox(ψ_ref'*M*ψ_ref, ψ_compiled'*M*ψ_compiled, rtol=tol, atol=tol)
         end
 
