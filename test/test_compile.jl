@@ -10,7 +10,7 @@ using CUDA
 if CUDA.functional()
     tol = 1e-5
 else
-    tol = 1e-13
+    tol = 1e-14
 end
 ##==----------------------------------------------------------------------------------------------------------------------
 
@@ -288,6 +288,7 @@ end
 
             ψ_ref = U*ψ
             ψ_compiled = apply(ψ, cgs)
+            println(norm(ψ_ref'*M*ψ_ref - ψ_compiled'*M*ψ_compiled))
             @test isapprox(ψ_ref'*M*ψ_ref, ψ_compiled'*M*ψ_compiled, rtol=tol, atol=tol)
         end
 
