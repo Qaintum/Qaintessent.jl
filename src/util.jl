@@ -101,7 +101,7 @@ end
 
 
 """
-    gramm_schmidt(a::Array{FloatQ})
+    gramm_schmidt(a::Array{<:Real})
 
 Compute orthogonalized real vectors.
 """
@@ -121,7 +121,7 @@ function gramm_schmidt!(a::Array{<:Real})
 end
 
 """
-    gramm_schmidt(a::Array{ComplexQ})
+    gramm_schmidt(a::Array{<:Complex})
 
 Compute orthogonalized complex vectors.
 """
