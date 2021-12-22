@@ -25,7 +25,7 @@ using Random
             cga = CircuitGate{1,AbstractGate}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
 
             @test apply(ψ, cg) ≈ apply(ψ, cga)
-            @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
+            @test apply(ψ, cg) ≈ apply(ψ, sparse_matrix(cga, N))
         end
     end
 
