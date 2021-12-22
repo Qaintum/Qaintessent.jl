@@ -60,7 +60,7 @@ end
 end
 
 """Tailored implementation of 1/2 (X ρ + ρ X)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,XGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,XGate}, factor::FloatQ=convert(FloatQ, 0))
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
     shift = 2^l
@@ -160,7 +160,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Y ρ + ρ Y)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,YGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,YGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     k = 2*cg.iwire[1]-1
     l = 2*cg.iwire[1]-2
@@ -258,7 +258,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Z ρ + ρ Z)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,ZGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,ZGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -378,7 +378,7 @@ end
 end
 
 """Tailored implementation of 1/2 (H ρ + ρ H)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,HadamardGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -494,7 +494,7 @@ end
 end
 
 """Tailored implementation of 1/2 (S ρ + ρ S†)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -620,7 +620,7 @@ end
 end
 
 """Tailored implementation of 1/2 (S† ρ + ρ S)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,SdagGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -775,7 +775,7 @@ end
 end
 
 """Tailored implementation of 1/2 (T ρ + ρ T†)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -915,7 +915,7 @@ end
 end
 
 """Tailored implementation of 1/2 (T† ρ + ρ T)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,TdagGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1061,7 +1061,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rx(θ) ρ + ρ Rx(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RxGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RxGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1188,7 +1188,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Ry(θ) ρ + ρ Ry(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RyGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RyGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1316,7 +1316,7 @@ end
 end
 
 """Tailored implementation of 1/2 (Rz(θ) ρ + ρ Rz(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RzGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RzGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1484,7 +1484,7 @@ end
 
 
 """Tailored implementation of 1/2 (Rn(θ) ρ + ρ Rn(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,RotationGate}, factor::FloatQ=convert(FloatQ, 0))
     θ = norm(cg.gate.nθ)
     if θ == 0
         # for consistency, we return a copy here
@@ -1645,7 +1645,7 @@ end
 end
 
 """Tailored implementation of 1/2 (P(ϕ) ρ + ρ P(-ϕ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,PhaseShiftGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -1822,7 +1822,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate})
 end
 
 """Tailored implementation of 1/2 (SWAP ρ + ρ SWAP)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,SwapGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit indices the gate acts on
     j, k = cg.iwire
     j, k = j < k ? (j, k) : (k, j)  # sort them
@@ -2047,7 +2047,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate
 end
 
 """Tailored implementation of 1/2 (Rxx(θ) ρ + ρ Rxx(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementXXGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit indices the gate acts on
 
     cosθ2 = cos(0.5*cg.gate.θ[])
@@ -2073,19 +2073,19 @@ end
             continue
         else
             index = i 
-            if index4 == 0
-                index += shift4
+            if index1%2 == 0
+                index += shift1
             else
-                index -= shift4
+                index -= shift1
             end
 
-            if index2 == 0
+            if index2%2 == 0
                 index += shift2
             else
                 index -= shift2
             end
             
-            if a == 2 || b == 2
+            if index1 == 2 || index2 == 2
                 sign = -1
             else
                 sign = 1
@@ -2302,7 +2302,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate
 end
 
 """Tailored implementation of 1/2 (Ryy(θ) ρ + ρ Ryy(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementYYGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit indices the gate acts on
     cosθ2 = cos(0.5*cg.gate.θ[])
     sinθ2 = sin(0.5*cg.gate.θ[])
@@ -2571,7 +2571,7 @@ function apply_mixed_add(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate
 end
 
 """Tailored implementation of 1/2 (Rzz(θ) ρ + ρ Rzz(-θ))"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{2,EntanglementZZGate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit indices the gate acts on
     cosθ2 = cos(0.5*cg.gate.θ[])
     sinθ2 = sin(0.5*cg.gate.θ[])
@@ -2737,7 +2737,7 @@ Base.kron(a::AbstractMatrix{T}) where {T} = a
 Projection |1><1| (auxiliary "gate" required for implementing controlled gates)
 """
 struct Proj1Gate <: AbstractGate end
-const proj1GateMatrix = ComplexF64[0 0; 0 1]
+const proj1GateMatrix = ComplexQ[0 0; 0 1]
 const sproj1GateMatrix = sparse(proj1GateMatrix)
 matrix(::Proj1Gate) = proj1GateMatrix
 sparse_matrix(::Proj1Gate) = sproj1GateMatrix
@@ -2809,7 +2809,7 @@ end
 end
 
 """Tailored implementation of 1/2 (|1><1| ρ + ρ |1><1|)"""
-@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate}, factor::Float64=0.0)
+@views function apply_mixed_add!(ρ::DensityMatrix, cg::CircuitGate{1,Proj1Gate}, factor::FloatQ=convert(FloatQ, 0))
     # qubit index the gate acts on
     j = cg.iwire[1]
     k = 2*cg.iwire[1]-1
@@ -2962,7 +2962,7 @@ end
         end
         nodd::Int = sum(eo)
         if iseven(nodd)
-            apply_mixed_add!(τ, cgU, -1.0)
+            apply_mixed_add!(τ, cgU, convert(FloatQ, -1.0))
         else
             apply_mixed_sub!(τ, cgU)
         end
@@ -2979,7 +2979,7 @@ end
     @inbounds ρs .= τ.v
     @inbounds ρ.v .+= apply!(τ, cgU).v
     @inbounds τ.v .= ρs
-    @inbounds ρ.v .-= 2.0.*apply_mixed_add!(τ, cgU, -0.5).v
+    @inbounds ρ.v .-= 2.0.*apply_mixed_add!(τ, cgU, promote(-0.5)).v
 
     return ρ
 end
@@ -2988,13 +2988,13 @@ end
 @views function apply(ρ::DensityMatrix, cg::CircuitGate{M,MatrixGate}) where {M}
 
     # Pauli matrix basis (including identity matrix)
-    pauli = Matrix{ComplexF64}[Matrix{ComplexF64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
-    halfpauli = Matrix{ComplexF64}[Matrix{ComplexF64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
+    pauli = Matrix{ComplexQ}[Matrix{ComplexQ}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
+    halfpauli = Matrix{ComplexQ}[Matrix{ComplexQ}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
 
-    U::Matrix{ComplexF64} = matrix(cg.gate)
+    U::Matrix{ComplexQ} = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
     m = quaternary_digits(M, 0)
-    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits!(m, i))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits!(m, j))]...) * U'))
+    conjU = FloatQ[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits!(m, i))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits!(m, j))]...) * U'))
                 for i in 0:4^M-1,
                     j in 0:4^M-1]
 
@@ -3014,13 +3014,13 @@ end
 @views function apply!(ρ::DensityMatrix, cg::CircuitGate{M,MatrixGate}) where {M}
 
     # Pauli matrix basis (including identity matrix)
-    pauli = Matrix{ComplexF64}[Matrix{ComplexF64}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
-    halfpauli = Matrix{ComplexF64}[Matrix{ComplexF64}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
+    pauli = Matrix{ComplexQ}[Matrix{ComplexQ}(I, 2, 2), matrix(X), matrix(Y), matrix(Z)]
+    halfpauli = Matrix{ComplexQ}[Matrix{ComplexQ}(0.5I, 2, 2), 0.5*matrix(X), 0.5*matrix(Y), 0.5*matrix(Z)]
 
-    U::Matrix{ComplexF64} = matrix(cg.gate)
+    U::Matrix{ComplexQ} = matrix(cg.gate)
     # represent conjugation by U with respect to Pauli basis
     m = quaternary_digits(M, 0)
-    conjU = Float64[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits!(m, i))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits!(m, j))]...) * U'))
+    conjU = FloatQ[real(tr(kron([pauli[p+1] for p in reverse(quaternary_digits!(m, i))]...) * U * kron([halfpauli[p+1] for p in reverse(quaternary_digits!(m, j))]...) * U'))
                 for i in 0:4^M-1,
                     j in 0:4^M-1]
 
