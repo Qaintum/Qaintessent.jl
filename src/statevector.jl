@@ -18,6 +18,9 @@ struct Statevector{M} <: AbstractArray{M,1}
     """
     function Statevector(v::Vector{M}) where {M<:Complex}
         ispow2(length(v)) || error("Statevector must have length which is a power of 2")
+        if M != ComplexQ
+            convert(Vector{ComplexQ}, v)
+        end
         N = intlog2(length(v))
         new{ComplexQ}(v, zeros(ComplexQ, 2^N), collect(1:2^N), N)
     end
@@ -28,20 +31,6 @@ struct Statevector{M} <: AbstractArray{M,1}
     """
     function Statevector(N::Int)
         new{ComplexQ}(zeros(ComplexQ, 2^N), zeros(ComplexQ, 2^N), collect(1:2^N), N)
-    end
-
-    @doc """
-    Statevector{M}(v::Vector{ComplexQ})
-
-    Create a `Statevector` object representing a pure quantum state with 'N' qubits.
-    """
-    function Statevector{M}(v::Vector{M}) where {M<:Complex}
-        if CUDA.functional()
-            if M != ComplexQ
-                @warn "Using CUDA support defaults base types to $ComplexQ, using $M may result in undefined behavior"
-            end
-        end
-        new{M}(zeros(ComplexQ, 2^N), zeros(ComplexQ, 2^N), collect(1:2^N), N)
     end
 end
 

@@ -32,7 +32,7 @@ using Qaintessent
 
         ψ = randn(ComplexTest, 2^N)
         s = Statevector(ψ)
-        @test typeof(s.state) == ComplexQ
+        @test typeof(s.state) == Vector{ComplexQ}
     end
 
     @testset "test statevector indexing" begin
