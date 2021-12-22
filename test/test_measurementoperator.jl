@@ -7,6 +7,14 @@ using Qaintessent
 ##==----------------------------------------------------------------------------------------------------------------------
 
 @testset ExtendedTestSet "measurement operators" begin
+    @testset "measurement operator Qaintessent.data functions" begin
+        meas1 = MeasurementOperator(X, (2,))
+        @test isnothing(Qaintessent.data(meas1))
+
+        meas2 = MeasurementOperator(matrix(X), (2,))
+        @test isnothing(Qaintessent.data(meas1))
+    end
+
     @testset "measurement operator construction" begin
         N = 5
         meas1 = MeasurementOperator.([3 * Matrix{Float64}(I, 2^N, 2^N), 2 * Matrix{Float64}(I, 2^N, 2^N)], ((1,2,3,4,5),))
