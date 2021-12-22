@@ -8,31 +8,33 @@ function flipqubit!(ψ::Statevector, wire::Int)
     end
 end
 
-"""Permutes perm vector in Statevector object, shifting qubits in "wires" to the fastest running qubit"""
-function orderbit(n::Int, wires::NTuple{K,Int}, N::Int) where {K}
+"""Permutes perm vector of length 2^N in Statevector object, shifting qubits in "wires" to the slowest running qubit for index n"""
+function orderbit(n::Int, wires::NTuple{K,Int}, N::Int, control::NTuple{L,Int}) where {K,L}
     result = 0
-    l = N-length(wires)-1
+    w = N-length(control)-length(wires)
+    c = N-length(control)
+    r = 0
 
-    for i in N:-1:1
-        if !(i in wires)
-            bit = n >> (i-1) & 1
-            result = result | (bit << l)
-            l -= 1
-        end
-    end
-    l = N-length(wires)
-    for i in wires
+    for i in 1:N
         bit = n >> (i-1) & 1
-        result = result | (bit << l)
-        l += 1 
+        if i in control
+            result = result | (bit << c)
+            c += 1
+        elseif i in wires
+            result = result | (bit << w)
+            w += 1
+        else
+            result = result | (bit << r)
+            r += 1
+        end
     end
     return result
 end
 
 """Permutes perm vector in Statevector object, shifting qubits in "wires" to the fastest running qubit"""
-function orderqubit!(ψ::Statevector, wires::NTuple{K,Int}) where {K}
+function orderqubit!(ψ::Statevector, wires::NTuple{K,Int}, control::NTuple{L,Int}=()) where {K,L}
     @simd for i in 1:length(ψ)
-        @inbounds ψ.perm[orderbit(i-1, wires, ψ.N) + 1] = i
+        @inbounds ψ.perm[orderbit(i-1, wires, ψ.N, control) + 1] = i
     end
 end
 
@@ -120,22 +122,20 @@ end
 """Tailored apply for HadamardGate"""
 function _apply!(ψ::Statevector, cg::CircuitGate{1,HadamardGate}) 
     mid = 2^(ψ.N-1)
-    ψ.state .*= 1/sqrt(2)
+    ψ.state .*= convert(ComplexQ, 1/sqrt(2))
 
     orderqubit!(ψ, cg.iwire)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)  
     @views begin
         @inbounds ψ.state .= ψ.vec
+        @inbounds ψ.state[1:mid] .+= ψ.vec[mid+1:end]
 
         @inbounds ψ.state[mid+1:2mid] .*= -1
-
-        ψ.state[1:mid] .+= ψ.vec[mid+1:end]
-        ψ.state[mid+1:2mid] .+= ψ.vec[1:mid]
+        @inbounds ψ.state[mid+1:2mid] .+= ψ.vec[1:mid]
 
         @inbounds invpermute!!(ψ.state, ψ.perm)
         resetpermute!(ψ)
     end
-    
     return
 end
 
@@ -195,7 +195,6 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,TdagGate})
     return
 end
 
-
 """Tailored apply for RzGate"""
 function _apply!(ψ::Statevector, cg::CircuitGate{1,RzGate}) 
     wire = cg.iwire[1]
@@ -230,7 +229,7 @@ end
 
 """Tailored apply for a general single qubit gate"""
 function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
-    U = matrix(cg.gate)::Array{ComplexF64,2}
+    U = matrix(cg.gate)::Array{ComplexQ,2}
     orderqubit!(ψ, cg.iwire)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
     mid = 2^(ψ.N-length(cg.iwire))
@@ -247,6 +246,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
     return
 end
 
+
 """Tailored apply for SwapGate"""
 function _apply!(ψ::Statevector, cg::CircuitGate{2,SwapGate})
     i, j = cg.iwire
@@ -254,6 +254,22 @@ function _apply!(ψ::Statevector, cg::CircuitGate{2,SwapGate})
     swapqubit!(ψ, i, j)
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)
     @inbounds ψ.state .= ψ.vec
+    resetpermute!(ψ)
+    return
+end
+
+"""Tailored apply for a general ControlledGate"""
+function _apply!(ψ::Statevector, cg::CircuitGate{M,ControlledGate{G}}) where {M,G}
+    T = target_wires(cg.gate)
+    C = control_wires(cg.gate)
+    orderqubit!(ψ, cg.iwire[1:T], cg.iwire[T+1:end])
+    @inbounds ψ.vec .= getindex.(Ref(ψ.state), ψ.perm)
+    new_cg = CircuitGate((ψ.N-C:-1:ψ.N-C-T+1...,), cg.gate.U)
+
+    start = length(ψ) - 2^(ψ.N-C) + 1
+    ψ.vec[start:end] .= _apply(ψ.vec[start:end], new_cg, ψ.N-C)
+    @inbounds ψ.state .= ψ.vec
+    @inbounds invpermute!!(ψ.state, ψ.perm)
     resetpermute!(ψ)
     return
 end
@@ -267,7 +283,7 @@ Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
 
 ```jldoctest
 julia> cg = circuit_gate(1, HadamardGate());
-julia> ψ = Statevector(ComplexF64[1 0]);
+julia> ψ = Statevector(ComplexQ[1 0]);
 julia> apply!(ψ, cg)
 julia> ψ.state
 2-element Array{Complex{Float64},1}:
@@ -281,8 +297,11 @@ function apply!(ψ::Statevector, cg::CircuitGate{M,G}) where {M,G}
 end
 
 function _apply!(ψ::Statevector, cg::CircuitGate{M,G}) where {M,G}
-    U = matrix(cg.gate)::Array{ComplexF64,2}
-    orderqubit!(ψ, cg.iwire)
+    U = matrix(cg.gate)::Array{ComplexQ,2}
+    
+    T = target_wires(cg.gate)
+    orderqubit!(ψ, cg.iwire[1:T], cg.iwire[T+1:end])
+    
     @inbounds ψ.vec .= getindex.(Ref(ψ.state),ψ.perm)    
     step = 2^(ψ.N-length(cg.iwire))
     @views begin
@@ -312,7 +331,7 @@ Apply a sequence of [`CircuitGate`](@ref)(s) to a quantum state vector `ψ`.
 julia> cgs = [circuit_gate(1, HadamardGate()),
                 circuit_gate(1, X),
                 circuit_gate(1, Y)];
-julia> ψ = Statevector(ComplexF64[1 0]);
+julia> ψ = Statevector(ComplexQ[1 0]);
 julia> apply!(ψ, cgs)
 julia> ψ.state
 2-element Array{Complex{Float64},1}:

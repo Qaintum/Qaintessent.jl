@@ -3,14 +3,14 @@ using TestSetExtensions
 using LinearAlgebra
 using Random
 using Qaintessent
-
+using CUDA
 
 ##==----------------------------------------------------------------------------------------------------------------------
 
 
 @testset ExtendedTestSet "apply gates to density matrix" begin
     N = 5
-    ψ = randn(ComplexF64, 2^N)
+    ψ = randn(ComplexQ, 2^N)
     ψ /= norm(ψ)
     # @code_warntype(density_from_statevector(ψ))
     
@@ -119,7 +119,7 @@ using Qaintessent
 
     @testset "density matrix apply general unitary gate" begin
         # matrix gate (general unitary gate)
-        cg = CircuitGate(NTuple{3,Int64}(randperm(N)[1:3]), MatrixGate(Matrix(qr(randn(ComplexF64, 8, 8)).Q)))
+        cg = CircuitGate(NTuple{3,Int64}(randperm(N)[1:3]), MatrixGate(Matrix(qr(randn(ComplexQ, 8, 8)).Q)))
         ψs = apply(ψ, cg)
         ρ = density_from_statevector(ψ)
         ρsref = density_from_statevector(ψs)

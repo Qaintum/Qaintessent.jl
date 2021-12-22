@@ -7,7 +7,7 @@ julia> m = MeasurementOperator(X, (1,))
 MeasurementOperator{1,XGate}(XGate(), (1,))
 
 julia> m = MeasurementOperator([0 1; 1 0], (1,))
-MeasurementOperator{1,SparseArrays.SparseMatrixCSC{Complex{Float64},Int64}}(
+MeasurementOperator{1,SparseArrays.SparseMatrixCSC{Complex{FloatQ},Int64}}(
   [2, 1]  =  1.0+0.0im
   [1, 2]  =  1.0+0.0im, (1,))
 ```
@@ -25,7 +25,7 @@ struct MeasurementOperator{M,G}
         d = 2
         size(m) == (d^M, d^M) || error("Measurement operator must be a $(d^M) × $(d^M) matrix.")
         m ≈ adjoint(m) || error("Measurement operator must be Hermitian.")
-        new{M,SparseMatrixCSC{Complex{Float64},Int}}(sparse(m), iwire)
+        new{M,SparseMatrixCSC{Complex{FloatQ},Int}}(sparse(m), iwire)
     end
 
     function MeasurementOperator(m, iwire::Integer...)
@@ -41,6 +41,8 @@ end
 @memoize function Base.size(m::MeasurementOperator)
     length(m.iwire)
 end
+
+data(m::MeasurementOperator) = data(m.operator)
 
 @memoize function check_commute(ops::Vector{<:MeasurementOperator})
     for (i, operator) in enumerate(ops)

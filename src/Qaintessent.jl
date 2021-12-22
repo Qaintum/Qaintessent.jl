@@ -3,6 +3,23 @@ module Qaintessent
 using LinearAlgebra
 using SparseArrays
 using Memoize
+using CUDA
+
+if CUDA.functional()
+    const FloatQ = Float32
+    const ComplexQ = ComplexF32
+    to_gpu(x) = CuArray(x)
+    promote(f::Float64) = convert(Float32, f)
+    promote(c::ComplexF64) = convert(ComplexF32, c)
+else
+    const FloatQ = Float64
+    const ComplexQ = ComplexF64
+    to_gpu(x) = x
+    promote(f::Float64) = convert(Float64, f)
+    promote(c::ComplexF64) = convert(ComplexF64, c)
+end
+
+export FloatQ, ComplexQ
 
 
 include("util.jl")
@@ -38,7 +55,8 @@ export
     MatrixGate,
     matrix,
     sparse_matrix,
-    num_wires
+    num_wires, 
+    data
 
 include("circuitgate.jl")
 export
@@ -80,7 +98,7 @@ include("commute.jl")
 include("apply.jl")
 export
     apply
-    
+
 include("apply_density.jl")
 export
     apply,
@@ -89,6 +107,10 @@ export
 include("apply_statevector.jl")
 export
     apply!
+
+module gpu
+    include("gpu/apply_gpu.jl")
+end
 
 include("gradients.jl")
 include("gradients_density.jl")

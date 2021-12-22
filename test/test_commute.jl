@@ -35,7 +35,7 @@ using Qaintessent
             # number of target and control wires
             nt = 2
             nc = rand(1:3)
-            circuit_gate(iwperm[1:nt], MatrixGate(Array(qr(randn(ComplexF64, 4, 4)).Q)), iwperm[nt+1:nt+nc],)
+            circuit_gate(iwperm[1:nt], MatrixGate(Array(qr(randn(ComplexQ, 4, 4)).Q)), iwperm[nt+1:nt+nc],)
         end
         cgates = [
             circuit_gate(rand(1:N), X),
@@ -70,9 +70,9 @@ using Qaintessent
 
     @testset "commute measurement operators" begin
         N = 4
-        q1 = Array(qr(randn(ComplexF64, 4, 4)).Q)
-        q2 = Array(qr(randn(ComplexF64, 4, 4)).Q)
-        q3 = Array(qr(randn(ComplexF64, 4, 4)).Q)
+        q1 = Array(qr(randn(ComplexQ, 4, 4)).Q)
+        q2 = Array(qr(randn(ComplexQ, 4, 4)).Q)
+        q3 = Array(qr(randn(ComplexQ, 4, 4)).Q)
         mops = [
             mop(X, rand(1:N)),
             mop(Y, rand(1:N)),

@@ -15,7 +15,7 @@ using Random
     θ = 0.7π
     ϕ = 0.4π
     n = randn(3); n /= norm(n)
-    ψ = rand(ComplexF64, 2^N)
+    ψ = rand(ComplexQ, 2^N)
 
     @testset "apply basic gates" begin
         # single qubit gates
@@ -25,7 +25,7 @@ using Random
             cga = CircuitGate{1,AbstractGate}(cg.iwire, cg.gate) # generate same gate with type AbstractGate{1}
 
             @test apply(ψ, cg) ≈ apply(ψ, cga)
-            @test apply(ψ, cg) ≈ sparse_matrix(cga, N) * ψ
+            @test apply(ψ, cg) ≈ apply(ψ, sparse_matrix(cga, N))
         end
     end
 
@@ -107,7 +107,7 @@ using Random
     @testset "apply 1-qubit MatrixGate" begin
         # MatrixGate: one qubit
         d = 2
-        A = rand(ComplexF64, d, d)
+        A = rand(ComplexQ, d, d)
         U, R = qr(A)
         U = Array(U);
         g = MatrixGate(U)
@@ -122,7 +122,7 @@ using Random
     @testset "apply k-qubit MatrixGate" begin
         # MatrixGate: k qubits
         k = rand(1:N)
-        A = rand(ComplexF64, 2^k, 2^k)
+        A = rand(ComplexQ, 2^k, 2^k)
         U, R = qr(A)
         U = Array(U);
         g = MatrixGate(U)
