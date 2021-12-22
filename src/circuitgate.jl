@@ -150,9 +150,6 @@ end
 
 
 function distribute_to_wires(gmat::SparseMatrixCSC{Complex{F},Int}, iwire::Vector{Int}, N::Int, M::Int) where {F<:AbstractFloat}
-    if F != FloatQ
-        gmat = convert(SparseMatrixCSC{Complex{FloatQ},Int}, gmat)
-    end
     # complementary wires
     iwcompl = setdiff(1:N, iwire)
     @assert length(iwire) + length(iwcompl) == N
