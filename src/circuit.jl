@@ -1,4 +1,4 @@
-sparse_matrix(g::SparseMatrixCSC{Complex{Float64},Int}) = g
+sparse_matrix(g::SparseMatrixCSC{Complex{FloatQ},Int}) = g
 
 
 """

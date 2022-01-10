@@ -3,20 +3,20 @@ using Random
 using Memoize
 
 """
-    weights(state::Vector{ComplexF64})
+    weights(state::Vector{ComplexQ})
 
 extended StatsBase weights to allow complex values
 """
-function StatsBase.weights(state::Vector{ComplexF64})
+function StatsBase.weights(state::Vector{ComplexQ})
     weights(norm.(state).^2)
 end
 
 """
-    measure(state:Vector{ComplexF64}, n::Int)
+    measure(state:Vector{ComplexQ}, n::Int)
 
 sample 'n' possible quantum state after measurement.
 """
-function measure(state::Vector{ComplexF64}, shots::Int=1)
+function measure(state::Vector{ComplexQ}, shots::Int=1)
 
     (shots > 0) || error("Shots has to be a natural integer above 0.")	
     ispow2(length(state)) || error("Statevector is not a viable quantum state (length $(length(state) )")

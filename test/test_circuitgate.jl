@@ -84,7 +84,7 @@ end
     θ = 0.7 * π
     ϕ = 0.4 * π
     n = randn(3); n /= norm(n)
-    ϵ = 3*sqrt(eps())
+    ϵ = 3*sqrt(eps(FloatQ))
     sqg = [RxGate(θ), RyGate(θ), RzGate(θ), RotationGate(θ, n), PhaseShiftGate(ϕ)]
     sqḡ = [RxGate(θ + eps()), RyGate(θ + eps()), RzGate(θ + eps()), RotationGate(θ + eps(), n), PhaseShiftGate(ϕ + eps())]
     sqĝ = [RxGate(θ + ϵ), RyGate(θ + ϵ), RzGate(θ + ϵ), RotationGate(θ + ϵ, n), PhaseShiftGate(ϕ + ϵ)]

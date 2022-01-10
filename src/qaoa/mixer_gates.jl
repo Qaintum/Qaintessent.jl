@@ -9,7 +9,7 @@ y = matrix(Y)
 
 # Utility function for a XY mixer
 # Implements X_a X_{a+1} + Y_a Y_{a+1}, or more generally (⊗_{i ∈ xy_indices} X_i) + (⊗_{i ∈ xy_indices} Y_i)
-function XY_sum(xy_indices::Vector{Int64}, d::Int64)::Matrix{ComplexF64}
+function XY_sum(xy_indices::Vector{Int64}, d::Int64)::Matrix{ComplexQ}
     # passing generator into kron via varargs syntax
     return kron((i ∈ xy_indices ? x : I(2) for i ∈ 1:d)...
         ) + kron((i ∈ xy_indices ? y : I(2) for i ∈ 1:d)...)
@@ -155,8 +155,8 @@ struct PartitionMixerGate <: AbstractGate
 end
 
 # Compute the partition mixer Hamiltonians
-@memoize function partition_mixer_hamiltonians(g::PartitionMixerGate)::Vector{Matrix{ComplexF64}}
-    hamiltonians = Matrix{ComplexF64}[]
+@memoize function partition_mixer_hamiltonians(g::PartitionMixerGate)::Vector{Matrix{ComplexQ}}
+    hamiltonians = Matrix{ComplexQ}[]
 
     # Implements parts of Eqs. (11), (12)
     # iterate through partition

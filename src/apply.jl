@@ -1,7 +1,6 @@
 
 apply(ψ::Vector{<:Complex}, m::AbstractMatrix) = m*ψ
 
-
 """Tailored apply for XGate"""
 function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{1,XGate}, N::Int) 
     i = cg.iwire[1]
@@ -142,7 +141,7 @@ end
 
 """Tailored apply for a general ControlledGate"""
 function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,ControlledGate{G}}, N::Int) where {M,G}
-    χ = copy(ψ) # TODO: copy only what's needed
+    χ = copy(ψ)::Vector{ComplexQ} # TODO: copy only what's needed
     χ = reshape(χ, fill(2, N)...)
     T = target_wires(cg.gate)
     itarget  = cg.iwire[1:T]
@@ -159,29 +158,7 @@ function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,ControlledGate{G}}, N::
 end
 
 
-"""
-    apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
-
-Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
-# Examples
-
-```jldoctest
-julia> cg = circuit_gate(1, HadamardGate());
-julia> ψ = [1 0];
-julia> apply(ψ, cg)
-2-element Array{Complex{Float64},1}:
- 0.7071067811865475 + 0.0im
- 0.7071067811865475 + 0.0im
-```
-"""
-function apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
-    l = length(ψ)::Int
-    N = Qaintessent.intlog2(l)
-    l == 2^N || error("Vector length must be a power of 2")
-    req_wires(cg) <= N || error("CircuitGate requires a minimum of $(req_wires(cg)) qubits, input vector `ψ` has $N qubits")
-    _apply(ψ, cg, N)
-end
-
+"""Tailored apply for a general CircuitGate"""
 function _apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}, N::Int) where {M,G}
     U = matrix(cg.gate)
     ψs = reshape(ψ, fill(2, N)...)
@@ -198,6 +175,31 @@ end
 
 
 """
+    apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
+
+Apply a [`CircuitGate`](@ref) to a quantum state vector `ψ`.
+# Examples
+
+```jldoctest
+julia> cg = circuit_gate(1, HadamardGate());
+julia> ψ = [1 0];
+julia> apply(ψ, cg)
+2-element Array{Complex{FloatQ},1}:
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
+```
+"""
+function apply(ψ::Vector{<:Complex}, cg::CircuitGate{M,G}) where {M,G}
+    l = length(ψ)::Int
+    N = Qaintessent.intlog2(l)
+    l == 2^N || error("Vector length must be a power of 2")
+    req_wires(cg) <= N || error("CircuitGate requires a minimum of $(req_wires(cg)) qubits, input vector `ψ` has $N qubits")
+    _apply(ψ, cg, N)
+end
+
+
+
+"""
     apply(ψ::Vector{<:Complex}, cgs::Vector{<:CircuitGate})
 
 Apply a sequence of [`CircuitGate`](@ref)(s) to a quantum state vector `ψ`.
@@ -210,7 +212,7 @@ julia> cgs = [circuit_gate(1, HadamardGate()),
                 circuit_gate(1, Y)];
 julia> ψ = [1 0];
 julia> apply(ψ, cgs)
-2-element Array{Complex{Float64},1}:
+2-element Array{Complex{FloatQ},1}:
  0.0 - 0.7071067811865475im
  0.0 + 0.7071067811865475im
 ```
@@ -268,9 +270,8 @@ end
 """
     apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractGate}
 
-returns state vector of `N` qubits after applying a `Moment{N}` object to a quantum state vector of `N` qubits `ψ`
+returns state vector of `N` qubits after applying a `MeasurementOperator` object to a quantum state vector of `N` qubits `ψ`
 """
-
 function apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractGate}
     Nmoment = num_wires(m)
     l = length(ψ)::Int    
@@ -281,13 +282,23 @@ function apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:A
     _apply(ψ, c, N)   
 end
 
+
 function apply(ψ::Vector{<:Complex}, m::MeasurementOperator{M,G}) where {M,G<:AbstractMatrix}
-    Nmoment = num_wires(m)
-    l = length(ψ)::Int    
+    l = length(ψ)::Int
     N = Qaintessent.intlog2(l)
     l == 2^N || error("Vector length must be a power of 2")
-    Nmoment <= N || error("MeasurementOperator affecting $Nmoment qubits applied to $N qubits")
-    apply(ψ, m.operator)   
+    M <= N || error("MeasurementOperator affecting $M qubits applied to $N qubits")
+    U = m.operator
+    ψs = reshape(ψ, fill(2, N)...)
+    χ = similar(ψs)
+    it = binary_digits(M, 0)
+    scratch = binary_digits(M, 0)
+    for i in 1:2^M
+        binary_digits!(it, i - 1)
+        # cannot use .= here since broadcasting fails for scalar numbers
+        χ[sliced_index(it, m.iwire, N)...] = sum(U[i, j] .* ψs[sliced_index(binary_digits!(scratch, j - 1), m.iwire, N)...] for j in 1:2^M)
+    end
+    return reshape(χ, :)
 end
 
 
@@ -307,6 +318,5 @@ function apply(ψ::Vector{<:Complex}, c::Circuit{N}) where {N}
     ψr = apply.((ψl,), c.meas) 
     return real.(dot.((ψl,), ψr))
 end
-
 
 (c::Circuit)(ψ) = apply(ψ, c)

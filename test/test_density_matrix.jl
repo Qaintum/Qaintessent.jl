@@ -10,7 +10,7 @@ using Qaintessent
 @testset ExtendedTestSet "density matrix" begin
 
     pauli = [
-        Matrix{Float64}(I, 2, 2),
+        Matrix{FloatQ}(I, 2, 2),
         Qaintessent.matrix(X),
         Qaintessent.matrix(Y),
         Qaintessent.matrix(Z),
@@ -23,7 +23,7 @@ using Qaintessent
     @testset "density matrix constructor" begin
         N = 3
 
-        v = randn(Float64, 4^N)
+        v = randn(FloatQ, 4^N)
         d1 = DensityMatrix(v)
         d2 = DensityMatrix(v, N)
         @test d1.v ≈ d2.v
@@ -32,7 +32,7 @@ using Qaintessent
 
     @testset "density matrix constructor helper function" begin
         N = 4
-        ψ = randn(ComplexF64, 2^N)
+        ψ = randn(ComplexQ, 2^N)
         # matrix representation of density matrix |ψ⟩⟨ψ|
         ρmat = reshape(kron(conj(ψ), ψ), 2^N, 2^N)
         # density matrix represented with respect to Pauli basis

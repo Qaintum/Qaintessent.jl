@@ -52,7 +52,7 @@ returns dense matrix representation of [`AbstractGate`](@ref) objects
 # Examples
 ```jldoctest    
 julia> matrix(X)
-2×2 Array{Complex{Float64},2}:
+2×2 Array{Complex{FloatQ},2}:
  0.0+0.0im  1.0+0.0im
  1.0+0.0im  0.0+0.0im
 ```
@@ -67,7 +67,7 @@ returns sparse matrix representation of [`AbstractGate`](@ref) objects
 # Examples
 ```jldoctest    
 julia> sparse_matrix(X)
-2×2 SparseArrays.SparseMatrixCSC{Complex{Float64},Int64} with 2 stored entries:
+2×2 SparseArrays.SparseMatrixCSC{Complex{FloatQ},Int64} with 2 stored entries:
   [2, 1]  =  1.0+0.0im
   [1, 2]  =  1.0+0.0im
 ```
@@ -75,20 +75,16 @@ julia> sparse_matrix(X)
 sparse_matrix(::AbstractGate) = error("Not implemented")
 
 """
-    adjoint(::AbstractGate)
+    data(::AbstractGate)
 
-returns adjoint of [`AbstractGate`](@ref)
+returns variable data for specified gate
 
 # Examples
 ```jldoctest    
-julia> adjoint(X)
-XGate()
-
-julia> adjoint(RxGate(0.3))
-RxGate(-0.3)
+julia> sparse_matrix(X)
 ```
 """
-
+data(::AbstractGate) = nothing
 
 """
     Pauli X gate
@@ -111,9 +107,9 @@ struct YGate <: AbstractGate end
 """
 struct ZGate <: AbstractGate end
 
-const XMatrix = ComplexF64[0  1 ; 1  0]
-const YMatrix = ComplexF64[0 -im; im 0]
-const ZMatrix = ComplexF64[1  0 ; 0 -1]
+const XMatrix = ComplexQ[0  1 ; 1  0]
+const YMatrix = ComplexQ[0 -im; im 0]
+const ZMatrix = ComplexQ[1  0 ; 0 -1]
 const sXMatrix = sparse(XMatrix)
 const sYMatrix = sparse(YMatrix)
 const sZMatrix = sparse(ZMatrix)
@@ -124,10 +120,6 @@ matrix(::ZGate) = ZMatrix
 sparse_matrix(::XGate) = sXMatrix
 sparse_matrix(::YGate) = sYMatrix
 sparse_matrix(::ZGate) = sZMatrix
-
-# sparse_matrix(::XGate) = sparse(matrix(XGate()))
-# sparse_matrix(::YGate) = sparse(matrix(YGate()))
-# sparse_matrix(::ZGate) = sparse(matrix(ZGate()))
 
 LinearAlgebra.ishermitian(::XGate) = true
 LinearAlgebra.ishermitian(::YGate) = true
@@ -156,11 +148,9 @@ num_wires(::ZGate)::Int = 1
 """
 struct HadamardGate <: AbstractGate end
 
-const HMatrix = ComplexF64[1  1; 1 -1] / sqrt(2)
-const sHMatrix = sparse([1,1,2,2],[1,2,1,2], ComplexF64[1, 1, 1, -1] / sqrt(2)) 
+const HMatrix = ComplexQ[1  1; 1 -1] ./ convert(ComplexQ, sqrt(2))
+const sHMatrix = sparse(HMatrix) 
 
-# sparse_matrix(::HadamardGate) = sparse([1,1,2,2],[1,2,1,2], ComplexF64[1, 1, 1, -1] / sqrt(2)) 
-# matrix(::HadamardGate) = ComplexF64[1  1; 1 -1] / sqrt(2)
 sparse_matrix(::HadamardGate) = sHMatrix
 matrix(::HadamardGate) = HMatrix
 
@@ -202,10 +192,10 @@ struct SdagGate <: AbstractGate end
 """
 struct TdagGate <: AbstractGate end
 
-const SGateMatrix    = ComplexF64[1 0; 0 im]
-const SdagGateMatrix = ComplexF64[1 0; 0 -im]
-const TGateMatrix    = ComplexF64[1 0; 0 Base.exp(im * π / 4)]
-const TdagGateMatrix = ComplexF64[1 0; 0 Base.exp(-im * π / 4)]
+const SGateMatrix    = ComplexQ[1 0; 0 im]
+const SdagGateMatrix = ComplexQ[1 0; 0 -im]
+const TGateMatrix    = ComplexQ[1 0; 0 Base.exp(im * π / 4)]
+const TdagGateMatrix = ComplexQ[1 0; 0 Base.exp(-im * π / 4)]
 
 const sSGateMatrix    = sparse(SGateMatrix)
 const sSdagGateMatrix = sparse(SdagGateMatrix)
@@ -248,17 +238,17 @@ num_wires(::TdagGate)::Int = 1
 """
 struct RxGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{Float64}
+    θ::Vector{FloatQ}
 
     function RxGate(θ::Real)
         new([θ])
     end
 end
 
-const RxGateMatrix = ComplexF64[1 -im; -im 1]
+const RxGateMatrix = ComplexQ[1 -im; -im 1]
 
 function matrix(g::RxGate)
-    m = zeros(ComplexF64, (2,2))
+    m = zeros(ComplexQ, (2,2))
     c = cos(g.θ[] / 2.0)
     s = -im*sin(g.θ[] / 2.0)
     m[1,1] = c; m[1,2] = s;
@@ -267,7 +257,8 @@ function matrix(g::RxGate)
 end
 
 sparse_matrix(g::RxGate) = sparse(matrix(g))
-
+data(g::RxGate) = g.θ[]
+# data(::RxGate) = nothing
 LinearAlgebra.ishermitian(g::RxGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
@@ -281,7 +272,7 @@ num_wires(::RxGate)::Int = 1
 """
 struct RyGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{Float64}
+    θ::Vector{FloatQ}
 
     function RyGate(θ::Real)
         new([θ])
@@ -289,7 +280,7 @@ struct RyGate <: AbstractGate
 end
 
 function matrix(g::RyGate)
-    m = zeros(ComplexF64, (2,2))
+    m = zeros(ComplexQ, (2,2))
     c = cos(g.θ[] / 2.0)
     s = sin(g.θ[] / 2.0)
     m[1,1] = c; m[1,2] = -s;
@@ -298,6 +289,7 @@ function matrix(g::RyGate)
 end
 
 sparse_matrix(g::RyGate) = sparse(matrix(g))
+data(g::RyGate) = g.θ[]
 
 LinearAlgebra.ishermitian(g::RyGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
@@ -312,14 +304,14 @@ num_wires(::RyGate)::Int = 1
 """
 struct RzGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{Float64}
+    θ::Vector{FloatQ}
     function RzGate(θ::Real)
         new([θ])
     end
 end
 
 function matrix(g::RzGate)
-    m = zeros(ComplexF64, (2,2))
+    m = zeros(ComplexQ, (2,2))
     eθ = exp(im * g.θ[] / 2)
     m[1,1] = conj(eθ)
     m[2,2] = eθ
@@ -327,7 +319,7 @@ function matrix(g::RzGate)
 end
 
 sparse_matrix(g::RzGate) = sparse(matrix(g))
-
+data(g::RzGate) = g.θ[]
 LinearAlgebra.ishermitian(g::RzGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 
@@ -345,7 +337,7 @@ num_wires(::RzGate)::Int = 1
 ``R_{\\vec v}(\\theta) = \\cos(\\frac{\\theta}{2})I - i\\sin(\\frac{\\theta}{2})\\vec v \\sigma, \\\\ \\sigma = [X, Y, Z]``
 """
 struct RotationGate <: AbstractGate
-    nθ::Vector{Float64}
+    nθ::Vector{FloatQ}
 
     function RotationGate(nθ::Vector{<:Real})
         length(nθ) == 3 || error("Rotation axis vector must have length 3.")
@@ -362,14 +354,14 @@ end
 function matrix(g::RotationGate)
     θ = norm(g.nθ)
     if θ == 0
-        return Matrix{ComplexF64}(I, 2, 2)
+        return Matrix{ComplexQ}(I, 2, 2)
     end
     n = g.nθ / θ
     return cos(θ/2)*I - im*sin(θ/2)*pauli_vector(n...)
 end
 
 sparse_matrix(g::RotationGate) = sparse(matrix(g))
-
+data(g::RotationGate) = to_gpu(matrix(g))
 LinearAlgebra.ishermitian(g::RotationGate) = abs(sin(norm(g.nθ) / 2)) < 8 * eps()
 
 Base.adjoint(g::RotationGate) = RotationGate(-g.nθ)
@@ -385,7 +377,7 @@ num_wires(::RotationGate)::Int = 1
 """
 struct PhaseShiftGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    ϕ::Vector{Float64}
+    ϕ::Vector{FloatQ}
 
     function PhaseShiftGate(ϕ::Real)
         new([ϕ])
@@ -393,13 +385,13 @@ struct PhaseShiftGate <: AbstractGate
 end
 
 function matrix(g::PhaseShiftGate) 
-    m = zeros(ComplexF64, (2,2))
+    m = zeros(ComplexQ, (2,2))
     m[1,1] = 1; m[2,2] = Base.exp(im * g.ϕ[])
     m
 end
 
 sparse_matrix(g::PhaseShiftGate) = sparse(matrix(g))
-
+data(g::PhaseShiftGate) = g.ϕ[]
 LinearAlgebra.ishermitian(g::PhaseShiftGate) = abs(sin(g.ϕ[])) < 4 * eps()
 
 Base.adjoint(g::PhaseShiftGate) = PhaseShiftGate(-g.ϕ[])
@@ -416,8 +408,8 @@ num_wires(::PhaseShiftGate)::Int = 1
 struct SwapGate <: AbstractGate end
 
 
-const swapmatrix = ComplexF64[1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1]
-const sswapmatrix = sparse([1, 3, 2, 4], [1, 2, 3, 4], ComplexF64[1, 1, 1, 1])
+const swapmatrix = ComplexQ[1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 1]
+const sswapmatrix = sparse([1, 3, 2, 4], [1, 2, 3, 4], ComplexQ[1, 1, 1, 1])
 
 matrix(::SwapGate,) = swapmatrix
 sparse_matrix(::SwapGate,) = sswapmatrix
@@ -443,14 +435,14 @@ Reference:\n
 """
 struct EntanglementXXGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{Float64}
+    θ::Vector{FloatQ}
     function EntanglementXXGate(θ::Real)
         new([θ])
     end
 end
 
 function matrix(g::EntanglementXXGate)
-    m = zeros(ComplexF64, (4,4))
+    m = zeros(ComplexQ, (4,4))
     c = cos(g.θ[] / 2)
     s = -im*sin(g.θ[] / 2)
     m[1,1] = c; m[1,4] = s;
@@ -463,8 +455,10 @@ end
 function sparse_matrix(g::EntanglementXXGate)
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
-    sparse([1, 4, 2, 3, 2, 3, 1, 4], [1, 1, 2, 2, 3, 3, 4, 4], ComplexF64[c, -im*s, c, -im*s, -im*s, c, -im*s, c])
+    sparse([1, 4, 2, 3, 2, 3, 1, 4], [1, 1, 2, 2, 3, 3, 4, 4], ComplexQ[c, -im*s, c, -im*s, -im*s, c, -im*s, c])
 end
+
+data(g::EntanglementXXGate) = g.θ[]
 
 LinearAlgebra.ishermitian(g::EntanglementXXGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
@@ -484,14 +478,14 @@ Reference:\n
 """
 struct EntanglementYYGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{Float64}
+    θ::Vector{FloatQ}
     function EntanglementYYGate(θ::Real)
         new([θ])
     end
 end
 
 function matrix(g::EntanglementYYGate)
-    m = zeros(ComplexF64, (4,4))
+    m = zeros(ComplexQ, (4,4))
     c = cos(g.θ[] / 2)
     s = im*sin(g.θ[] / 2)
     m[1,1] = c; m[1,4] = s;
@@ -504,8 +498,10 @@ end
 function sparse_matrix(g::EntanglementYYGate)
     c = cos(g.θ[] / 2)
     s = sin(g.θ[] / 2)
-    sparse([1, 4, 2, 3, 2, 3, 1, 4], [1, 1, 2, 2, 3, 3, 4, 4], ComplexF64[c, im*s, c, -im*s, -im*s, c, im*s, c])
+    sparse([1, 4, 2, 3, 2, 3, 1, 4], [1, 1, 2, 2, 3, 3, 4, 4], ComplexQ[c, im*s, c, -im*s, -im*s, c, im*s, c])
 end
+
+data(g::EntanglementYYGate) = g.θ[]
 
 LinearAlgebra.ishermitian(g::EntanglementYYGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
@@ -525,14 +521,14 @@ Reference:\n
 """
 struct EntanglementZZGate <: AbstractGate
     # use a reference type (array with 1 entry) for compatibility with Flux
-    θ::Vector{Float64}
+    θ::Vector{FloatQ}
     function EntanglementZZGate(θ::Real)
         new([θ])
     end
 end
 
 function matrix(g::EntanglementZZGate)
-    m = zeros(ComplexF64, (4,4))
+    m = zeros(ComplexQ, (4,4))
     eθ = exp(im * g.θ[] / 2)
     m[1,1] = conj(eθ)
     m[2,2] = eθ
@@ -543,9 +539,9 @@ end
 
 function sparse_matrix(g::EntanglementZZGate)
     eθ = exp(im * g.θ[] / 2)
-    sparse([1, 2, 3, 4], [1, 2, 3, 4], ComplexF64[conj(eθ), eθ, eθ, conj(eθ)])
+    sparse([1, 2, 3, 4], [1, 2, 3, 4], ComplexQ[conj(eθ), eθ, eθ, conj(eθ)])
 end
-
+data(g::EntanglementZZGate) = g.θ[]
 LinearAlgebra.ishermitian(g::EntanglementZZGate) = abs(sin(g.θ[] / 2)) < 4 * eps()
 
 # wires
@@ -557,7 +553,7 @@ Base.adjoint(g::EntanglementYYGate) = EntanglementYYGate(-g.θ[])
 Base.adjoint(g::EntanglementZZGate) = EntanglementZZGate(-g.θ[])
 
 
-matrix(::UniformScaling{Bool}) = ComplexF64[1 0; 0 1]
+matrix(::UniformScaling{Bool}) = ComplexQ[1 0; 0 1]
 sparse_matrix(::UniformScaling{Bool}) = sparse((1.0+0.0im)*I, 2, 2)
 
 """
@@ -596,6 +592,7 @@ julia> target_wires(cnot)
 ```
 """
 target_wires(g::ControlledGate) = num_wires(g.U)
+target_wires(g::AbstractGate) = num_wires(g)
 
 """
     control_wires(g::ControlledGate)
@@ -611,11 +608,12 @@ julia> target_wires(ccnot)
 ```
 """
 control_wires(g::ControlledGate) = g.M
+control_wires(g::AbstractGate) = 0
 
 function matrix(g::ControlledGate{G}) where {G <:AbstractGate}
     N = num_wires(g)
     Umat = matrix(g.U)
-    CU = Matrix{ComplexF64}(I, 2^N, 2^N)
+    CU = Matrix{ComplexQ}(I, 2^N, 2^N)
     # Note: target qubit(s) corresponds to fastest varying index
     CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
     return CU
@@ -624,12 +622,12 @@ end
 function sparse_matrix(g::ControlledGate{G}) where {G <:AbstractGate}
     N = num_wires(g)
     Umat = sparse_matrix(g.U)
-    CU = sparse(one(ComplexF64)*I, 2^N, 2^N)
+    CU = sparse(one(ComplexQ)*I, 2^N, 2^N)
     # Note: target qubit(s) corresponds to fastest varying index
     CU[end-size(Umat, 1)+1:end, end-size(Umat, 2)+1:end] = Umat
     return dropzeros!(CU)
 end
-
+data(g::ControlledGate) = data(g.U)
 LinearAlgebra.ishermitian(g::ControlledGate) = LinearAlgebra.ishermitian(g.U)
 
 Base.adjoint(g::ControlledGate) = ControlledGate(Base.adjoint(g.U), g.M)
@@ -646,7 +644,7 @@ isunitary(m::AbstractMatrix) = (m * Base.adjoint(m) ≈ I)
 general gate constructed from an unitary matrix
 """
 struct MatrixGate <: AbstractGate
-    matrix::SparseMatrixCSC{ComplexF64,Int}
+    matrix::SparseMatrixCSC{ComplexQ,Int}
     function MatrixGate(m::AbstractMatrix)
         @assert size(m, 1) == size(m, 2)
         isunitary(m) || error("Quantum gate must be unitary")
@@ -657,9 +655,11 @@ end
 # wires
 num_wires(g::MatrixGate)::Int = Int(log(2, size(g.matrix, 1)))
 
-matrix(g::MatrixGate) = Matrix(g.matrix)
+matrix(g::MatrixGate) = Matrix{ComplexQ}(g.matrix)
 
 sparse_matrix(g::MatrixGate) = g.matrix
+
+data(g::MatrixGate) = to_gpu(g.matrix)
 
 Base.adjoint(g::MatrixGate) = MatrixGate(Base.adjoint(g.matrix))
 

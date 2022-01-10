@@ -56,7 +56,7 @@ function sparse_matrix(m::Moment, N::Int=0)
     mat
 end
 
-function sparse_matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{Float64},Int}
+function sparse_matrix(m::Vector{Moment}, N::Int=0)::SparseMatrixCSC{Complex{FloatQ},Int}
     length(m) != 0 || error("Vector of length 0 cannot be converted to matrix")
     if N == 0
         N = maximum(req_wires.(m))

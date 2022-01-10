@@ -19,12 +19,12 @@ function properly_colored_edges(graph::Graph, coloring::Vector{Int})
 end
 
 # Create a state ψ that corresponds to a given coloring
-function ψ_from_coloring(n::Int, κ::Int, colors::Vector{Int})::Vector{ComplexF64}
+function ψ_from_coloring(n::Int, κ::Int, colors::Vector{Int})::Vector{ComplexQ}
     (n > 0 && κ > 0) || throw(DomainError("Parameters n and κ must be positive integers."))
     colors ⊆ 1:κ || throw(ArgumentError("Parameter `colors` may only contain colors in the range 1:$(κ)."))
 
     # Create ψ with |1> entries in the indices corresponding to the given colors, |0> elsewhere
-    ψ = kron((color == colors[vertex] ? [0.0im, 1] : [1, 0.0im] for vertex ∈ 1:n for color ∈ 1:κ)...)
+    ψ = kron((color == colors[vertex] ? ComplexQ[0.0im, 1] : ComplexQ[1, 0.0im] for vertex ∈ 1:n for color ∈ 1:κ)...)
     ψ
 end
 
@@ -39,8 +39,8 @@ function ψ_from_partitioning(n::Int, partitioning::Vector{Int})::Vector{Complex
 end
 
 # Utility function to compute the probabilities of the outcomes represented by a wavefunction ψ, sorted by descending probability
-function wavefunction_distribution(ψ::Vector{ComplexF64}; as_bitstrings::Bool = true,
-        include_zero = false)::Union{Vector{Tuple{Int, Float64}}, Vector{Tuple{Vector{Int}, Float64}}}
+function wavefunction_distribution(ψ::Vector{T}; as_bitstrings::Bool = true,
+        include_zero = false) where {T<:Complex}
     distribution = [(i-1, abs(amplitude)^2) for (i, amplitude) ∈ enumerate(ψ) if abs(amplitude) > 0 || include_zero]
     if as_bitstrings
         N = Int(log2(length(ψ)))
@@ -50,7 +50,7 @@ function wavefunction_distribution(ψ::Vector{ComplexF64}; as_bitstrings::Bool =
     return sort(distribution, by=(t -> -t[2]))
 end
 
-@testset ExtendedTestSet "max-k-col. subgraph QAOA Hamiltonians and gate matrices" begin
+@testset ExtendedTestSet "max-k-col. QAOA gates" begin
     @testset ExtendedTestSet "max-k-col. subgraph QAOA Hamiltonians" begin
         # Test that the phase separation Hamiltonian used in MaxKColSubgraphPhaseSeparationGate
         # implements the objective function correctly.
