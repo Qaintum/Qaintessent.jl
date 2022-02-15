@@ -1,7 +1,7 @@
 name = "Qaintessent"
 uuid = "9e6618a4-6605-11ea-2880-e931cf774ea8"
 authors = ["Christian B. Mendl <christian.b.mendl@gmail.com>"]
-version = "0.1.4"
+version = "0.1.5"
 
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
