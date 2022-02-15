@@ -129,7 +129,7 @@ the cost function gradients with respect to the circuit outputs (measurement ope
 The gradients with respect to the circuit parameters are returned in a duplicate circuit;
 the overall return value is the tuple (dc::Circuit{N}, dψ::AbstractVector).
 """
-function gradients(c::Circuit{N}, ψ::Vector{ComplexQ}, Δ::Vector{<:Real}) where {N}
+function gradients(c::Circuit{N}, ψ::Vector{ComplexQ}, Δ::AbstractArray) where {N}
     # length of circuit output vector must match gradient vector
     @assert length(Δ) == length(c.meas)
     # forward pass through unitary gates
