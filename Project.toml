@@ -21,6 +21,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
+CUDA = "2.6.3"
+ExprTools = "0.1.6"
+LLVM = "3.9.0"
 GenericSchur = "0.5.2"
 JLD = "0.12.5"
 MLStyle = "0.4.10"
