@@ -2,6 +2,7 @@ using Test
 using TestSetExtensions
 using LinearAlgebra
 using Qaintessent
+using Qaintessent.QAOAHelperDataStructs
 using Qaintessent.MaxKColSubgraphQAOA
 using CUDA
 

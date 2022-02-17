@@ -1,24 +1,8 @@
 using Qaintessent
+using Qaintessent.QAOAHelperDataStructs
 using LinearAlgebra
 using SparseArrays: sparse
 using Memoize
-
-# Simple struct that represents a graph via its edges
-struct Graph
-    n::Int # number of vertices (indices 1,...,n)
-    edges::Set{Set{Int}} # edges, represented as sets of vertices
-
-    function Graph(n::Integer, edges::Vector{Tuple{T, T}}) where T <: Integer
-        n >= 1 || throw(DomainError("n must be a positive integer"))
-
-        # Turn into set of sets
-        edge_set = Set(Set.(edges))
-
-        # Verify that all edges are valid
-        all(edge -> edge ⊆ 1:n && length(edge) == 2, edge_set) || throw(ArgumentError("Some edges have invalid endpoints"))
-        new(n, edge_set)
-    end
-end
 
 """
     Phase separation gate for Max-κ-colorable subgraph QAOA mapping.
@@ -28,6 +12,7 @@ end
 
 ``U_{P}(\\gamma) = e^{-i \\gamma H_{P}}``
 ``H_{P} = \\sum_{\\{u, v\\} \\in E} \\sum_{a=1}^{\\kappa} Z_{u, a} Z_{v, a}``
+``H_{P} = \\sum_{\\{u, v\\} \\in E} \\frac{1}{2} (I - Z_{u} Z_{v})``
 
 Reference:\n
     Stuart Hadfield, Zhihui Wang, Bryan O'Gorman, Eleanor G. Rieffel, Davide Venturelli and Rupak Biswas\n
@@ -75,3 +60,74 @@ Qaintessent.sparse_matrix(g::MaxKColSubgraphPhaseSeparationGate) = sparse(matrix
 
 # Number of wires (κ * n in the one-hot encoding)
 Qaintessent.num_wires(g::MaxKColSubgraphPhaseSeparationGate)::Int = g.κ * g.graph.n
+
+"""
+    Phase separation gate for MaxCut QAOA mapping.
+    Represents the objective function which counts the number of edges
+    between the two complementary partitions.
+
+``U_{P}(\\gamma) = e^{-i \\gamma H_{P}}``
+``H_{P} = \\sum_{\\{u, v\\} \\in E} \\sum_{a=1}^{\\kappa} Z_{u, a} Z_{v, a}``
+
+Reference:\n
+    Farhi, Edward, Jeffrey Goldstone, en Sam Gutmann\n
+    “A Quantum Approximate Optimization Algorithm”\n
+    arXiv [quant-ph], 2014. arXiv. http://arxiv.org/abs/1411.4028
+"""
+
+struct MaxCutPhaseSeparationGate <: AbstractGate
+    γ::Vector{Float64} # reference type (array with 1 entry) for compatibility with Flux
+    graph::EdgeWeightedGraph # The underlying graph which should be cut
+
+    function MaxCutPhaseSeparationGate(γ::Float64, graph::Graph)
+        length(graph.edges) > 0 || throw(ArgumentError("Graph `graph` must have at least one edge."))
+        new([γ], to_edge_weighted_graph(graph))
+    end
+
+    function MaxCutPhaseSeparationGate(γ::Float64, graph::EdgeWeightedGraph)
+        length(graph.edges) > 0 || throw(ArgumentError("Graph `graph` must have at least one edge."))
+        new([γ], graph)
+    end
+end
+
+@memoize function max_cut_phase_separation_hamiltonian(graph::Graph)
+    return max_cut_phase_separation_hamiltonian(to_edge_weighted_graph(graph))
+end
+
+@memoize function max_cut_phase_separation_hamiltonian(graph::EdgeWeightedGraph)
+    # Implementation of Eq. (11)
+    # m (number of edges) dimensional vector. Index i corresponds to edge i.
+    H_P_dim = 2 ^ graph.n
+    H_P_enc = zeros(ComplexF64, H_P_dim, H_P_dim)
+    for (edge, w) ∈ graph.edges  # Σ_{(u,v) = edge ∈ E}
+        Z_part = I(H_P_dim) # Z_{u} Z_{v}
+        for vertex ∈ edge
+            Z_vertex = kron((v == vertex  ? matrix(Z) : I(2) for v ∈ 1:graph.n)...)
+            Z_part = Z_part * Z_vertex
+        end
+        H_P_enc += (0.5 * w) .* (I - Z_part) # 0.5 * (I - Z_{u} * Z_{v})
+    end
+
+    # The hamiltonian is guaranteed to be diagonal due to its construction
+    return Diagonal(H_P_enc)
+end
+
+function Qaintessent.matrix(g::MaxCutPhaseSeparationGate)
+    # Calculate the hamiltonian (Eq. 11)
+    H_P_enc = max_cut_phase_separation_hamiltonian(g.graph)
+
+    # Implementation of one-hot phase seperator, Eq. (2)
+    U_P = exp(-im * g.γ[] * H_P_enc)
+
+    return U_P
+end
+
+Qaintessent.adjoint(g::MaxCutPhaseSeparationGate) = MaxCutPhaseSeparationGate(-g.γ[], g.graph)
+
+Qaintessent.sparse_matrix(g::MaxCutPhaseSeparationGate) = sparse(matrix(g))
+
+# Number of wires (n - number of nodes)
+Qaintessent.num_wires(g::MaxCutPhaseSeparationGate)::Int = g.graph.n
+
+
+
