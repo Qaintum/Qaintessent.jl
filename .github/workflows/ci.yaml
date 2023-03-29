@@ -4,10 +4,10 @@ on: pull_request
 
 jobs:
   unittests:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy: 
       matrix:
-        julia-version: ['1.7.0']
+        julia-version: ['1.7.0', '1.8.5']
     steps:
       - uses: actions/checkout@v2  
         with:
