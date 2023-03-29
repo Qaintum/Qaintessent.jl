@@ -76,6 +76,6 @@ Applying the [Circuit](@ref) object to a 3-qubit quantum state all in the ground
 julia> ψ = ComplexF64[1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 
 julia> apply(ψ, c)
-1-element Array{Float64,1}:
+1-element Array{Float64}:
  0.9999999999999996
 ```
