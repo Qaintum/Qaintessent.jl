@@ -1,5 +1,3 @@
-using Base
-using Base: invpermute!!
 using Qaintessent
 using CUDA
 
