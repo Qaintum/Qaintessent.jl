@@ -1,6 +1,3 @@
-using Base
-using Base: invpermute!!
-
 """Modifies perm vector in Statevector object to flip qubit at position `wire`"""
 function flipqubit!(ψ::Statevector, wire::Int)
     @simd for i in 1:length(ψ)
@@ -133,7 +130,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,HadamardGate})
         @inbounds ψ.state[mid+1:2mid] .*= -1
         @inbounds ψ.state[mid+1:2mid] .+= ψ.vec[1:mid]
 
-        @inbounds invpermute!!(ψ.state, ψ.perm)
+        @inbounds invpermute!(ψ.state, ψ.perm)
         resetpermute!(ψ)
     end
     return
@@ -240,7 +237,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{1,T}) where {T<:AbstractGate}
         @inbounds ψ.state[1:mid] .+= ψ.vec[1:mid]
         @inbounds mul!(ψ.vec[1:mid], U[2,2], ψ.vec[mid+1:end])
         @inbounds ψ.state[mid+1:mid+mid] .+= ψ.vec[1:mid]
-        @inbounds invpermute!!(ψ.state, ψ.perm)
+        @inbounds invpermute!(ψ.state, ψ.perm)
         resetpermute!(ψ)
     end 
     return
@@ -269,7 +266,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{M,ControlledGate{G}}) where {M
     start = length(ψ) - 2^(ψ.N-C) + 1
     ψ.vec[start:end] .= _apply(ψ.vec[start:end], new_cg, ψ.N-C)
     @inbounds ψ.state .= ψ.vec
-    @inbounds invpermute!!(ψ.state, ψ.perm)
+    @inbounds invpermute!(ψ.state, ψ.perm)
     resetpermute!(ψ)
     return
 end
@@ -314,7 +311,7 @@ function _apply!(ψ::Statevector, cg::CircuitGate{M,G}) where {M,G}
                 @inbounds ψ.state[(i-1)*step+1:i*step] .+= ψ.vec[1:step]
             end
         end
-        @inbounds invpermute!!(ψ.state, ψ.perm)
+        @inbounds invpermute!(ψ.state, ψ.perm)
         resetpermute!(ψ)
     end
 end
